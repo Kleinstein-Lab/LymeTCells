@@ -1,0 +1,2658 @@
+---
+title: "Manuscript: T Cells"
+output:
+  html_document:
+    code_download: yes
+    code_folding: hide
+    css: ../../"style.css"
+    dev: "png" # png, tiff
+    df_print: kable
+    fig_caption: yes
+    keep_md: no
+    self_contained: true
+    theme: yeti
+    toc: yes
+    toc_depth: 3 # 4
+    toc_float:
+        collapsed: false
+        smooth_scroll: false
+editor_options: 
+  chunk_output_type: console
+---
+
+------------------------------------------------------------------------
+
+# Overview and setup
+
+```{r setup-options, include = FALSE}
+knitr::opts_chunk$set(comment = NA, dpi = 600, fig.align = "center",
+                      out.width = "100%", warning = FALSE, error = TRUE,
+                      message = FALSE,
+                      fig.path = here::here("primary_analysis", "figures",
+                                            "manuscripts", "manuscript_t",
+                                            "manuscript-t-"))
+
+# will mess with chunk labels, but needed for parameterized reports
+options(knitr.duplicate.label = "allow")
+```
+
+**Author(s):** Edel Aron<br>
+**Date Created:** 2024-04-08<br>
+**Last Updated:** `r Sys.Date()`
+
+**R version:** `r R.Version()$version.string`<br>
+**Platform:** `r R.Version()$platform`<br>
+**Running under:** `r sessionInfo()$running`
+
+```{r, include = FALSE}
+# load packages, colors and themes, functions, and metadata (R code only)
+source(knitr::purl(here::here("primary_analysis", "notebooks",
+                              "01-setup.Rmd"), documentation = 0))
+source(knitr::purl(here::here("primary_analysis", "notebooks",
+                              "02-functions.Rmd"), documentation = 0))
+source(knitr::purl(here::here("primary_analysis", "notebooks",
+                              "03-meta.Rmd"), documentation = 0))
+```
+
+```{r}
+packages <- c("APackOfTheClones", "clusterProfiler", "ggpubr", "msigdbr",
+              "SeuratExtend", "xlsx")
+for (n in seq_along(packages)) {
+  suppressPackageStartupMessages(library(packages[n], character.only = TRUE))
+  cat(paste0(packages[n], ": ", packageVersion(packages[n]), "\n"))
+}
+```
+
+Set the figure theme:
+
+```{r}
+labels_manuscript <- theme(axis.line = element_line(linewidth = 0.5),
+                           legend.title = element_text(size = 12),
+                           legend.text = element_text(size = 10),
+                           plot.title = element_text(face = "plain", size = 14,
+                                                     hjust = 0.5),
+                           plot.subtitle = element_text(size = 12),
+                           plot.tag = element_text(face = "plain", size = 12))
+
+labels_manuscript_dot <- labels_manuscript +
+                         theme(axis.title = element_blank(),
+                               axis.text = element_text(size = 9),
+                               # shrink the gap between the facets
+                               panel.spacing = unit(0.3, "lines"),
+                               strip.text.y = element_text(angle = 0, size = 9)) +
+                         RotatedAxis()
+
+labels_manuscript_venn <- labels_manuscript +
+                          theme(axis.line = element_blank())
+```
+
+------------------------------------------------------------------------
+
+# Read in the data
+
+The pre-updated objects can be found in the "final" subdirectory (they are the ones with 202943_SC removed).
+
+## Metadata
+
+```{r}
+metrics_summary <- create_metrics_summary(meta = meta,
+                                          path_data_specific = path_data_root,
+                                          data_types = "GEX",
+                                          samples_list = samples)
+
+aggr_results <- fromJSON(file.path(path_data_root, "aggr",
+                                   "outs", "count", "summary.json"))
+```
+
+```{r}
+table_clinical <-
+  meta_clinical %>%
+    select("Study ID", "Age", "Gender", "Single EM", "Size (diameter in cm)",
+           "If yes to skin biopsy obtained from the EM,",
+           "If yes to skin biopsy obtained from the EM, location",
+           "Dataset", "Paired") %>%
+    unite("Lesion Site(s)",
+          c("If yes to skin biopsy obtained from the EM,",
+            "If yes to skin biopsy obtained from the EM, location"),
+          sep = " ") %>%
+    rename(Subject = "Study ID", Sex = Gender, EM = "Single EM",
+           Size = "Size (diameter in cm)", "Paired Control" = Paired) %>%
+    mutate(Subject = as.character(Subject), Size = as.character(Size),
+           EM = recode(EM, "Yes" = "Single", "No" = "Multiple"), 
+           Dataset = as.character(as.integer(Dataset) - 1)) %>%
+    relocate(Dataset, .before = Subject)
+```
+
+## GEX
+
+### Blood
+
+```{r setup-gex-blood}
+# objects
+combined_blood <-
+  readRDS(file.path(path_objs, "final", "combined_blood_airr.rds"))
+combined_blood_t <-
+  readRDS(file.path(path_objs, "final", "combined_blood_t_ref.rds"))
+
+# colors
+colors_annotated_blood <- combined_blood@misc$colors_annotated
+colors_annotated_blood_t <- combined_blood_t@misc$colors_annotated
+```
+
+With doublets:
+
+```{r}
+combined_blood_with_doublets <-
+  readRDS(file.path(path_objs, "doublets", "with_doublets", "combined_blood.rds"))
+```
+
+### Skin
+
+```{r setup-gex-skin}
+# objects
+combined_skin <-
+  readRDS(file.path(path_objs, "final", "combined_skin_airr.rds"))
+combined_skin_recombined <-
+  readRDS(file.path(path_objs, "final", "combined_skin_recombined_t.rds"))
+combined_skin_t <-
+  readRDS(file.path(path_objs, "final", "combined_skin_t_ref.rds"))
+
+# for splicing
+combined_skin_t_ideis <-
+  readRDS(file.path(path_objs, "downstream", "splicing",
+                    "combined_skin_t_ideis.rds"))
+
+# colors
+colors_annotated_skin <- combined_skin@misc$colors_annotated
+colors_annotated_skin_recombined <- combined_skin_recombined@misc$colors_annotated
+colors_annotated_skin_t <- combined_skin_t@misc$colors_annotated
+```
+
+With doublets:
+
+```{r}
+combined_skin_with_doublets <-
+  readRDS(file.path(path_objs, "doublets", "with_doublets", "combined_skin.rds"))
+```
+
+## AIRR
+
+Use the airrflow objects:
+
+```{r setup-airr}
+combined_bcr <-
+  readRDS(file.path(path_airrflow_objs, "combined_airrflow_bcr.rds"))
+combined_tcr <-
+  readRDS(file.path(path_airrflow_objs, "combined_airrflow_tcr.rds"))
+```
+
+## Differential expression
+
+```{r setup-de}
+fdr_cutoff <- 0.05
+
+hallmark <- msigdbr::msigdbr(species = "Homo sapiens", category = "H") %>% 
+              select(gs_name, gene_symbol) # ensembl_gene, entrez_gene
+reactome <- msigdbr::msigdbr(species = "Homo sapiens", category = "C2",
+                             subcategory = "REACTOME") %>% 
+              select(gs_name, gene_symbol)
+
+# this has had the "T Cells" removed
+de_skin_recombined <-
+  readRDS(file.path(path_objs, "downstream", "differential_expression",
+                    "deseq2_combined_skin_recombined.rds"))
+
+de_skin_t_em_ifng <-
+  readRDS(file.path(path_objs, "downstream", "differential_expression",
+                    "deseq2_combined_skin_t_em_ifng.rds"))
+de_genes_skin_t_em_ifng <- enframe(de_skin_t_em_ifng) %>%
+                             unnest(value) %>%
+                             rename(cell_type = name) %>%
+                             dplyr::filter(p_val_adj < 0.05)
+```
+
+## Other
+
+```{r setup-other}
+markers_all <- read_csv(file.path(path_resources, "marker_genes_all.csv"),
+                        show_col_types = FALSE) %>%
+                 dplyr::filter(Species == "Human")
+
+# for the supported data values spreadsheet later
+sdv <- list()
+```
+
+------------------------------------------------------------------------
+
+# Update the data
+
+## Dataset
+
+We say datasets 1, 2 and 3 instead of datasets 2, 3 and 4 in the manuscript.
+
+```{r}
+# objects
+combined_skin$Dataset <-
+  as.character(as.integer(combined_skin[[]]$Dataset) - 1)
+combined_skin_recombined$Dataset <-
+  as.character(as.integer(combined_skin_recombined[[]]$Dataset) - 1)
+combined_skin_t$Dataset <-
+  as.character(as.integer(combined_skin_t[[]]$Dataset) - 1)
+
+# table
+metrics_summary$Dataset <-
+  as.character(as.integer(metrics_summary$Dataset) - 1)
+```
+
+## Immune cell types
+
+Immune vs. non-immune:
+
+```{r}
+combined_skin_annotations_immune <-
+  rbind(c("B Cells", "Immune"),
+        c("Cycling Dendritic Cells", "Immune"),
+        c("Endothelial Cells", "Non Immune"),
+        c("Fibroblasts", "Non Immune"),
+        c("Keratinocytes", "Non Immune"),
+        c("Langerhans", "Immune"),
+        c("Macrophages", "Immune"),
+        c("Mast Cells", "Immune"),
+        c("Melanocytes", "Non Immune"),
+        c("Natural Killers", "Immune"),
+        c("Nerves", "Non Immune"),
+        c("Pericytes", "Non Immune"),
+        c("T Cells", "Immune"))
+
+colnames(combined_skin_annotations_immune) <- c("Cluster", "CellType")
+combined_skin_annotations_immune <- data.frame(combined_skin_annotations_immune)
+
+combined_skin <- add_annotations(seurat_obj = combined_skin,
+                                 annotations_df = combined_skin_annotations_immune,
+                                 relabel = FALSE,
+                                 clusters_col = "annotated_clusters",
+                                 annotations_col = "annotated_clusters_immune")
+```
+
+Adaptive immune vs. innate immune vs. non-immune:
+
+```{r}
+combined_skin_recombined_annotations_immune <-
+  rbind(c("B Cells", "Adaptive Immune"),
+        c("CD4- CD8- T Cells", "Adaptive Immune"),
+        c("CD4+ Effector Memory T Cells", "Adaptive Immune"),
+        c("CD4+ Tissue-Resident Memory T Cells", "Adaptive Immune"),
+        c("CD4+ Undefined T Cells", "Adaptive Immune"),
+        c("CD8+ GZMK+ IFNGhi T Cells", "Adaptive Immune"),
+        c("CD8+ GZMK+ IFNGint T Cells", "Adaptive Immune"),
+        c("CD8+ Undefined T Cells", "Adaptive Immune"),
+        c("Cycling Dendritic Cells", "Innate Immune"),
+        c("Dividing T Cells", "Adaptive Immune"),
+        c("Endothelial Cells", "Non Immune"),
+        c("Fibroblasts", "Non Immune"),
+        c("HSPhi T Cells", "Adaptive Immune"),
+        c("Keratinocytes", "Non Immune"),
+        c("Langerhans", "Innate Immune"),
+        c("Macrophages", "Innate Immune"),
+        c("Mast Cells", "Innate Immune"),
+        c("Melanocytes", "Non Immune"),
+        c("Naive T Cells", "Adaptive Immune"),
+        c("Natural Killers", "Innate Immune"),
+        c("Nerves", "Non Immune"),
+        c("Pericytes", "Non Immune"),
+        c("Regulatory T Cells", "Adaptive Immune"))
+
+colnames(combined_skin_recombined_annotations_immune) <- c("Cluster", "CellType")
+combined_skin_recombined_annotations_immune <-
+  data.frame(combined_skin_recombined_annotations_immune)
+
+combined_skin_recombined <-
+  add_annotations(seurat_obj = combined_skin_recombined,
+                  annotations_df = combined_skin_recombined_annotations_immune,
+                  relabel = FALSE,
+                  clusters_col = "annotated_clusters_expanded",
+                  annotations_col = "annotated_clusters_expanded_immune")
+```
+
+Group together CD4+ and CD8+:
+
+```{r}
+combined_skin_t_annotations_simpler <-
+  rbind(c("CD4- CD8- T Cells", "CD4- CD8- T Cells"),
+        c("CD4+ Effector Memory T Cells", "CD4+ T Cells"),
+        c("CD4+ Tissue-Resident Memory T Cells", "CD4+ T Cells"),
+        c("CD4+ Undefined T Cells", "CD4+ T Cells"),
+        c("CD8+ GZMK+ IFNGhi T Cells", "CD8+ T Cells"),
+        c("CD8+ GZMK+ IFNGint T Cells", "CD8+ T Cells"),
+        c("CD8+ Undefined T Cells", "CD8+ T Cells"),
+        c("Dividing T Cells", "Dividing T Cells"),
+        c("HSPhi T Cells", "HSPhi T Cells"),
+        c("Naive T Cells", "Naive T Cells"),
+        c("Regulatory T Cells", "Regulatory T Cells")) # double negative
+
+colnames(combined_skin_t_annotations_simpler) <- c("Cluster", "CellType")
+combined_skin_t_annotations_simpler <-
+  data.frame(combined_skin_t_annotations_simpler)
+
+combined_skin_t <-
+  add_annotations(seurat_obj = combined_skin_t,
+                  annotations_df = combined_skin_t_annotations_simpler,
+                  relabel = FALSE,
+                  clusters_col = "annotated_subclusters",
+                  annotations_col = "annotated_subclusters_simpler")
+```
+
+## Differential expression
+
+```{r}
+combined_skin_recombined_annotations_immune <-
+  combined_skin_recombined_annotations_immune %>% arrange(desc(CellType))
+
+# Steve suggested a different order (non immune, then innate, then adaptive)
+de_skin_recombined <-
+  de_skin_recombined[combined_skin_recombined_annotations_immune$Cluster]
+
+# for the top of the later heatmaps
+skin_recombined_types <- combined_skin_recombined_annotations_immune %>%
+                           column_to_rownames("Cluster") %>%
+                           rename("Immune Cell Type" = CellType) # nicer for plotting
+```
+
+## Clean up objects
+
+Add clinical info (we don't use it for any of the manuscript figures, but it might be useful for other researchers to have easily accessible):
+
+```{r}
+# for consistency
+ages <- str_sort(unique(table_clinical$Age), numeric = TRUE)
+sexes <- sort(unique(table_clinical$Sex))
+sizes <- str_sort(unique(table_clinical$Size), numeric = TRUE)
+
+# blood
+combined_blood@meta.data <-
+  left_join(combined_blood[[]],
+            select(table_clinical, Subject, Age, Sex),
+            by = join_by(Subject)) %>%
+  mutate(Age = factor(Age, levels = ages),
+         Sex = factor(Sex, levels = sexes))
+combined_blood_t@meta.data <-
+  left_join(combined_blood_t[[]],
+            select(table_clinical, Subject, Age, Sex),
+            by = join_by(Subject)) %>%
+  mutate(Age = factor(Age, levels = ages),
+         Sex = factor(Sex, levels = sexes))
+
+# skin
+combined_skin@meta.data <-
+  left_join(combined_skin[[]],
+            select(table_clinical, Subject, Age, Sex, Size),
+            by = join_by(Subject)) %>%
+  # the lesion sizes only make sense for the EM data
+  mutate(Size = ifelse(SampleType == "EM", Size, NA)) %>%
+  mutate(Age = factor(Age, levels = ages),
+         Sex = factor(Sex, levels = sexes),
+         Size = factor(Size, levels = sizes))
+combined_skin_recombined@meta.data <-
+  left_join(combined_skin_recombined[[]],
+            select(table_clinical, Subject, Age, Sex, Size),
+            by = join_by(Subject)) %>%
+  # the lesion sizes only make sense for the EM data
+  mutate(Size = ifelse(SampleType == "EM", Size, NA)) %>%
+  mutate(Age = factor(Age, levels = ages),
+         Sex = factor(Sex, levels = sexes),
+         Size = factor(Size, levels = sizes))
+combined_skin_t@meta.data <-
+  left_join(combined_skin_t[[]],
+            select(table_clinical, Subject, Age, Sex, Size),
+            by = join_by(Subject)) %>%
+  # the lesion sizes only make sense for the EM data
+  mutate(Size = ifelse(SampleType == "EM", Size, NA)) %>%
+  mutate(Age = factor(Age, levels = ages),
+         Sex = factor(Sex, levels = sexes),
+         Size = factor(Size, levels = sizes))
+```
+
+Fix the rownames:
+
+```{r}
+rownames(combined_blood@meta.data) <- combined_blood$Cell_ID_Unique
+rownames(combined_blood_t@meta.data) <- combined_blood_t$Cell_ID_Unique
+rownames(combined_skin@meta.data) <- combined_skin$Cell_ID_Unique
+rownames(combined_skin_recombined@meta.data) <- combined_skin_recombined$Cell_ID_Unique
+rownames(combined_skin_t@meta.data) <- combined_skin_t$Cell_ID_Unique
+```
+
+Remove BCR columns:
+
+```{r}
+# the recombined object already had a lot of these columns, so let's make sure
+# that they exist prior to removal
+for (meta_col in c("Has_BCR", "Isotype", "j_call_family_IGK",
+                   "j_call_family_IGL", "mu_freq_bins", "mu_freq",
+                   "paired_light", "v_call_family_IGK", "v_call_family_IGL")) {
+  # blood
+  if (meta_col %in% colnames(combined_blood[[]])) {
+    combined_blood[[meta_col]] <- c()
+  }
+  if (meta_col %in% colnames(combined_blood_t[[]])) {
+    combined_blood_t[[meta_col]] <- c()
+  }
+  
+  # skin
+  if (meta_col %in% colnames(combined_skin[[]])) {
+    combined_skin[[meta_col]] <- c()
+  }
+  if (meta_col %in% colnames(combined_skin_recombined[[]])) {
+    combined_skin_recombined[[meta_col]] <- c()
+  }
+  if (meta_col %in% colnames(combined_skin[[]])) {
+    combined_skin_t[[meta_col]] <- c()
+  }
+}
+```
+
+Remove other miscellaneous columns:
+
+```{r}
+for (meta_col in c("clone_id_sc", "clone_id_sc_unique", "sequence_id_unique")) {
+  # blood
+  if (meta_col %in% colnames(combined_blood[[]])) {
+    combined_blood[[meta_col]] <- c()
+  }
+  if (meta_col %in% colnames(combined_blood_t[[]])) {
+    combined_blood_t[[meta_col]] <- c()
+  }
+  
+  # skin
+  if (meta_col %in% colnames(combined_skin[[]])) {
+    combined_skin[[meta_col]] <- c()
+  }
+  if (meta_col %in% colnames(combined_skin_recombined[[]])) {
+    combined_skin_recombined[[meta_col]] <- c()
+  }
+  if (meta_col %in% colnames(combined_skin_t[[]])) {
+    combined_skin_t[[meta_col]] <- c()
+  }
+}
+```
+
+Rearrange metadata columns to be a little cleaner:
+
+```{r}
+# blood
+combined_blood@meta.data <-
+  combined_blood[[]] %>%
+  relocate(cell_id, Cell_ID_Unique, .after = percent.mt) %>%
+  relocate(Age, Sex, .after = Disease) %>%
+  relocate(Has_TCR, paired_alpha, locus, .after = annotated_clusters) %>%
+  relocate(v_call_family_TRA, .after = v_call_gene) %>%
+  relocate(j_call_family_TRA, .after = j_call_gene)
+
+combined_blood_t@meta.data <-
+  combined_blood_t[[]] %>%
+  relocate(cell_id, Cell_ID_Unique, .after = percent.mt) %>%
+  relocate(Age, Sex, .after = Disease) %>%
+  relocate(Has_TCR, paired_alpha, locus, .after = annotated_clusters) %>%
+  relocate(v_call_family_TRA, .after = v_call_gene) %>%
+  relocate(j_call_family_TRA, .after = j_call_gene) %>%
+  relocate(seurat_subclusters, annotated_subclusters_full,
+           annotated_subclusters, .after = last_col())
+
+# skin
+combined_skin@meta.data <-
+  combined_skin[[]] %>%
+  relocate(cell_id, Cell_ID_Unique, .after = percent.mt) %>%
+  relocate(Age, Sex, Size, .after = Disease) %>%
+  relocate(annotated_clusters_immune, Has_TCR, paired_alpha, locus,
+           .after = annotated_clusters) %>%
+  relocate(v_call_family_TRA, .after = v_call_gene) %>%
+  relocate(j_call_family_TRA, .after = j_call_gene)
+
+combined_skin_recombined@meta.data <-
+  combined_skin_recombined[[]] %>%
+  relocate(cell_id, Cell_ID_Unique, .after = percent.mt) %>%
+  relocate(Age, Sex, Size, .after = Disease) %>%
+  relocate(annotated_clusters_expanded, annotated_clusters_expanded_immune,
+           Has_TCR, paired_alpha, locus, .after = annotated_clusters) %>%
+  relocate(v_call_family_TRA, .after = v_call_gene) %>%
+  relocate(j_call_family_TRA, .after = j_call_gene)
+
+combined_skin_t@meta.data <-
+  combined_skin_t[[]] %>%
+  relocate(cell_id, Cell_ID_Unique, .after = percent.mt) %>%
+  relocate(Age, Sex, Size, .after = Disease) %>%
+  relocate(Has_TCR, paired_alpha, locus,
+           .after = annotated_clusters) %>%
+  relocate(v_call_family_TRA, .after = v_call_gene) %>%
+  relocate(j_call_family_TRA, .after = j_call_gene) %>%
+  relocate(seurat_subclusters, annotated_subclusters_full,
+           annotated_subclusters, annotated_subclusters_simpler,
+           .after = last_col())
+```
+
+We didn't save the original `cell_id`s because we use the `Cell_ID_Unique` columns instead, so let's just drop that column (since it got roped using the AIRR data so there are `NA`s for the GEX barcodes that don't have corresponding TCRs):
+
+```{r}
+combined_blood$cell_id <- c()
+combined_blood_t$cell_id <- c()
+combined_skin$cell_id <- c()
+combined_skin_recombined$cell_id <- c()
+combined_skin_t$cell_id <- c()
+```
+
+## Save the objects
+
+For GEO:
+
+```{r}
+#| eval = FALSE
+
+# blood
+saveRDS(combined_blood,
+        file.path(path_objs, "manuscript_t", "combined_blood.rds"))
+saveRDS(combined_blood_t,
+        file.path(path_objs, "manuscript_t", "combined_blood_t.rds"))
+
+# skin
+saveRDS(combined_skin,
+        file.path(path_objs, "manuscript_t", "combined_skin.rds"))
+saveRDS(combined_skin_recombined,
+        file.path(path_objs, "manuscript_t", "combined_skin_recombined.rds"))
+saveRDS(combined_skin_t,
+        file.path(path_objs, "manuscript_t", "combined_skin_t.rds"))
+```
+
+------------------------------------------------------------------------
+
+# Tables
+
+## Clinical
+
+192563 refused a control biopsy, the control for 202939 is missing, and we removed the control for 202943.
+
+```{r table-clinical}
+# update the subjects that don't have controls
+
+# update the column names for display
+table_clinical_display <-
+  table_clinical %>%
+    rename("Participant Number" = Subject, "Age (years)" = Age,
+           "EM Lesion(s)" = EM, "Lesion Size (cm)" = Size)
+
+table_clinical_display <-
+  table_clinical_display %>%
+  mutate("Paired Control" =
+           ifelse(`Participant Number` %in% c("192563", "202939", "202943"),
+                  "No", "Yes"))
+
+kable(x = table_clinical_display, align = "c") %>%
+  kable_styling("striped") %>%
+  scroll_box(height = NULL, width = "100%")
+
+# JCI wants a Word table
+# ggpubr::ggtexttable(table_clinical_display, rows = NULL, theme = ttheme("light"))
+
+# write_csv(table_clinical_display,
+#           file.path(path_tables, "manuscript_t", "clinical.csv"))
+```
+
+## Counts
+
+Pull info from the QC:
+
+```{r}
+# setup the summary table with feature reads
+aggr_results_feature_reads <-
+  aggr_results[grepl("*_pre_normalization_feature_reads\\>",
+                     names(aggr_results))]
+names(aggr_results_feature_reads) <- aggr_results[["batches"]] # samples
+
+aggr_results_summary <- as_tibble(aggr_results_feature_reads)
+aggr_results_summary$Type <- "pre_normalization_feature_reads"
+aggr_results_summary <-
+  relocate(aggr_results_summary, Type, .before = "192561SKL")
+
+# add fraction of reads kept
+aggr_results_frac_kept <- aggr_results[["frac_reads_kept"]]
+names(aggr_results_frac_kept) <- aggr_results[["batches"]]
+aggr_results_frac_kept$Type <- "frac_reads_kept"
+
+# add number of cells by library
+aggr_results_num_cells <- aggr_results[["num_cells_by_library"]]
+names(aggr_results_num_cells) <- aggr_results[["batches"]]
+aggr_results_num_cells$Type <- "num_cells_by_library"
+
+aggr_results_summary <- bind_rows(aggr_results_summary, aggr_results_frac_kept,
+                                  aggr_results_num_cells)
+
+# transpose the table and add metadata
+aggr_results_summary <-
+  tibble(aggr_results_summary) %>%
+  pivot_longer(cols = c(-Type), names_to = "SampleName") %>%
+  pivot_wider(names_from = c(Type)) %>%
+  left_join(meta %>% select(SampleName, Subject, SampleType, Dataset),
+            by = "SampleName") %>%
+  distinct() %>%
+  relocate(Dataset, .before = SampleName) %>%
+  relocate(Subject, SampleType, .after = SampleName)
+```
+
+Pull just the TCR info:
+
+```{r}
+metrics_summary_tcr <-
+  create_metrics_summary(meta = meta, path_data_specific = path_data_root,
+                         data_types = "TCR", samples_list = samples) %>%
+  select(SampleName, EstimatedNumberofCells) %>%
+  rename(Sample = SampleName, "Cell Count (TCR)" = EstimatedNumberofCells)
+```
+
+Assemble the new table:
+
+```{r}
+table_counts <-
+  aggr_results_summary %>%
+  # don't include the blood
+  filter(SampleType != "Blood") %>%
+  # add in metrics summary info
+  left_join(metrics_summary %>%
+              select(SampleName, ReadsPerCell, MedianGenesperCell),
+            by = join_by(SampleName)) %>%
+  # make a new column to show the `cellranger aggr` difference
+  mutate("Post Aggregation Read Count" =
+           round(pre_normalization_feature_reads * frac_reads_kept, digits = 0),
+         .after = pre_normalization_feature_reads) %>%
+  # round the fraction of reads
+  # mutate(frac_reads_kept = round(frac_reads_kept, digits = 3)) %>%
+  mutate(frac_reads_kept = label_percent(accuracy = 0.1)(frac_reads_kept)) %>%
+  # make the names more readable
+  rename(Sample = SampleName,
+         "Participant Number" = Subject,
+         "Sample Type" = SampleType,
+         "Pre Aggregation Read Count" = pre_normalization_feature_reads,
+         # "Fraction of Reads Kept" = frac_reads_kept,
+         "% Reads Kept" = frac_reads_kept,
+         "Cell Count" = num_cells_by_library, "Reads per Cell" = ReadsPerCell,
+         "Median Genes per Cell" = MedianGenesperCell)
+
+# add TCR info
+table_counts <-
+  table_counts %>% left_join(metrics_summary_tcr, by = join_by(Sample))
+
+kable(x = table_counts, align = "c") %>%
+  kable_styling("striped") %>%
+  scroll_box(height = NULL, width = "100%")
+
+# JCI wants a Word table
+# ggpubr::ggtexttable(table_counts, rows = NULL, theme = ttheme("light"))
+
+# write_csv(table_counts %>% mutate_all(as.character),
+#           file.path(path_tables, "manuscript_t", "counts.csv"))
+```
+
+------------------------------------------------------------------------
+
+# Figures
+
+## Figure 1 (Skin)
+
+```{r}
+plots_figure_1 <- list()
+
+for (sample_type in c("Control", "EM")) {
+  combined_skin_sub <- filter(combined_skin[[]], SampleType == sample_type)
+  
+  # calculate proportions for each subject, then average them
+  props_skin_sub <-
+    combined_skin_sub %>%
+    group_by(Subject, annotated_clusters, annotated_clusters_immune) %>%
+    summarize(count = n()) %>%
+    ungroup() %>%
+    group_by(Subject) %>%
+    mutate(proportion = count / sum(count)) %>%
+    ungroup() %>%
+    group_by(annotated_clusters, annotated_clusters_immune) %>%
+    summarize(mean_proportion = mean(proportion)) %>%
+    ungroup() %>%
+    mutate(SampleType = sample_type)
+  
+  # reorder clusters by immune type and mean_proportion within each SampleType
+  props_skin_sub_order <-
+    props_skin_sub %>%
+    arrange(SampleType, desc(annotated_clusters_immune), mean_proportion) %>%
+    pull(annotated_clusters)
+  props_skin_sub <-
+    props_skin_sub %>%
+      mutate(annotated_clusters =
+               factor(annotated_clusters, levels = props_skin_sub_order))
+  
+  # calculate where to split the immune types
+  props_skin_sub_immune <- props_skin_sub %>%
+                             group_by(annotated_clusters_immune) %>%
+                             summarize(n = sum(mean_proportion)) %>%
+                             arrange(annotated_clusters_immune) %>% 
+                             pull(n)
+  props_skin_sub_immune <- props_skin_sub_immune[1] # just need one
+  bar_height <- 1.55
+  
+  plots_figure_1[[sample_type]] <-
+    ggplot(props_skin_sub,
+           aes(x = SampleType, y = mean_proportion, fill = annotated_clusters)) +
+      geom_bar(stat = "identity", color = "black", linewidth = 0.2) +
+      geom_segment(aes(color = "Immune"), x = bar_height, xend = bar_height,
+                   y = 0, yend = props_skin_sub_immune, linewidth = 4) +
+      geom_segment(aes(color = "Non Immune"), x = bar_height, xend = bar_height,
+                   y = props_skin_sub_immune, yend = 1, linewidth = 4) +
+      labs(x = sample_type, y = "Cell Type Percentage", fill = "Cell Type",
+           color = "Immune Cell Type") +
+      coord_flip() +
+      scale_y_continuous(labels = label_percent(scale = 100),
+                         expand = expansion(mult = 0.05)) +
+      scale_fill_manual(breaks = names(colors_annotated_skin),
+                        values = colors_annotated_skin, guide = "none") +
+      scale_color_manual(values = colors_immune) +
+      geom_label(aes(label =
+                       ifelse(mean_proportion > 0.02,
+                              label_percent(accuracy = 1)(mean_proportion), NA),
+                     group = annotated_clusters),
+                 color = "black", fill = "white", size = 3,
+                 position = position_stack(vjust = 0.5)) +
+      theme_bw + labels_standard +
+      theme(panel.grid.minor.x = element_blank(),
+            panel.grid.major.y = element_blank(),
+            axis.title = element_text(size = 11),
+            axis.text.x = element_text(size = 10),
+            axis.text.y = element_blank(), axis.ticks.y = element_blank())
+}
+```
+
+```{r figure-1-umap-freq-skin}
+#| fig.dim = c(15, 18)
+
+#dev = c("png", "tiff")
+
+p1 <- plot_umap(seurat_obj = combined_skin, tissue_type = "Skin",
+                use_hues = TRUE, plot_by = "cluster_all") +
+        guides(color = guide_legend(override.aes = list(size = 3), ncol = 2))
+
+p2 <- plot_umap(seurat_obj = combined_skin, tissue_type = "Skin",
+                clrs_specific = colors_annotated_skin,
+                plot_by = "cluster_all", annotated = TRUE)
+
+# highlight increasing immune cells
+p3 <- plot_subsets(seurat_obj = combined_skin,
+                   tissue_type = "Skin",
+                   clrs_specific = colors_roy_skin,
+                   facet_by = "annotated_clusters",
+                   # don't need Dataset
+                   meta_group_by = c("Subject", "SampleType"),
+                   highlights = c("B Cells", "Macrophages", "Natural Killers",
+                                  "T Cells"),
+                   signif_caption = FALSE) +
+        labs(title = NULL, y = NULL)
+
+# combine the plots
+plots_figure_1_bar <-
+  (plots_figure_1$Control / plots_figure_1$EM) + plot_layout(guides = "collect")
+
+((p1 | p2) / free(plots_figure_1_bar) / free(p3)) +
+  plot_anno + plot_layout(heights = c(3, 2, 4)) &
+  labels_manuscript
+```
+
+Save for SDV spreadsheet:
+
+```{r}
+sdv$Figure_1C <- plots_figure_1$Control$data
+sdv$Figure_1D <- plots_figure_1$EM$data
+sdv$Figure_1E <- p3$data
+```
+
+Just for the significance values:
+
+```{r figure-1-freq}
+#| fig.dim = c(15, 7)
+
+plot_subsets(seurat_obj = combined_skin,
+             tissue_type = "Skin",
+             clrs_specific = colors_roy_skin,
+             facet_by = "annotated_clusters",
+             highlights = c("B Cells", "Macrophages", "Natural Killers",
+                            "T Cells"),
+             signif_stars = FALSE) +
+    labs(title = NULL, y = NULL)
+```
+
+## Figure 2 (Skin T cells)
+
+*Not ordered by immune type*
+
+```{r}
+plots_figure_2 <- list()
+
+for (sample_type in c("Control", "EM")) {
+  combined_skin_t_sub <- filter(combined_skin_t[[]], SampleType == sample_type)
+  
+  props_skin_t_sub <-
+  (sweep(table(combined_skin_t_sub$Subject,
+               combined_skin_t_sub$annotated_subclusters), 1,
+       table(combined_skin_t_sub$Subject), FUN = "/") * 100) %>%
+    as.data.frame() %>%
+    group_by(Var2) %>%
+    mutate(Freq = sum(Freq)) %>%
+    select(-Var1) %>% distinct() %>% ungroup() %>%
+    mutate(mean_proportion = Freq/(sum(Freq)), SampleType = "Control") %>%
+    rename(annotated_subclusters = Var2) %>% select(-Freq)
+  
+  # reorder clusters by immune type and mean_proportion within each SampleType
+  props_skin_t_sub_order <-
+    props_skin_t_sub %>%
+    arrange(SampleType, mean_proportion) %>%
+    pull(annotated_subclusters)
+  props_skin_t_sub <-
+    props_skin_t_sub %>%
+      mutate(annotated_subclusters =
+               factor(annotated_subclusters, levels = props_skin_t_sub_order))
+  
+  plots_figure_2[[sample_type]] <-
+    ggplot(props_skin_t_sub,
+           aes(x = SampleType, y = mean_proportion, fill = annotated_subclusters)) +
+      geom_bar(stat = "identity", color = "black", linewidth = 0.2) +
+      labs(x = sample_type,
+           y = "Cell Type Percentage", fill = "Cell Type") +
+      coord_flip() +
+      scale_y_continuous(labels = label_percent(scale = 100),
+                         expand = expansion(mult = 0.05)) +
+      scale_fill_manual(breaks = names(colors_annotated_skin_t),
+                        values = colors_annotated_skin_t) +
+      geom_label(aes(label =
+                       ifelse(mean_proportion > 0.02,
+                              label_percent(accuracy = 1)(mean_proportion), NA),
+                     group = annotated_subclusters),
+                 color = "black", fill = "white", size = 3,
+                 position = position_stack(vjust = 0.5)) +
+      theme_bw + labels_standard +
+      theme(legend.position = "none",
+            panel.grid.minor.x = element_blank(),
+            panel.grid.major.y = element_blank(),
+            axis.title = element_text(size = 11),
+            axis.text.x = element_text(size = 10),
+            axis.text.y = element_blank(), axis.ticks.y = element_blank())
+}
+```
+
+Subsets as part of the full skin:
+
+```{r figure-2-umap-freq-skin-t}
+#| fig.dim = c(16, 17)
+
+p1 <- plot_umap(seurat_obj = combined_skin_t, tissue_type = "Skin T Cells",
+                use_hues = TRUE, plot_by = "cluster_all",
+                clusters_col = "seurat_subclusters")
+
+p2 <- plot_umap(seurat_obj = combined_skin_t, tissue_type = "Skin T Cells",
+                clrs_specific = colors_annotated_skin_t,
+                plot_by = "cluster_all", annotated = TRUE,
+                annotations_col = "annotated_subclusters")
+
+# highlight increasing immune cells
+p3 <- plot_subsets(seurat_obj = combined_skin_recombined,
+                   tissue_type = "Skin T Cells",
+                   clrs_specific = colors_roy_skin,
+                   facet_by = "annotated_clusters_expanded",
+                   # don't need Dataset
+                   meta_group_by = c("Subject", "SampleType"),
+                   ncol = 6,
+                   filter_to = levels(combined_skin_t$annotated_subclusters),
+                   # has to be updated manually unfortunately
+                   highlights = c("CD4- CD8- T Cells",
+                                  "CD4+ Effector Memory T Cells",
+                                  "CD4+ Tissue-Resident Memory T Cells",
+                                  "CD8+ GZMK+ IFNGhi T Cells",
+                                  "CD8+ GZMK+ IFNGint T Cells",
+                                  "Dividing T Cells",
+                                  "HSPhi T Cells",
+                                  "Naive T Cells",
+                                  "Regulatory T Cells"),
+                   signif_caption = FALSE) +
+        labs(title = NULL, y = NULL) +
+        theme(strip.text.x = element_text(size = 9))
+
+# combine the plots
+((p1 | p2) / free(plots_figure_2$Control) / free(plots_figure_2$EM) / free(p3)) +
+  plot_anno + plot_layout(heights = c(3, 1, 1, 4)) &
+  labels_manuscript
+```
+
+Save for SDV spreadsheet:
+
+```{r}
+sdv$Figure_2C <- plots_figure_2$Control$data
+sdv$Figure_2D <- plots_figure_2$EM$data
+sdv$Figure_2E <- p3$data
+```
+
+Just for the significance values:
+
+```{r figure-2-freq}
+#| fig.dim = c(15, 7)
+
+plot_subsets(seurat_obj = combined_skin_recombined,
+             tissue_type = "Skin T Cells",
+             clrs_specific = colors_roy_skin,
+             facet_by = "annotated_clusters_expanded", ncol = 6,
+             filter_to = levels(combined_skin_t$annotated_subclusters),
+             # has to be updated manually unfortunately
+             highlights = c("CD4- CD8- T Cells",
+                            "CD4+ Effector Memory T Cells",
+                            "CD4+ Tissue-Resident Memory T Cells",
+                            "CD8+ GZMK+ IFNGhi T Cells",
+                            "CD8+ GZMK+ IFNGint T Cells",
+                            "Dividing T Cells",
+                            "HSPhi T Cells",
+                            "Naive T Cells",
+                            "Regulatory T Cells"),
+             signif_stars = FALSE) +
+  labs(title = NULL, y = NULL) +
+  theme(strip.text.x = element_text(size = 9))
+```
+
+## Figure 3 (IFNGhi vs IFNGint)
+
+```{r figure-3-waterfall}
+#| fig.dim = c(12, 5)
+
+# for plotting purposes
+de_genes_skin_t_em_ifng_waterfall <-
+  de_genes_skin_t_em_ifng %>%
+  arrange(desc(avg_logFC)) %>%
+  mutate(cell_type = "CD8+ GZMK+ IFNGhi vs. IFNGint T Cells",
+         gene = factor(gene, levels = unique(gene)),
+         annotated_subclusters =
+           ifelse(avg_logFC > 0,
+                  "CD8+ GZMK+ IFNGhi T Cells", "CD8+ GZMK+ IFNGint T Cells"))
+
+# save for SDV spreadsheet
+sdv$Figure_3 <- de_genes_skin_t_em_ifng_waterfall
+
+# just color by cell type
+ggplot(de_genes_skin_t_em_ifng_waterfall) +
+        aes(x = gene, y = avg_logFC, fill = annotated_subclusters) +
+        geom_col(linewidth = 0.2, color = "black") +
+        scale_fill_manual(name = "Cell Type with Higher Expression",
+                          values = colors_annotated_skin_t) +
+        labs(# title = "Skin CD8+ GZMK+ IFNGhi vs. IFNGint T Cells (EM only)",
+             x = "Differentially Expressed Genes", y = "log2FC") +
+        theme_bw + labels_standard + labels_rotate_x +
+  labels_manuscript + theme(legend.position = "top")
+```
+
+## Figure 4 (Clonal overlaps)
+
+```{r}
+plots_figure_4 <- list()
+
+# only show a few cell types in the main figure
+specific_cell_types_skin_simpler <- c("CD4+ T Cells", "CD8+ T Cells")
+specific_cell_types_skin_gzmk <- 
+  c("CD8+ GZMK+ IFNGhi T Cells", "CD8+ GZMK+ IFNGint T Cells")
+specific_cell_types_skin <-
+  c(specific_cell_types_skin_gzmk, "Regulatory T Cells")
+```
+
+```{r}
+# pull clones and remove NAs
+clones_blood <-
+  combined_blood_t[[]] %>%
+    filter(!is.na(clone_id_unique)) %>%
+    pull(clone_id_unique)
+clones_control <-
+  combined_skin_t[[]] %>%
+    filter(!is.na(clone_id_unique), SampleType == "Control") %>%
+    pull(clone_id_unique)
+clones_em <-
+  combined_skin_t[[]] %>%
+    filter(!is.na(clone_id_unique), SampleType == "EM") %>%
+    pull(clone_id_unique)
+
+list_venn <-
+  list("Blood" = clones_blood, "Control" = clones_control, "EM" = clones_em)
+list_venn_total <- Venn(list_venn)
+
+plots_figure_4[["venn_total"]] <-
+  ggVennDiagram(x = list_venn,
+                set_color = colors_sample_types[c("Blood", "Control", "EM")],
+                set_size = 4, label = "count", label_size = 5,
+                edge_size = 1.5) +
+    labs(title = "All Clones in the Blood and Skin T Cells",
+         fill = "Clone Count") +
+    scale_fill_gradient2(low = "white", high = "grey40") +
+    # don't cut off "Control"
+    scale_x_continuous(expand = expansion(mult = 0.2)) +
+    labels_standard_venn +
+    theme(plot.title = element_text(size = 14))
+```
+
+```{r figure-4-clonal-venn-skin-t-simpler}
+plots_venn_skin_t_simpler <- list()
+list_venn_skin_t_simpler <- list()
+
+for (cell_type in specific_cell_types_skin_simpler) {
+  combined_skin_t_sub <-
+    subset(combined_skin_t, subset = annotated_subclusters_simpler == cell_type)
+  
+  # pull clones and remove NAs
+  clones_control <-
+    combined_skin_t_sub[[]] %>%
+      filter(!is.na(clone_id_unique), SampleType == "Control") %>%
+      pull(clone_id_unique)
+  clones_em <-
+    combined_skin_t_sub[[]] %>%
+      filter(!is.na(clone_id_unique), SampleType == "EM") %>%
+      pull(clone_id_unique)
+  # we only want the overlapping clones (because it makes no sense to show blood
+  # clones associated with a skin cell type)
+  clones_blood <-
+    combined_blood_t[[]] %>%
+      filter(clone_id_unique %in% c(clones_control, clones_em)) %>%
+      pull(clone_id_unique)
+  
+  list_venn <-
+    list("Blood" = clones_blood, "Control" = clones_control, "EM" = clones_em)
+  
+    # for ease of counting for the results
+  list_venn_skin_t_simpler[[cell_type]] <- Venn(list_venn)
+
+  plots_venn_skin_t_simpler[[cell_type]] <-
+    ggVennDiagram(x = list_venn,
+                  set_color = colors_sample_types[c("Blood", "Control", "EM")],
+                  set_size = 4, label = "count", label_size = 5,
+                  edge_size = 1.5) +
+      labs(title = paste("Skin", cell_type, "Clones"),
+           fill = "Clone Count") +
+      scale_fill_gradient2(low = "white", high = "grey40") +
+      # don't cut off "Control"
+      scale_x_continuous(expand = expansion(mult = 0.2)) +
+      labels_standard_venn +
+      theme(plot.title = element_text(size = 14))
+}
+
+plots_figure_4[["venn_skin_simpler"]] <-
+  plots_venn_skin_t_simpler[specific_cell_types_skin_simpler]
+```
+
+```{r figure-4-clonal-venn-skin-t}
+plots_venn_skin_t <- list()
+list_venn_skin_t <- list()
+
+for (cell_type in sort(unique(combined_skin_t$annotated_subclusters))) {
+  combined_skin_t_sub <-
+    subset(combined_skin_t, subset = annotated_subclusters == cell_type)
+  
+  # pull clones and remove NAs
+  clones_control <-
+    combined_skin_t_sub[[]] %>%
+      filter(!is.na(clone_id_unique), SampleType == "Control") %>%
+      pull(clone_id_unique)
+  clones_em <-
+    combined_skin_t_sub[[]] %>%
+      filter(!is.na(clone_id_unique), SampleType == "EM") %>%
+      pull(clone_id_unique)
+  # we only want the overlapping clones (because it makes no sense to show blood
+  # clones associated with a skin cell type)
+  clones_blood <-
+    combined_blood_t[[]] %>%
+      filter(clone_id_unique %in% c(clones_control, clones_em)) %>%
+      pull(clone_id_unique)
+  
+  list_venn <-
+    list("Blood" = clones_blood, "Control" = clones_control, "EM" = clones_em)
+  
+    # for ease of counting for the results
+  list_venn_skin_t[[cell_type]] <- Venn(list_venn)
+
+  plots_venn_skin_t[[cell_type]] <-
+    ggVennDiagram(x = list_venn,
+                  set_color = colors_sample_types[c("Blood", "Control", "EM")],
+                  set_size = 4, label = "count", label_size = 5,
+                  edge_size = 1.5) +
+      labs(title = paste("Skin", cell_type, "Clones"),
+           fill = "Clone Count") +
+      scale_fill_gradient2(low = "white", high = "grey40") +
+      # don't cut off "Control"
+      scale_x_continuous(expand = expansion(mult = 0.2)) +
+      labels_standard_venn +
+      theme(plot.title = element_text(size = 14))
+}
+
+plots_figure_4[["venn_skin"]] <- plots_venn_skin_t[specific_cell_types_skin]
+```
+
+```{r figure-4-clonal-venn}
+#| fig.dim = c(14, 7)
+
+# Venn diagrams
+wrap_plots(list_flatten(list(plots_figure_4$venn_total,
+                             plots_figure_4$venn_skin_simpler,
+                             plots_figure_4$venn_skin)), nrow = 2) +
+  plot_anno & labels_manuscript_venn
+```
+
+## Figure 5 (Chemokines)
+
+```{r figure-5-chemokine-heatmap}
+#| fig.dim = c(9, 7.5)
+
+genes_list_ligands <- c("CCL4", "CCL5", "CXCL9", "CXCL10", "CXCL11", "CXCL13",
+                        "XCL1", "XCL2")
+genes_list_receptors <- c("CCR1", "CCR3", "CCR5", "CXCR5")
+
+# all genes together
+genes_list <- c(genes_list_ligands, genes_list_receptors)
+
+# and split the rows by group (so much nicer than patchwork)
+chemokine_groups <-
+    data.frame("Type" = c(rep("Ligands", length(genes_list_ligands)),
+                          rep("Receptors", length(genes_list_receptors))),
+               "Genes" = genes_list)
+
+heatmap_DESeq2(DESeq2_out = de_skin_recombined, gene_list = genes_list,
+               FDR_cutoff = fdr_cutoff,
+               anno_top = skin_recombined_types, clrs_anno_top = colors_immune,
+               split_row = chemokine_groups,
+               x_angle = 90, row_size = 14, col_size = 14, number_size = 16)
+```
+
+Save for SDV spreadsheet:
+
+```{r}
+# pulls from the first lines of heatmap_DESeq2()
+sdv$Figure_5 <-
+  enframe(de_skin_recombined) %>%
+  unnest(value) %>%
+  rename(cell_type = name) %>%
+  dplyr::filter(gene %in% genes_list) %>%
+  # need the genes to be alphanumerically sorted
+  mutate(gene = factor(gene,
+                       levels = str_sort(unique(gene), numeric = TRUE))) %>%
+  arrange(cell_type, gene)
+```
+
+## Figure 6 (GSEA)
+
+```{r}
+sig_gsea_results <- c()
+
+for (i in names(de_skin_recombined)) {
+  degs <- data.frame(gene = de_skin_recombined[[i]]$gene,
+                     stat = de_skin_recombined[[i]]$stat) %>%
+            arrange(desc(stat))
+  gene_list <- degs$stat
+  names(gene_list) <- degs$gene
+  
+  msig_gsea <-
+    clusterProfiler::GSEA(gene_list, 
+                          scoreType = "pos", # std, neg (no results)
+                          pvalueCutoff = 0.01, 
+                          pAdjustMethod = "bonferroni",
+                          TERM2GENE = hallmark, verbose = FALSE)
+  
+  if (dim(msig_gsea)[1] > 0) {
+    sig_gsea_results <-
+      bind_rows(sig_gsea_results,
+                msig_gsea@result %>% mutate(Cells = i) %>% remove_rownames())
+  }
+}
+
+# easier to read pathways
+sig_gsea_simpler <- sig_gsea_results %>%
+                      select(-ID) %>% 
+                      mutate(Description =
+                               str_remove(Description, "HALLMARK_") %>%
+                               str_replace_all("_", " ")) %>%
+                      rename(Pathways = Description, p_adjust = p.adjust)
+sig_gsea_simpler <- left_join(sig_gsea_simpler,
+                              combined_skin_recombined_annotations_immune %>%
+                                rename(Cells = Cluster),
+                              by = join_by(Cells))
+
+# save for SDV spreadsheet
+sdv$Figure_6 <- sig_gsea_simpler %>%
+                  arrange(Cells, Pathways) %>%
+                  relocate(Cells, CellType, .before = Pathways)
+```
+
+```{r figure-6-gsea-pathways-skin-point}
+#| fig.dim = c(12, 7)
+
+# use purple to not conflict with other heatmap blue
+p <- ggplot(sig_gsea_simpler,
+            aes(x = Cells, y = Pathways, color = p_adjust)) + # size = NES
+       geom_point(aes(fill = p_adjust), color = "black", size = 4, pch = 21) +
+       labs(x = NULL, y = NULL) +
+       scale_x_discrete(limits = rev) + # alphabetical order
+       # scale_size_continuous(range = c(2, 8)) +
+       scale_fill_gradientn(colors = c("#aa8cfa", "white")) +
+       coord_flip() +
+       theme_bw + labels_standard + labels_rotate_x +
+       theme(panel.grid.major.x = element_line())
+
+# highlight pathways of interest
+pathways_immune <-
+  c("APOPTOSIS", "COMPLEMENT", "IL2 STAT5 SIGNALING", "IL6 JAK STAT3 SIGNALING",
+    "INTERFERON ALPHA RESPONSE", "INTERFERON GAMMA RESPONSE",
+    "TGF BETA SIGNALING", "TNFA SIGNALING VIA NFKB")
+# hard way, but this works
+p_y_axis <- ggplot_build(p)$layout$panel_scales_y[[1]]$range$range
+p_y_axis_cols <- setNames(rep("black", length(p_y_axis)), p_y_axis)
+for (pathway in pathways_immune) {
+  p_y_axis_cols[pathway] <- "red"
+}
+
+# final plot
+p + facet_grid(rows = vars(CellType), scales = "free_y", space = "free_y") +
+  theme(axis.text.x = element_text(color = p_y_axis_cols))
+```
+
+## Figure 7 (Interferon response and production)
+
+```{r figure-7-heatmap}
+#| fig.dim = c(9, 14)
+
+# we only want the protein-coding genes, so let's list them manually by deleting
+# from the commented out code's output
+# genes_list <- str_sort(grep("^IFN", rownames(combined_skin_recombined), 
+#                             value = TRUE), numeric = TRUE)
+genes_list_ifn <- c(# Type I
+                    "IFNA1", "IFNA2", "IFNA4", "IFNA5", "IFNA6", "IFNA7", 
+                    "IFNA8", "IFNA10", "IFNA13", "IFNA14", "IFNA16", "IFNA17",
+                    "IFNA21", "IFNB1", "IFNE", "IFNK", "IFNW1",
+                    # Type II
+                    "IFNG",
+                    # Type III
+                    "IFNL1", "IFNL2", "IFNL3", "IFNL4")
+
+# let's include the ISG genes too
+# TODO: Move IRF1 and IRF7 to signaling?
+genes_list_irg <- c("IFITM1", "IFITM2", "ISG20", "ISG20L2", "SOCS3",
+                    "STAT1", "IRF1", "IRF7",
+                    # not currently mentioned in the paper:
+                    "ISG15", "STAT2", "STAT3")
+
+# and the interleukins
+# str_sort(grep("^IL", rownames(combined_skin), value = TRUE), numeric = TRUE)
+genes_list_il <- c("IL7", "IL10", "IL15", "IL16", "IL18", "IL32",
+                   # not currently mentioned in the paper:
+                   "IL12A", "IL12B", "IL23A") # "IL1B", "IL2", "IL6"
+
+genes_list_signaling <- c("IRF9", "NFKB1", "NFKB2", "TNF", "TYK2", "JAK1", "JAK2")
+
+# all genes together
+genes_list <-
+  c(genes_list_ifn, genes_list_irg, genes_list_il, genes_list_signaling)
+
+# and split the rows by group (so much nicer than patchwork)
+ifn_groups <-
+  data.frame("Type" = c(rep("Interferon", length(genes_list_ifn)),
+                        rep("Interferon-Regulated", length(genes_list_irg)),
+                        rep("Interleukin", length(genes_list_il)),
+                        rep("Signaling", length(genes_list_signaling))),
+             "Genes" = genes_list)
+
+heatmap_DESeq2(DESeq2_out = de_skin_recombined, gene_list = genes_list,
+               FDR_cutoff = fdr_cutoff,
+               anno_top = skin_recombined_types, clrs_anno_top = colors_immune,
+               split_row = ifn_groups,
+               x_angle = 90, row_size = 14, col_size = 14, number_size = 16)
+```
+
+Save for SDV spreadsheet:
+
+```{r}
+# pulls from the first lines of heatmap_DESeq2() 
+sdv$Figure_7 <-
+  enframe(de_skin_recombined) %>%
+  unnest(value) %>%
+  rename(cell_type = name) %>%
+  dplyr::filter(gene %in% genes_list) %>%
+  # need the genes to be alphanumerically sorted
+  mutate(gene = factor(gene,
+                       levels = str_sort(unique(gene), numeric = TRUE))) %>%
+  arrange(cell_type, gene)
+```
+
+------------------------------------------------------------------------
+
+# Supplemental
+
+For the dot plots, we could combine the cluster and cell type labels into one.
+
+## Setup
+
+Custom lists of markers:
+
+```{r}
+blood_markers <-
+  list("B Cells" = c("CD19", "CD27", "IGHD", "IGHM", "MS4A1"),
+       "Dendritic Cells" = c("CD1C", "CLEC4C", "CLEC10A", "FCER1A"),
+       "Monocytes" = c("CD14", "FCGR3A", "FCN1", "LYZ", "S100A9"),
+       "Natural Killers" = c("FCGR3A", "GNLY", "GZMA", "KLRB1", "NCAM1", "NKG7"),
+       "Plasma Cells" = c("IGHG1", "IGKC", "MZB1", "XBP1"),
+       "Platelets" = c("PF4", "PPBP", "TUBB1"),
+       "T Cells" = c("CCR7", "CD3D", "CD4", "CD8A", "CD8B", "IL7R"))
+blood_markers <- data.frame(Cell_Type_Full = rep(names(blood_markers),
+                                                 sapply(blood_markers, length)),
+                            features.plot = unlist(blood_markers)) %>%
+                  remove_rownames()
+
+blood_t_markers <-
+    list("CD4 T Cells" = c("CCR7", "CD4"),
+         "CD8 T Cells" = c("CD8A", "CD8B"),
+         "GZMK Cells" = c("GZMB", "GZMK"),
+         "MAIT Cells" = c("KLRB1", "SLC4A10", "TRAV1-2"),
+         "Gamma Delta T Cells" = c("TRDC", "TRDV2", "TRGC1", "TRGV9", "TRGV10"),
+         "Proliferating Cells" = c("CDK1", "MKI67", "PCNA", "TOP2A"))
+blood_t_markers <-
+    data.frame(Cell_Type_Full = rep(names(blood_t_markers),
+                                    sapply(blood_t_markers, length)),
+               features.plot = unlist(blood_t_markers)) %>%
+    remove_rownames()
+
+skin_markers <-
+  list("B Cells" = c("CD19", "CD27", "IGHD", "IGHM", "MS4A1"),
+       "Cycling Cells" = c("MKI67", "TOP2A"),
+       "Dendritic Cells" = c("CLEC9A", "ITGAE", "ITGAX", "XCR1"),
+       "Endothelial Cells" = c("CD93", "PECAM1", "SELE", "VWF"),
+       "Fibroblasts" = c("COL1A1", "COL6A2", "DCN", "LUM", "PDGFRA"),
+       "Keratinocytes" = c("KRT1", "KRT5", "KRT10", "KRT14"),
+       "Langerhans" = c("CD1A", "CD207"),
+       "Macrophages" = c("CD14", "CD163", "CD68", "CTSS", "ITGAM", "MS4A7"),
+       "Mast Cells" = c("CPA3", "IL1RL1", "TPSAB1"),
+       "Melanocytes" = c("DCT", "MLANA", "PMEL", "TYRP1"),
+       "Natural Killers" = c("FCGR3A", "GNLY", "GZMA", "KLRB1", "NCAM1", "NKG7"),
+       "Nerves" = c("CDH19", "MPZ", "S100B", "SCN7A"),
+       "Pericytes" = c("CCL2", "IL6", "RGS5"),
+       "T Cells" = c("CD3D", "CD4", "CD8A", "CD8B", "IL7R"))
+skin_markers <-
+  data.frame(Cell_Type_Full = rep(names(skin_markers),
+                                  sapply(skin_markers, length)),
+             features.plot = unlist(skin_markers)) %>%
+  remove_rownames()
+
+# PD-1/PDCD1 is duplicated since it's a general exhaustion marker
+skin_t_markers <-
+    list("CD4 T Cells" = c("CD3D", "CD4", "CD40LG"),
+         "CD8 GZMK IFNG T Cells" = c("CD8A", "CD8B", "GZMB", "GZMK", "IFNG",
+                                     "PRF1"),
+         "Dividing Cells" = c("CDK1", "MKI67", "PCNA", "TOP2A"),
+         "Effector Memory T Cells" = c("CTLA4", "EOMES", "FOS", "GZMH", "IL7R",
+                                       "KLRB1"),
+         "Heat Shock Protein Cells" = c("HSPA1A", "HSPA6", "HSPB1"),
+         "Naive T Cells" = c("CCR7", "IL2RG", "TCF7", "SELL"),
+         "Regulatory T Cells" = c("FOXP3", "IL2RA", "TIGIT"),
+         "Tissue-Resident T Cells" = c("CCL5", "CD69", "CXCR6", "GZMA", "ITGA4",
+                                       "ITGAE", "PDCD1", "RGS1", "TBX21"))
+skin_t_markers <-
+    data.frame(Cell_Type_Full = rep(names(skin_t_markers),
+                                    sapply(skin_t_markers, length)),
+               features.plot = unlist(skin_t_markers)) %>%
+    remove_rownames()
+```
+
+## Supplemental Figure 1 (Skin)
+
+```{r figure-supplemental-1-skin-dot}
+#| fig.dim = c(15, 18)
+
+p1 <- DotPlot(combined_skin,
+              features = unique(skin_markers$features.plot), 
+              dot.scale = 3, group.by = "seurat_clusters") %>%
+        dot_color_scale() %>%
+        add_info_bar(method = "join", info_type = "Cell_Type_Full",
+                     info = skin_markers,
+                     text_size = 8, label = FALSE, angle = 90) %>%
+        plot_dot_side(seurat_obj = combined_skin,
+                      row_identity = "seurat_clusters",
+                      facet_col = "Cell_Type_Full",
+                      info_to_add = c("cluster_size", "percent_TCR")) +
+        labs(title = "Clustered Skin", subtitle = NULL) +
+        labels_standard + labels_manuscript_dot
+
+# a bit of the cDCs and NKs show up in the nerve section
+p2 <- DotPlot(combined_skin,
+              features = unique(skin_markers$features.plot),
+              cols = colors_dot, dot.scale = 3) %>%
+        dot_color_scale() %>%
+        add_info_bar(method = "join", info_type = "Cell_Type_Full",
+                     info = skin_markers,
+                     text_size = 8, label = FALSE, angle = 90) %>%
+        plot_dot_side(seurat_obj = combined_skin,
+                      row_identity = "annotated_clusters",
+                      facet_col = "Cell_Type_Full",
+                      info_to_add = c("cluster_size", "percent_TCR")) +
+        labs(title = "Annotated Skin", subtitle = NULL) +
+        labels_standard + labels_manuscript_dot
+
+(p1 / p2) + plot_anno + plot_layout(heights = c(3, 1)) & labels_manuscript
+```
+
+## Supplemental Figure 2 (Skin T cells)
+
+```{r figure-supplemental-2-skin-t-dot}
+#| fig.dim = c(15, 13)
+
+p1 <- DotPlot(combined_skin_t,
+              features = unique(skin_t_markers$features.plot),
+              dot.scale = 3, group.by = "seurat_subclusters") %>%
+        dot_color_scale() %>% 
+        add_info_bar(method = "join", info_type = "Cell_Type_Full",
+                     info = skin_t_markers, sort = FALSE,
+                     text_size = 8, label = FALSE, angle = 90) %>%
+        plot_dot_side(seurat_obj = combined_skin_t,
+                      row_identity = "seurat_subclusters",
+                      facet_col = "Cell_Type_Full",
+                      info_to_add = c("cluster_size", "percent_TCR")) +
+        labs(title = "Clustered Skin T Cells", subtitle = NULL) +
+        labels_standard + labels_manuscript_dot
+
+p2 <- DotPlot(combined_skin_t,
+              features = unique(skin_t_markers$features.plot),
+              dot.scale = 3) %>%
+        dot_color_scale() %>% 
+        add_info_bar(method = "join", info_type = "Cell_Type_Full",
+                     info = skin_t_markers, sort = FALSE,
+                     text_size = 8, label = FALSE, angle = 90) %>%
+        plot_dot_side(seurat_obj = combined_skin_t,
+                      row_identity = "annotated_subclusters",
+                      facet_col = "Cell_Type_Full",
+                      info_to_add = c("cluster_size", "percent_TCR")) +
+        labs(title = "Annotated Skin T Cells", subtitle = NULL) +
+        labels_standard + labels_manuscript_dot
+
+(p1 / p2) + plot_anno + plot_layout(heights = c(2, 1)) & labels_manuscript
+```
+
+## Supplemental Figure 3 (IFNG/IL10/FOXP3/TRAIL)
+
+TNFSF10 = TRAIL
+
+```{r figure-supplemental-3-skin-t-feature-nebulosa-vln}
+#| fig.dim = c(14, 4.6 * 4)
+
+# making p3 automatically be the same height as p1 and p2 requires getting rid
+# of clean_umap, which then introduces different problems
+
+plots_figure_7 <- list()
+specific_features <- c("IL10", "FOXP3", "TNFSF10", "IFNG")
+
+for (feature in specific_features) {
+  p1 <- FeaturePlot(combined_skin_t, features = feature, pt.size = 0.2,
+                    order = TRUE) +
+          scale_color_viridis(option = "G", direction = -1) +
+          labs(color = "Expression") +
+          labels_standard + clean_umap
+  p2 <- plot_density(combined_skin_t, features = feature, size = 0.2) +
+          labels_standard + clean_umap
+  p3 <- vln_cell_info(seurat_obj = combined_skin_t, feature = feature,
+                      clrs_specific = colors_annotated_skin_t,
+                      split_by = NULL, num_dec = 1, label_size = 3) +
+          # match labels_standard
+          theme(plot.title = element_text(size = 12))
+  
+  # make the density plots match the axes thickness of p1 and p3
+  p2[["theme"]][["axis.line"]][["linewidth"]] <-
+    p1[[1]][["theme"]][["axis.line"]][["linewidth"]]
+  
+  # makes the tags align (or at least be closer)
+  p1 <- p1[[1]]
+  p3 <- p3[[1]]
+  
+  plots_figure_7[[feature]] <-
+    (p1 | p2 | p3) + plot_layout(widths = c(1, 1, 3))
+}
+
+wrap_plots(plots_figure_7, nrow = length(specific_features)) +
+  plot_anno & labels_manuscript
+```
+
+## Supplemental Figure 4 (IFNG/GZMK/PRF1)
+
+```{r figure-supplemental-4-ifng-gzmk-prf1-venn}
+#| fig.dim = c(10, 15)
+
+plots_venn_cytotoxic <- list()
+
+# defined in figure 3
+for (cell_type in specific_cell_types_skin_gzmk) {
+  seurat_obj_cell_type <-
+    subset(combined_skin_t, subset = annotated_subclusters == cell_type)
+  
+  for (sample_type in c("EM", "Control")) {
+    seurat_obj <-
+      subset(seurat_obj_cell_type, subset = SampleType == sample_type)
+    
+    cells_gzmb_pos <- GetAssayData(seurat_obj, slot = "scale.data")["GZMB", ]
+    cells_gzmb_pos <- cells_gzmb_pos[cells_gzmb_pos > 0] %>% names()
+    
+    cells_prf1_pos <- GetAssayData(seurat_obj, slot = "scale.data")["PRF1", ]
+    cells_prf1_pos <- cells_prf1_pos[cells_prf1_pos > 0] %>% names()
+    
+    cells_ifng_pos <- GetAssayData(seurat_obj, slot = "scale.data")["IFNG", ]
+    cells_ifng_pos <- cells_ifng_pos[cells_ifng_pos > 0] %>% names()
+    
+    plots_venn_cytotoxic[[paste(sample_type, cell_type)]] <-
+      ggVennDiagram(x = list(GZMB = cells_gzmb_pos,
+                             IFNG = cells_ifng_pos,
+                             PRF1 = cells_prf1_pos),
+                    set_color = colors_sample_types[[sample_type]]) +
+        labs(title = paste("Skin", cell_type), # Expression Overlaps in 
+             subtitle = paste(sample_type, "only"),
+             fill = "Cell Count") +
+        scale_fill_gradient2(low = "white", high = "grey40") +
+        # scale_y_continuous(expand = expansion(mult = 0.2)) +
+        labels_standard_venn
+  }
+}
+
+seurat_obj <- combined_skin_t
+cell_type <- "CD8+ GZMK+ IFNG T Cells"
+seurat_obj$annotated_subclusters <- as.character(seurat_obj$annotated_subclusters)
+seurat_obj$annotated_subclusters <-
+  ifelse(seurat_obj$annotated_subclusters %in% specific_cell_types_skin_gzmk,
+         cell_type, seurat_obj$annotated_subclusters)
+
+seurat_obj_cell_type <-
+  subset(seurat_obj,
+         subset = annotated_subclusters == cell_type)
+  
+for (sample_type in c("EM", "Control")) {
+  seurat_obj <-
+    subset(seurat_obj_cell_type, subset = SampleType == sample_type)
+  
+  cells_gzmb_pos <- GetAssayData(seurat_obj, slot = "scale.data")["GZMB", ]
+  cells_gzmb_pos <- cells_gzmb_pos[cells_gzmb_pos > 0] %>% names()
+  
+  cells_prf1_pos <- GetAssayData(seurat_obj, slot = "scale.data")["PRF1", ]
+  cells_prf1_pos <- cells_prf1_pos[cells_prf1_pos > 0] %>% names()
+  
+  cells_ifng_pos <- GetAssayData(seurat_obj, slot = "scale.data")["IFNG", ]
+  cells_ifng_pos <- cells_ifng_pos[cells_ifng_pos > 0] %>% names()
+  
+  plots_venn_cytotoxic[[paste(sample_type, cell_type)]] <-
+    ggVennDiagram(x = list(GZMB = cells_gzmb_pos,
+                           IFNG = cells_ifng_pos,
+                           PRF1 = cells_prf1_pos),
+                  set_color = colors_sample_types[[sample_type]]) +
+      labs(title = paste("Skin", cell_type), # Expression Overlaps in 
+           subtitle = paste(sample_type, "only"),
+           fill = "Cell Count") +
+      scale_fill_gradient2(low = "white", high = "grey40") +
+      # scale_y_continuous(expand = expansion(mult = 0.2)) +
+      labels_standard_venn
+}
+
+wrap_plots(plots_venn_cytotoxic, nrow = 3) + plot_anno & labels_manuscript_venn
+```
+
+Calculate the percentage that expresses IFNG only per subject
+
+```{r, eval = FALSE}
+cytotoxic_df <- c()
+
+# defined in figure 3
+for (subject in unique(combined_skin_t$Subject)) {
+  seurat_obj_subject <-
+      subset(combined_skin_t, subset = Subject == subject)
+      
+  for (cell_type in specific_cell_types_skin_gzmk) {
+    seurat_obj_cell_type <-
+      subset(seurat_obj_subject, subset = annotated_subclusters == cell_type)
+    
+    if (ncol(seurat_obj_cell_type) > 0) {
+      for (sample_type in c("EM", "Control")) {
+        seurat_obj <-
+          subset(seurat_obj_cell_type, subset = SampleType == sample_type)
+        
+        cells_gzmb_pos <- GetAssayData(seurat_obj, slot = "scale.data")["GZMB", ]
+        cells_gzmb_pos <- cells_gzmb_pos[cells_gzmb_pos > 0] %>% names()
+        
+        cells_prf1_pos <- GetAssayData(seurat_obj, slot = "scale.data")["PRF1", ]
+        cells_prf1_pos <- cells_prf1_pos[cells_prf1_pos > 0] %>% names()
+        
+        cells_ifng_pos <- GetAssayData(seurat_obj, slot = "scale.data")["IFNG", ]
+        cells_ifng_pos <- cells_ifng_pos[cells_ifng_pos > 0] %>% names()
+        
+        venn <- Venn(sets = list(GZMB = cells_gzmb_pos, IFNG = cells_ifng_pos,
+                                 PRF1 = cells_prf1_pos))
+        venn_regions <- process_region_data(venn)
+        ifng_only <- filter(venn_regions, name == "IFNG") %>% pull(count)
+        total_cells <- sum(venn_regions$count)
+        
+        cytotoxic_df <- bind_rows(cytotoxic_df,
+                                  data.frame("Subject" = subject,
+                                             "CellType" = cell_type,
+                                             "SampleType" = sample_type,
+                                             "IFNGonly" = ifng_only/total_cells,
+                                             "TotalCells" = total_cells))
+      }
+    }
+  }  
+}
+```
+
+```{r, eval = FALSE}
+seurat_obj <- combined_skin_t
+seurat_obj <- subset(seurat_obj,
+                     annotated_subclusters == "CD8+ GZMK+ IFNGhi T Cells" &
+                       SampleType == "EM")
+
+seurat_obj$cytotoxic_t <- case_when(
+  (FetchData(seurat_obj, "GZMB") == 0 &
+    FetchData(seurat_obj, "IFNG") > 0 &
+    FetchData(seurat_obj, "PRF1") == 0) ~ "IFNG+",
+  (FetchData(seurat_obj, "GZMB") > 0 |
+    FetchData(seurat_obj, "PRF1") > 0) ~ "GZMB+ and/or PRF1+",
+  TRUE ~ "Other" #"CD8+ GZMK+ IFNGhi GZMB-IFNG-PRF1-"
+)
+Idents(seurat_obj) <- "cytotoxic_t"
+seurat_obj <- subset(seurat_obj, cytotoxic_t != "Other")
+
+table(seurat_obj$cytotoxic_t)
+
+AverageExpression(seurat_obj, features = "GZMB", group.by = "Subject")$RNA
+```
+
+## Supplemental Figure 5 (Splicing)
+
+```{r figure-supplemental-5-splicing-umap-dot}
+#| fig.dim = c(13, 13)
+
+cd45_feats <- str_c("PTPRC-R", c("A", "B", "C", "O"))
+
+p1 <- UMAPPlot(combined_skin_t_ideis, cols = colors_annotated_skin_t,
+               pt.size = 0.2) +
+        labs(title = "Skin T Cells") +
+        labels_standard + clean_umap
+
+# flip the cell type order so it's not upside down
+Idents(combined_skin_t_ideis) <-
+  factor(combined_skin_t_ideis$annotated_subclusters,
+         levels = rev(levels(combined_skin_t_ideis$annotated_subclusters)))
+p2 <- DotPlot(combined_skin_t_ideis, features = cd45_feats, dot.scale = 3) %>%
+        dot_color_scale() +
+        labs(title = "CD45 Isoforms") +
+        labels_standard + theme(axis.title = element_blank())
+Idents(combined_skin_t_ideis) <-
+  factor(combined_skin_t_ideis$annotated_subclusters,
+         levels = levels(combined_skin_t_ideis$annotated_subclusters))
+
+plots_sup_figure_5 <- list()
+for (feature in cd45_feats) {
+  p3 <- FeaturePlot(combined_skin_t_ideis, features = feature, pt.size = 0.2,
+                    order = TRUE) +
+          scale_color_viridis(option = "G", direction = -1) +
+          labs(color = "Expression") +
+          labels_standard + clean_umap#2
+  p4 <- plot_density(combined_skin_t_ideis, features = feature, size = 0.2) +
+          labels_standard + clean_umap#2
+  
+  # make the density plots match the axes thickness of p3
+  p4[["theme"]][["axis.line"]][["linewidth"]] <-
+    p3[[1]][["theme"]][["axis.line"]][["linewidth"]]
+  
+  # makes the tags align (or at least be closer)
+  p3 <- p3[[1]]
+  
+  plots_sup_figure_5[[paste0("first_", feature)]] <- p3 # feature
+  plots_sup_figure_5[[paste0("second_", feature)]] <- p4 # density
+}
+# change the order to be more clear
+plots_sup_figure_5 <-
+  plots_sup_figure_5[sort(names(plots_sup_figure_5))]
+
+# do a box plot instead of a violin plot actually
+p5 <- vln_cell_info(seurat_obj = combined_skin_t_ideis, feature = "PTPRC-RA",
+                    clrs_specific = colors_annotated_skin_t,
+                    split_by = NULL, pt_size = 0.2, num_dec = 1, label_size = 3) +
+        geom_boxplot(outlier.shape = NA)
+# hide the violin
+p5[[1]][["layers"]][[1]] <- NULL
+
+# combine the plots
+# 5J's legend is a little off for some reason, probably the fixed aspect ratio
+(((p1 + p2) + plot_layout(nrow = 1)) /
+    wrap_plots(plots_sup_figure_5, nrow = 2) /
+    free(p5, side = "r")) +
+  plot_layout(heights = c(1, 2, 1)) + plot_anno & labels_manuscript
+```
+
+## Supplemental Figure 6 (Clonal expansion)
+
+By subject:
+
+```{r figure-supplemental-6-clonal-expansion}
+#| fig.dim = c(15, 8)
+
+# for sanity checks:
+# clone_sizes <- countClones(combined_skin_t[[]],
+#                            groups = c("annotated_subclusters", "SampleType"),
+#                            clone = "clone_id_unique", remove_na = TRUE)
+
+# only keep the subjects with both EM and control
+seurat_obj <- combined_skin_t
+overlapping_subjects <- seurat_obj[[]] %>%
+                          group_by(Subject) %>%
+                          filter(n_distinct(SampleType) == 2) %>%
+                          pull(Subject) %>%
+                          unique()
+seurat_obj <- subset(seurat_obj, Subject %in% overlapping_subjects)
+
+# run APOTC
+combined_skin_t_control <-
+  RunAPOTC(seurat_obj = subset(seurat_obj, subset = SampleType == "Control"),
+           alt_ident = "Subject",
+           run_id = "run", clonecall = "clone_id_unique",
+           clone_scale_factor = 0.05, rad_scale_factor = 0.8,
+           verbose = FALSE)
+combined_skin_t_em <-
+  RunAPOTC(seurat_obj = subset(seurat_obj, subset = SampleType == "EM"),
+           alt_ident = "Subject",
+           run_id = "run", clonecall = "clone_id_unique",
+           clone_scale_factor = 0.05, rad_scale_factor = 0.8,
+           verbose = FALSE)
+
+# the control has fewer subjects than the EM (EM has everything)
+# assumes all cell types have at least one clone in both sample types
+n_clust <- n_distinct(seurat_obj$Subject)
+# adjust the colors and centroids (so that control aligns with EM)
+combined_skin_t_control <-
+  AdjustAPOTC(combined_skin_t_control, run_id = "run",
+              recolor_cluster = 1:n_clust,
+              new_color = colors_subject[overlapping_subjects],
+              relocate_cluster = 1:n_clust,
+              relocation_coord = combined_skin_t_em@misc$APackOfTheClones$run@centroids,
+              verbose = FALSE)
+combined_skin_t_em <-
+  AdjustAPOTC(combined_skin_t_em, run_id = "run",
+              recolor_cluster = 1:n_clust,
+              new_color = colors_subject[overlapping_subjects],
+              verbose = FALSE)
+
+# plot the APTOCs
+p1 <- APOTCPlot(combined_skin_t_control, run_id = "run",
+                retain_axis_scales = TRUE, # alpha = 0.8,
+                # show_labels = TRUE, label_size = 4,
+                # legend_text_size = 4,
+                verbose = FALSE) +
+        labs(title = "Control") + labels_standard
+p2 <- APOTCPlot(combined_skin_t_em, run_id = "run",
+                retain_axis_scales = TRUE,  # alpha = 0.8,
+                # show_labels = TRUE, label_size = 4,
+                # legend_text_size = 4,
+                verbose = FALSE) +
+        labs(title = "EM") + labels_standard
+
+# reset the axes to be the same
+x_limits_p1 <- layer_scales(p1)$x$range$range
+x_limits_p2 <- layer_scales(p2)$x$range$range
+y_limits_p1 <- layer_scales(p1)$y$range$range
+y_limits_p2 <- layer_scales(p2)$y$range$range
+
+x_limits_new <-
+  c(min(x_limits_p1[1], x_limits_p2[1]), max(x_limits_p1[2], x_limits_p2[2]))
+y_limits_new <-
+  c(min(y_limits_p1[1], y_limits_p2[1]), max(y_limits_p1[2], y_limits_p2[2]))
+
+p1 <- p1 + scale_x_continuous(limits = x_limits_new) +
+           scale_y_continuous(limits = y_limits_new)
+p2 <- p2 + scale_x_continuous(limits = x_limits_new) +
+           scale_y_continuous(limits = y_limits_new)
+
+# standardize the legend position
+# it will still be slightly different since it plots by the smallest clone and
+# not the largest
+p1 <- overlayLegend(apotc_ggplot = p1, 
+                    legend_position =
+                      # c(x_limits_new[2] - 2.5, y_limits_new[2] - 1),
+                      c(x_limits_new[1] + 0.5, y_limits_new[1] + 2.5),
+                    legend_buffer = 0, legend_label = "Clone Sizes",
+                    legend_text_size = 4, add_legend_background = FALSE,
+                    add_legend_centerspace = 0)
+p2 <- overlayLegend(apotc_ggplot = p2, 
+                    legend_position =
+                      # c(x_limits_new[2] - 2.5, y_limits_new[2] - 1),
+                      c(x_limits_new[1] + 0.5, y_limits_new[1] + 2.5),
+                    legend_buffer = 0, legend_label = "Clone Sizes",
+                    legend_text_size = 4, add_legend_background = FALSE,
+                    add_legend_centerspace = 0)
+
+# combine the plots
+(p1 | p2) +
+  plot_anno & labels_manuscript &
+  # can't do clean_umap because it will distort the circles
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(),
+        axis.ticks = element_blank())
+```
+
+Just to get the subject legend for the APOTC plots:
+
+```{r figure-supplemental-6-legend}
+#| fig.dim = c(8, 8)
+
+# only paired subjects
+plot_umap(seurat_obj =
+            subset(combined_skin_t, subset = SampleType == "Control"),
+          tissue_type = "Skin T Cells",
+          clrs_specific = colors_subject,
+          plot_by = "cluster_all", plot_label = FALSE,
+          clusters_col = "Subject") +
+  labs(color = "Participant") & labels_manuscript
+```
+
+## Supplemental Figure 7 (Clonal Venns)
+
+```{r}
+plots_venn_blood_t <- list()
+
+for (cell_type in sort(unique(combined_blood_t$annotated_subclusters))) {
+  combined_blood_t_sub <-
+    subset(combined_blood_t, subset = annotated_subclusters == cell_type)
+  
+  # pull clones and remove NAs
+  clones_blood <-
+    combined_blood_t_sub[[]] %>%
+      filter(!is.na(clone_id_unique)) %>%
+      pull(clone_id_unique)
+  # we only want the overlapping clones (because it makes no sense to show skin
+  # clones associated with a blood cell type)
+  clones_control <-
+    combined_skin_t[[]] %>%
+      filter(clone_id_unique %in% clones_blood, SampleType == "Control") %>%
+      pull(clone_id_unique)
+  clones_em <-
+    combined_skin_t[[]] %>%
+      filter(clone_id_unique %in% clones_blood, SampleType == "EM") %>%
+      pull(clone_id_unique)
+  
+  list_venn <-
+    list("Blood" = clones_blood, "Control" = clones_control, "EM" = clones_em)
+
+  plots_venn_blood_t[[cell_type]] <-
+    ggVennDiagram(x = list_venn,
+                  set_color = colors_sample_types[c("Blood", "Control", "EM")],
+                  set_size = 4, label = "count", label_size = 5,
+                  edge_size = 1.5) +
+      labs(title = paste("Blood", cell_type, "Clones"),
+           fill = "Clone Count") +
+      scale_fill_gradient2(low = "white", high = "grey40") +
+      # don't cut off "Control"
+      scale_x_continuous(expand = expansion(mult = 0.2)) +
+      labels_standard_venn +
+      theme(plot.title = element_text(size = 14))
+}
+```
+
+```{r figure-supplemental-7-clonal-venn}
+#| fig.dim = c(19, 14)
+
+# try to space them out evenly
+wrap_plots(c(plots_venn_blood_t, plots_venn_skin_t), ncol = 4) +
+  plot_anno & labels_manuscript_venn
+```
+
+## Supplemental Figure 8 (Full chemokines)
+
+Note that:
+
+- CCL6 has been discontinued by HGNC (it's CCL23 now)
+- CCL9 is CCL15 in humans
+- CCL12 doesn't exist in humans
+- CXCL4 is PF4
+- CXCL7 is NAP-2/PPBP
+- CXCL8	is IL-8 (sometimes)
+- There are four atypical chemokine receptors (AKCR[1:4])
+- CCRL2 is also atypical
+
+```{r figure-supplemental-8-chemokines-heatmap}
+#| fig.dim = c(9, 21)
+
+# ligands and receptors together
+genes_list_ligands <- grep("^(CCL|CX3CL|CXCL|XCL)",
+                           rownames(combined_skin_recombined), value = TRUE)
+genes_list_receptors <- grep("^(CCR|CX3CR|CXCR|XCR)",
+                             rownames(combined_skin_recombined), value = TRUE)
+
+# add alternate gene names
+genes_list_ligands <- c(genes_list_ligands, "PF4", "PPBP")
+
+# remove "like" and antisense genes
+genes_list_ligands <- setdiff(genes_list_ligands, c("CCL3L1", "CCL4L2"))
+genes_list_receptors <- setdiff(genes_list_receptors, "CCR5AS")
+
+genes_list <- c(genes_list_ligands, genes_list_receptors)
+
+chemokine_groups <-
+  data.frame("Type" = c(rep("Ligands", length(genes_list_ligands)),
+                        rep("Receptors", length(genes_list_receptors))),
+             "Genes" = genes_list)
+heatmap_DESeq2(DESeq2_out = de_skin_recombined, gene_list = genes_list,
+               FDR_cutoff = fdr_cutoff,
+               anno_top = skin_recombined_types,
+               clrs_anno_top = colors_immune,
+               split_row = chemokine_groups,
+               x_angle = 90, row_size = 14, col_size = 14, number_size = 16)
+```
+
+Save for SDV spreadsheet:
+
+```{r}
+# pulls from the first lines of heatmap_DESeq2() 
+sdv$Supplemental_Figure_8 <-
+  enframe(de_skin_recombined) %>%
+  unnest(value) %>%
+  rename(cell_type = name) %>%
+  dplyr::filter(gene %in% genes_list) %>%
+  # need the genes to be alphanumerically sorted
+  mutate(gene = factor(gene,
+                       levels = str_sort(unique(gene), numeric = TRUE))) %>%
+  arrange(cell_type, gene)
+```
+
+It's too tall:
+
+```{r figure-supplemental-8-chemokines-ligands-heatmap}
+#| fig.dim = c(9, 15.75)
+
+chemokine_groups <-
+  data.frame("Type" = rep("Ligands", length(genes_list_ligands)),
+             "Genes" = genes_list_ligands)
+heatmap_DESeq2(DESeq2_out = de_skin_recombined,
+               gene_list = genes_list_ligands,
+               FDR_cutoff = fdr_cutoff,
+               anno_top = skin_recombined_types,
+               clrs_anno_top = colors_immune,
+               split_row = chemokine_groups,
+               x_angle = 90, row_size = 14, col_size = 14, number_size = 16)
+```
+
+```{r figure-supplemental-8-chemokines-receptors-heatmap}
+#| fig.dim = c(9, 9.25)
+
+chemokine_groups <-
+  data.frame("Type" = rep("Receptors", length(genes_list_receptors)),
+             "Genes" = genes_list_receptors)
+heatmap_DESeq2(DESeq2_out = de_skin_recombined,
+               gene_list = genes_list_receptors,
+               FDR_cutoff = fdr_cutoff,
+               anno_top = skin_recombined_types,
+               clrs_anno_top = colors_immune,
+               split_row = chemokine_groups,
+               x_angle = 90, row_size = 14, col_size = 14, number_size = 16)
+```
+
+## Supplemental Figure 9 (ISGs)
+
+```{r figure-supplemental-9-isgs-heatmap}
+#| fig.dim = c(9, 14.6)
+
+genes_list_marques <- c("GBP1", "IFI35", "IFI6", "IFIT1", "IFIT3", "IFITM1",
+                        "IRF1", "ISG15", "MX1", "OAS1", "PSMB8", "STAT1", "TAP1",
+                        "IDO1", "KMO", "KYNU")
+
+# significant only, without ones on the previous lists
+genes_list_schoggins <- c("ADAR1", "BST2", "CNP", "EIF2AK2", "GBP5", "IFI16",
+                          "IFITM3", "LY6E", "MCOLN2", "NCOA7", "RSAD2",
+                          "SAT1", "SOCS1", "ZC3HAV1")
+
+# significant only,overlaps a lot with Schoggins
+# PML = TRIM19, TMEM173 = STING
+genes_list_schneider <- c("PML", "TMEM173")
+# "USP18", "TRIM25", "TRIM56" were not significant
+
+# TNFSF10 = TRAIL
+genes_list_other <- c("IFITM5", "IFITM10", "STAT4", "STAT5A", "STAT5B", "STAT6",
+                      "TNFRSF14", "TNFSF10")
+
+genes_list <- c(genes_list_marques, genes_list_schoggins, genes_list_schneider,
+                genes_list_other)
+
+heatmap_DESeq2(DESeq2_out = de_skin_recombined, gene_list = genes_list,
+               FDR_cutoff = fdr_cutoff,
+               anno_top = skin_recombined_types,
+               clrs_anno_top = colors_immune,
+               x_angle = 90, row_size = 14, col_size = 14, number_size = 16)
+```
+
+Save for SDV spreadsheet:
+
+```{r}
+# pulls from the first lines of heatmap_DESeq2() 
+sdv$Supplemental_Figure_9 <-
+  enframe(de_skin_recombined) %>%
+  unnest(value) %>%
+  rename(cell_type = name) %>%
+  dplyr::filter(gene %in% genes_list) %>%
+  # need the genes to be alphanumerically sorted
+  mutate(gene = factor(gene,
+                       levels = str_sort(unique(gene), numeric = TRUE))) %>%
+  arrange(cell_type, gene)
+```
+
+## Supplemental Figure 10 (Full interleukins)
+
+The full list has 101 hits, so let's keep it simple:
+
+```{r figure-supplemental-10-il-heatmap}
+#| fig.dim = c(9, 14.1)
+
+# genes_list <- grep("^IL", rownames(combined_skin_recombined),
+#                    value = TRUE)
+genes_list <- c(paste0("IL", 1:39),
+                "IL1A", "IL1B", "IL12A", "IL12B", "IL17A", "IL17B", "IL23A",
+                "CXCL8", # CXCL8 is IL8
+                "TXLNA", # TXLNA is IL14
+                "IFNL2", # IFNL2 is IL28A
+                "IFNL3", # IFNL3 is IL28B
+                "IFNL1", # IFNL1 is IL29
+                "IL36A")
+
+heatmap_DESeq2(DESeq2_out = de_skin_recombined, gene_list = genes_list,
+               FDR_cutoff = fdr_cutoff,
+               anno_top = skin_recombined_types,
+               clrs_anno_top = colors_immune,
+               x_angle = 90, row_size = 14, col_size = 14, number_size = 16)
+```
+
+Save for SDV spreadsheet:
+
+```{r}
+# pulls from the first lines of heatmap_DESeq2() 
+sdv$Supplemental_Figure_10 <-
+  enframe(de_skin_recombined) %>%
+  unnest(value) %>%
+  rename(cell_type = name) %>%
+  dplyr::filter(gene %in% genes_list) %>%
+  # need the genes to be alphanumerically sorted
+  mutate(gene = factor(gene,
+                       levels = str_sort(unique(gene), numeric = TRUE))) %>%
+  arrange(cell_type, gene)
+```
+
+## Supplemental Figure 11 (Aggregation)
+
+```{r figure-supplemental-11-aggr-read-counts-bar}
+#| fig.dim = c(12, 6)
+
+# save for SDV spreadsheet
+sdv$Supplemental_Figure_11 <- metrics_summary %>% select(-Timepoint)
+
+# Read Counts for All Samples and GEX Unaggregated Data
+p1 <- (ggplot(metrics_summary,
+              aes(x = SampleName, y = NumberofReads, fill = Dataset)) +
+          geom_col(color = "black", linewidth = 0.2) +
+          labs(x = "Sample", y = "Number of Reads (Pre Aggregation)") +
+           scale_fill_manual(values = unname(colors_dataset)) +
+           theme_bw + labels_standard + labels_rotate_x +
+           theme(legend.position = "none")) %>% 
+        add_info_bar(info_type = "Dataset")
+
+p1
+```
+
+```{r figure-supplemental-11-aggr-read-counts-expanded-bar}
+#| fig.dim = c(12, 8)
+
+# Read Counts per Cell for All Samples and GEX Unaggregated Data
+p2 <- (ggplot(metrics_summary %>%
+                mutate(min_rpc = SampleName == "192565SKL",
+                       label = ifelse(min_rpc, "↓", "")),
+              aes(x = SampleName, y = ReadsPerCell, fill = Dataset)) +
+          geom_col(color = "black", linewidth = 0.2) +
+          geom_text(aes(label = label), vjust = -0.3, size = 6) +
+          labs(x = "Sample", y = "Reads per Cell (Pre Aggregation)") +
+          scale_fill_manual(values = unname(colors_dataset)) +
+          theme_bw + labels_standard + labels_rotate_x +
+          theme(legend.position = "none")) %>%
+          add_info_bar(info_type = "Dataset")
+
+(p1 / p2) + plot_anno + plot_layout(axes = "collect")
+```
+
+## Supplemental Figure 12 (Blood UMAPs)
+
+```{r figure-supplemental-12-blood-umaps}
+#| fig.dim = c(16, 14)
+
+p1 <- plot_umap(seurat_obj = combined_blood,
+                tissue_type = "Blood",
+                use_hues = TRUE, plot_by = "cluster_all") +
+        guides(color = guide_legend(override.aes = list(size = 3), ncol = 2))
+
+p2 <- plot_umap(seurat_obj = combined_blood,
+                tissue_type = "Blood",
+                clrs_specific = colors_annotated_blood,
+                plot_by = "cluster_all", annotated = TRUE)
+
+p3 <- plot_umap(seurat_obj = combined_blood_t,
+                tissue_type = "Blood T Cells",
+                use_hues = TRUE, plot_by = "cluster_all",
+                clusters_col = "seurat_subclusters")
+
+p4 <- plot_umap(seurat_obj = combined_blood_t,
+                tissue_type = "Blood T Cells",
+                clrs_specific = colors_annotated_blood_t,
+                plot_by = "cluster_all", annotated = TRUE,
+                annotations_col = "annotated_subclusters")
+
+(p1 + p2 + p3 + p4) + plot_anno + plot_layout(nrow = 2) & labels_manuscript
+```
+
+------------------------------------------------------------------------
+
+# Supporting Data Values
+
+```{r}
+#| eval = FALSE
+
+# make sure that the spreadsheet doesn't already exist (delete if needed)
+for (df in names(sdv)) {
+  write.xlsx(x = as.data.frame(sdv[[df]]),
+             file = file.path(path_tables, "manuscript_t",
+                              "supporting_data_values.xlsx"),
+             sheetName = df, 
+             col.names = TRUE, row.names = FALSE, append = TRUE)
+}
+```
+
+------------------------------------------------------------------------
+
+# Text
+
+## Alternate gene names
+
+In [common name] / [marker name] order:
+
+* CD16 / FCGR3A
+* CD20 / MS4A1
+* CD25 / IL2RA
+* CD56 / NCAM1
+* CD127 / IL7R
+* CD132 / IL2RG
+* CD225 / IFITM1
+* CD301 / CLEC10A
+* CD303 / CLEC4C
+* CXCL4 / PF4
+* HSP27 / HSPB1 & HSPB2
+* HSP60 / HSPD1
+* HSP70 / HSPA4
+* HSP72 / HSPA1A
+* IL8 / CXCL8
+* IL14 / TXLNA
+* IL28A / IFNL2
+* IL28B / IFNL3
+* IL29 / IFNL1
+* PDL1 / CD274
+* STING / TMEM173
+* TRIF / TICAM1
+
+## Results
+
+### Cell type counts
+
+Blood:
+
+```{r}
+# blood
+cat(paste("There are", nlevels(combined_blood$annotated_clusters),
+          "blood cell types:\n",
+          str_c(levels(combined_blood$annotated_clusters),
+                collapse = ", ")))
+
+# blood T cells
+cat(paste("There are", nlevels(combined_blood_t$annotated_subclusters),
+          "blood T cells cell types:\n",
+          str_c(levels(combined_blood_t$annotated_subclusters),
+                collapse = ", ")))
+```
+
+Skin:
+
+```{r}
+# skin
+cat(paste("There are", nlevels(combined_skin$annotated_clusters),
+          "skin cell types:\n",
+          str_c(levels(combined_skin$annotated_clusters),
+                collapse = ", ")))
+
+# skin (recombined)
+cat(paste("There are", nlevels(combined_skin_recombined$annotated_clusters_expanded),
+          "skin (recombined) cell types:\n",
+          str_c(levels(combined_skin_recombined$annotated_clusters_expanded),
+                collapse = ", ")))
+
+# skin T cells
+cat(paste("There are", nlevels(combined_skin_t$annotated_subclusters),
+          "skin T cells cell types:\n",
+          str_c(levels(combined_skin_t$annotated_subclusters),
+                collapse = ", ")))
+```
+
+### Majority immune types
+
+```{r}
+combined_skin[[]] %>%
+  group_by(SampleType) %>%
+  summarize(Immune_Cells = sum(annotated_clusters_immune == "Immune"),
+            Perc_Immune = label_percent(accuracy = 0.1)(Immune_Cells / n()))
+```
+
+### Clonal overlaps
+
+#### Counts
+
+Total:
+
+```{r}
+print(process_set_data(list_venn_total) %>% select(-id, -item))
+print(process_region_data(list_venn_total) %>% select(-id, -item))
+```
+
+```{r}
+total_blood <-
+  unname(filter(process_set_data(list_venn_total), name == "Blood")$count)
+total_blood_control <-
+  sum(filter(process_region_data(list_venn_total),
+             name %in% c("Blood/Control", "Blood/Control/EM"))$count)
+total_blood_em <-
+  sum(filter(process_region_data(list_venn_total),
+             name %in% c("Blood/EM", "Blood/Control/EM"))$count)
+
+cat(paste(label_percent(accuracy = 0.01)(total_blood_control/total_blood),
+          "of the total blood T cell clonotypes are shared with the control."))
+cat(paste(label_percent(accuracy = 0.01)(total_blood_em/total_blood),
+          "of the total blood T cell clonotypes are shared with the EM."))
+```
+
+Skin:
+
+```{r}
+for (cell_type in specific_cell_types_skin_simpler) {
+  print(cell_type)
+  
+  # set up variables
+  specific_venn <- list_venn_skin_t_simpler[[cell_type]]
+  venn_set <- process_set_data(specific_venn) %>% select(-id, -item)
+  venn_region <- process_region_data(specific_venn) %>% select(-id, -item)
+  
+  print(venn_set)
+  print(venn_region)
+  
+  count_control <- sum(filter(venn_set, name == "Control")$count)
+  count_em <- sum(filter(venn_set, name == "EM")$count)
+  count_blood_control <-
+    sum(filter(venn_region,
+               name %in% c("Blood/Control", "Blood/Control/EM"))$count)
+  count_blood_em <-
+    sum(filter(venn_region,
+               name %in% c("Blood/EM", "Blood/Control/EM"))$count)
+  
+  print(paste(label_percent(accuracy = 0.01)(count_blood_control/count_control),
+              "of the control skin", cell_type,
+              "clonotypes are shared with the blood.",
+              label_percent(accuracy = 0.01)(count_blood_em/count_em),
+              "of the EM skin", cell_type, "clonotypes are shared with the blood."))
+  cat("\n")
+}
+
+for (cell_type in specific_cell_types_skin) {
+  print(cell_type)
+  
+  # set up variables
+  specific_venn <- list_venn_skin_t[[cell_type]]
+  venn_set <- process_set_data(specific_venn) %>% select(-id, -item)
+  venn_region <- process_region_data(specific_venn) %>% select(-id, -item)
+  
+  print(venn_set)
+  print(venn_region)
+  
+  count_skin <- sum(filter(venn_set, name == "EM")$count)
+  count_blood_em <-
+    sum(filter(venn_region,
+               name %in% c("Blood/EM", "Blood/Control/EM"))$count)
+  
+  print(paste(label_percent(accuracy = 0.01)(count_blood_em/count_skin),
+            "of the EM", cell_type, "clonotypes are shared with the blood."))
+  cat("\n")
+}
+```
+
+#### Significance
+
+*Note that blood = 1, control = 2, and EM = 3 in the Venn calls.*
+
+Total:
+
+```{r}
+venn <- list_venn_total
+
+overlap_blood_em <- length(overlap(venn, c(1, 3)))
+overlap_blood_control <- length(overlap(venn, 1:3))
+total_em <- length(overlap(venn, 3))
+total_control <- length(overlap(venn, 2))
+em_no_blood <- length(discern(venn, 3, 1))
+control_no_blood <- length(discern(venn, 2, 1))
+
+# two-sample proportions test
+result <- prop.test(c(overlap_blood_em, overlap_blood_control),
+                    c(total_em, total_control))
+## Warning message:
+## In prop.test(c(overlap_blood_em, overlap_blood_control), c(total_em,  :
+##   Chi-squared approximation may be incorrect
+
+print(result)
+```
+
+Simpler:
+
+```{r}
+for (cell_type in specific_cell_types_skin_simpler) {
+  print(cell_type)
+  
+  venn <- list_venn_skin_t_simpler[[cell_type]]
+  
+  overlap_blood_em <- length(overlap(venn, c(1, 3)))
+  overlap_blood_control <- length(overlap(venn, 1:3))
+  total_em <- length(overlap(venn, 3))
+  total_control <- length(overlap(venn, 2))
+  em_no_blood <- length(discern(venn, 3, 1))
+  control_no_blood <- length(discern(venn, 2, 1))
+  
+  # two-sample proportions test
+  result <- prop.test(c(overlap_blood_em, overlap_blood_control),
+                      c(total_em, total_control))
+  ## Warning message:
+  ## In prop.test(c(overlap_blood_em, overlap_blood_control), c(total_em,  :
+  ##   Chi-squared approximation may be incorrect
+  
+  print(result)
+}
+```
+
+Specific cell types:
+
+```{r}
+for (cell_type in specific_cell_types_skin) {
+  print(cell_type)
+  
+  venn <- list_venn_skin_t[[cell_type]]
+  
+  overlap_blood_em <- length(overlap(venn, c(1, 3)))
+  overlap_blood_control <- length(overlap(venn, 1:3))
+  total_em <- length(overlap(venn, 3))
+  total_control <- length(overlap(venn, 2))
+  em_no_blood <- length(discern(venn, 3, 1))
+  control_no_blood <- length(discern(venn, 2, 1))
+  
+  # two-sample proportions test
+  result <- prop.test(c(overlap_blood_em, overlap_blood_control),
+                      c(total_em, total_control))
+  ## Warning message:
+  ## In prop.test(c(overlap_blood_em, overlap_blood_control), c(total_em,  :
+  ##   Chi-squared approximation may be incorrect
+  
+  print(result)
+}
+```
+
+#### Singletons
+
+Set up the clones:
+
+```{r}
+clones_blood_t <- countClones(combined_blood_t[[]], clone = "clone_id_unique",
+                              remove_na = TRUE)
+clones_skin_t <- countClones(combined_skin_t[[]], clone = "clone_id_unique",
+                             groups = "SampleType", remove_na = TRUE)
+clones_skin_t_control <- filter(clones_skin_t, SampleType == "Control")
+clones_skin_t_em <- filter(clones_skin_t, SampleType == "EM")
+
+clones_blood_t_only <-
+  setdiff(clones_blood_t$clone_id_unique, clones_skin_t$clone_id_unique)
+clones_skin_t_control_only <-
+  setdiff(clones_skin_t_control$clone_id_unique,
+          c(clones_blood_t$clone_id_unique, clones_skin_t_em$clone_id_unique))
+clones_skin_t_em_only <-
+  setdiff(clones_skin_t_em$clone_id_unique,
+          c(clones_blood_t$clone_id_unique, clones_skin_t_control$clone_id_unique))
+```
+
+```{r, eval = FALSE}
+clones_blood <-
+  combined_blood_t[[]] %>%
+    filter(!is.na(clone_id_unique)) %>%
+    pull(clone_id_unique)
+clones_control <-
+  combined_skin_t[[]] %>%
+    filter(!is.na(clone_id_unique), SampleType == "Control") %>%
+    pull(clone_id_unique)
+clones_em <-
+  combined_skin_t[[]] %>%
+    filter(!is.na(clone_id_unique), SampleType == "EM") %>%
+    pull(clone_id_unique)
+
+venn_all <- Venn(list("Blood" = clones_blood, "Control" = clones_control,
+                      "EM" = clones_em))
+
+process_region_data(venn_all)
+```
+
+Calculate percentages:
+
+```{r}
+clone_singlets <- function(clones_df, type) {
+  # singlets have a sequence count of 1
+  clones_df_singlets <- filter(clones_df, seq_count == 1)
+  
+  # just for T cells
+  cat(paste(label_percent(accuracy = 0.01)(nrow(clones_df_singlets)/nrow(clones_df)),
+            paste0("(", nrow(clones_df_singlets), " clones)"), "of the",
+            nrow(clones_df), type, "T cell clones are singletons."))
+}
+
+clone_singlets(clones_blood_t, "total blood")
+clone_singlets(clones_skin_t_control, "total control skin")
+clone_singlets(clones_skin_t_em, "total EM skin")
+
+# without overlaps
+clone_singlets(filter(clones_blood_t,
+                      clone_id_unique %in% clones_blood_t_only),
+               "blood only")
+clone_singlets(filter(clones_skin_t_control,
+                      clone_id_unique %in% clones_skin_t_control_only),
+               "control only")
+clone_singlets(filter(clones_skin_t_em,
+                      clone_id_unique %in% clones_skin_t_em_only),
+               "EM only")
+```
+
+### GSEA
+
+How many of the possible pathways had significance for at least one cell type?
+
+```{r}
+cat(paste("Out of the", n_distinct(hallmark$gs_name),
+          "total Hallmark pathways,", n_distinct(sig_gsea_simpler$Pathways),
+          "had significance for at least one cell type.",
+          "The ones that didn't were:",
+          toString(setdiff(unique(hallmark$gs_name),
+                           unique(sig_gsea_results$ID)) %>%
+                     str_remove("HALLMARK_") %>% str_replace_all("_", " "))))
+```
+
+The website says Reactome has 1736 gene sets, not 1615.
+
+```{r}
+cat(paste("Out of the", n_distinct(reactome$gs_name),
+          "total Reactome pathways,", n_distinct(sig_gsea_reactome_results$ID),
+          "had significance for at least one cell type."))
+```
+
+What are the overlaps between Hallmark and Reactome gene sets?
+
+```{r}
+ifng_hallmark <-
+  filter(hallmark, gs_name == "HALLMARK_INTERFERON_GAMMA_RESPONSE")$gene_symbol
+ifng_reactome <-
+  filter(reactome, gs_name == "REACTOME_INTERFERON_GAMMA_SIGNALING")$gene_symbol
+
+ifng_both <- intersect(ifng_hallmark, ifng_reactome)
+ifng_both
+
+cat(paste("There are", length(ifng_hallmark),
+          "genes in the Hallmark interferon gamma response pathway and",
+          length(ifng_reactome), "genes in the Reactome interferon gamma",
+          "signaling pathway. A total of", length(ifng_both),
+          paste0("(", paste(ifng_both, collapse = ", "), ")"),
+          "genes intersect between the two. Reactome includes IFNG itself",
+          "and the IFNG receptors."))
+
+# ggvenn::ggvenn(data = list("Hallmark IFNG Response" = ifng_hallmark,
+#                            "Reactome IFNG Signaling" = ifng_reactome),
+#                # show_elements = TRUE,
+#                show_percentage = FALSE, set_name_size = 4,
+#                fill_color = c("lightblue", "lightgreen"), label_sep = "\n",
+#                auto_scale = TRUE)
+# ggvenn::ggvenn(data = list(Hallmark = ifng_hallmark, Reactome = ifng_reactome),
+#                show_elements = TRUE, show_percentage = FALSE,
+#                fill_color = c("lightblue", "lightgreen"), 
+#                text_size = 2, label_sep = "\n")
+```
+
+## Methods
+
+### Data processing
+
+```{r}
+metrics_summary %>%
+  group_by(Dataset) %>%
+  summarize(NumberofReads = mean(NumberofReads)) %>%
+  mutate(NumberofReads = prettyNum(NumberofReads, big.mark = ",")) %>%
+  print_kable(kable_height = NULL)
+
+# alternatively
+metrics_summary %>%
+  group_by(Dataset) %>%
+  summarize(NumberofReads = mean(NumberofReads)) %>%
+  mutate(NumberofReads = round_any(NumberofReads, accuracy = 10^6)) %>%
+  print_kable(kable_height = NULL)
+```
+
+### Quality control
+
+Blood:
+
+```{r}
+cat(paste("There are",
+          dplyr::filter(metrics_summary, SampleType == "Blood") %>%
+            pull(EstimatedNumberofCells) %>%
+            sum() %>%
+            prettyNum(big.mark = ","),
+          "cells in the initial unprocessed blood data."))
+
+cat(paste("There are",
+          ncol(combined_blood_with_doublets) %>% prettyNum(big.mark = ","),
+          "total cells in the processed (with doublets) blood."))
+
+cat(paste("There are",
+          ncol(combined_blood) %>% prettyNum(big.mark = ","),
+          "total cells in the processed (doublets removed) blood data."))
+```
+
+```{r}
+# a few cells had both BCRs and TCRs
+overlap_blood_gex_bcr <-
+  intersect(colnames(combined_blood_with_doublets),
+            (dplyr::filter(combined_bcr, locus == "IGH",
+                           TissueType == "Blood"))$Cell_ID_Unique)
+overlap_blood_gex_bcr_tcr <-
+  intersect(overlap_blood_gex_bcr,
+            (dplyr::filter(combined_tcr, locus == "TRB",
+                           TissueType == "Blood"))$Cell_ID_Unique)
+
+cat(paste("There were", length(overlap_blood_gex_bcr_tcr), "cells with both",
+          "BCRs and TCRs that were removed from the blood GEX data."))
+```
+
+Skin:
+
+```{r}
+# combined_skin_unprocessed <-
+#   readRDS(file.path(path_objs, "raw", "combined_skin_unprocessed.rds"))
+# cat(paste("There are", ncol(combined_skin_unprocessed),
+#           "cells in the initial unprocessed skin data."))
+cat(paste("There are",
+          dplyr::filter(metrics_summary, SampleType != "Blood") %>%
+            pull(EstimatedNumberofCells) %>%
+            sum() %>%
+            prettyNum(big.mark = ","),
+          "cells in the initial unprocessed skin data."))
+
+cat(paste("There are",
+          ncol(combined_skin_with_doublets) %>% prettyNum(big.mark = ","),
+          "total cells in the processed (with doublets) skin data;",
+          table(combined_skin_with_doublets$SampleType)[["EM"]] %>%
+            prettyNum(big.mark = ","), "from the EMs and",
+          table(combined_skin_with_doublets$SampleType)[["Control"]] %>%
+            prettyNum(big.mark = ","),
+          "from the controls"))
+
+cat(paste("There are",
+          ncol(combined_skin) %>% prettyNum(big.mark = ","),
+          "total cells in the processed (doublets removed) skin data;",
+          table(combined_skin$SampleType)[["EM"]] %>%
+            prettyNum(big.mark = ","), "from the EMs and",
+          table(combined_skin$SampleType)[["Control"]] %>%
+            prettyNum(big.mark = ","),
+          "from the controls"))
+```
+
+```{r}
+# a few cells had both BCRs and TCRs
+overlap_skin_gex_bcr <-
+  intersect(colnames(combined_skin_with_doublets),
+            (dplyr::filter(combined_bcr, locus == "IGH",
+                           TissueType == "Skin"))$Cell_ID_Unique)
+overlap_skin_gex_bcr_tcr <-
+  intersect(overlap_skin_gex_bcr,
+            (dplyr::filter(combined_tcr, locus == "TRB",
+                           TissueType == "Skin"))$Cell_ID_Unique)
+
+cat(paste("There were", length(overlap_skin_gex_bcr_tcr), "cells with both",
+          "BCRs and TCRs that were removed from the skin GEX data."))
+```
+
+### Averages
+
+Using the metrics summaries (just for the gene expression):
+
+```{r}
+cat(paste("An average of", round(mean(metrics_summary$NumberofReads) / 1e6),
+          "million reads were sequenced and an average of around",
+          round(mean(metrics_summary$EstimatedNumberofCells)),
+          "cells were identified per sample."))
+```
+
+### Recombination
+
+```{r}
+cat(paste(table(combined_skin$annotated_clusters)[["T Cells"]] -
+            table(combined_skin_recombined$annotated_clusters)[["T Cells"]],
+          "skin T cells were removed after recombination."))
+```
+
+### TCR
+
+```{r}
+combined_skin_t[[]] %>% group_by(Has_TCR) %>% summarize(n = n())
+combined_skin_t[[]] %>% group_by(Has_TCR, paired_alpha) %>% summarize(n = n())
+```

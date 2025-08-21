@@ -1,0 +1,123 @@
+## Clinical metadata
+
+Some columns are completely empty.
+
+```{r metadata-clinical}
+meta_clinical <- read_csv(file.path(path_base, "metadata",
+                                    "meta_clinical_bockenstedt_lyme.csv"),
+                          show_col_types = FALSE,
+                          name_repair = "unique_quiet") %>%
+                   mutate(Dataset = as.character(Dataset))
+
+# NAs represent missing data
+print_dt(meta_clinical)
+```
+
+Distinct values of interest:
+
+```{r metadata-clinical-summary}
+print_kable(meta_clinical %>%
+              select(Dataset, "Study ID", Age, Gender, Race, "Single EM",
+                     "Size (diameter in cm)") %>%
+              pivot_longer(cols = everything(), names_to = "Column",
+                           values_transform = as.character) %>%
+              group_by(Column) %>%
+              distinct() %>%
+              arrange(Column, value) %>%
+              transmute(Values = paste0(value, collapse = ", ")) %>%
+              distinct(),
+            kable_height = NULL)
+```
+
+## Read in the metadata
+
+Originally each dataset had their own individual metadata file (e.g. "lyme_dataset2_meta.csv"), but they have since been combined into a single file. This file include columns ("SampleName" vs. "SampleNameOriginal") which addresses issues such as the incorrectly labeled samples in dataset 3.
+
+I included the disease in the metadata (although it is all "lyme") in case the resulting Seurat objects are used in a different analysis using multiple datasets/diseases.
+
+**Graphical overview of current HIPC Lyme data:**
+
+```{r}
+include_graphics(path = here::here("primary_analysis", "images",
+                                   "hipc_lyme_data.png"))
+```
+
+### Full metadata table
+
+Doesn't include the bulk data:
+
+```{r metadata-loading}
+meta <- read_csv(file.path(path_base, "metadata", "meta_bockenstedt_lyme.csv"),
+                 col_types = cols(.default = "c")) %>%
+          arrange(SampleName) # alphabetize by sample
+
+print_metadata_summary(meta)
+print_kable(meta %>% arrange(Subject, SampleType, DataType))
+```
+
+### All samples
+
+```{r samples}
+# list of samples
+samples <- unique(meta$SampleName)
+samples
+
+# by tissue type
+samples_blood <- unique(dplyr::filter(meta, TissueType == "Blood")$SampleName)
+samples_skin <- unique(dplyr::filter(meta, TissueType == "Skin")$SampleName)
+```
+
+### All subjects
+
+```{r subjects}
+# list of subjects
+subjects <- unique(meta$Subject)
+subjects
+```
+
+### Choose more colors
+
+```{r color-schemes}
+# clinical
+colors_age <- setNames(iwanthue(n_distinct(meta_clinical$Age)),
+                       sort(unique(meta_clinical$Age)))
+colors_age_simpler <- c("Younger" = "#ff9100", "Older" = "#8a4e00")
+colors_gender <- c("F" = "pink", "M" = "skyblue") # so stereotypical, my bad
+colors_size <- setNames(iwanthue(n_distinct(meta_clinical$`Size (diameter in cm)`)),
+                        sort(unique(meta_clinical$`Size (diameter in cm)`)))
+
+# define the colors
+colors_sample_blood <- stepped3(length(samples_blood)) # up to 20 colors
+
+# iwanthue - split by colors for each dataset (2 is the green/blue/grays, 3 is
+#            the reds/oranges and 4 is the purple/pinks)
+colors_sample_skin = c("#738930", "#84C02B", # 192561
+                       "#48672D", # 192563
+                       "#8CB577", "#45893C", # 192564
+                       "#2C4229", "#31A86F", # 192565
+                       "#1C694C", "#4AC2A6", # 192566
+                       "#0A5045", "#1ABFC8", # 192567
+                       "#D6907A", "#E04D35", # 202936
+                       "#953425", "#5E2C1E", # 202937
+                       "#8E5F36", "#D18328", # 202938
+                       "#6A94E1", # 202939
+                       "#374B93", "#6B6BD8", # 202940
+                       "#693BBA", "#7A1890", # 202941
+                       "#CE8AD8", "#C74CD2") # 202943
+
+# manually defined as the most distinctive color or the subject average of the
+# previous colors so they match visually
+colors_subject <- c("#84C02B", "#3c5c21", "#617d54", # this one was tweaked
+                    "#31A86F", "#00613d", "#1ABFC8",
+                    "#DB6F58", "#7A3022", "#B0712F",
+                    "#6A94E1", "#515BB6", "#4e1378", # this one was tweaked too
+                    "#CB6BD5")
+
+# assign names
+names(colors_sample_blood) <- samples_blood
+names(colors_sample_skin) <- samples_skin
+names(colors_subject) <- subjects
+
+# all samples
+colors_samples <- c(colors_sample_blood, colors_sample_skin)
+```

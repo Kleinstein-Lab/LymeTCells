@@ -1,0 +1,4547 @@
+Rather than having them scattered throughout the script and having to redefine them each time the analysis changes, they have all been placed here. This also helps with standardization if the analysis has distinct components (e.g. blood and skin data).
+
+## Notebook
+
+### Display pretty tables
+
+```{r func-print-kable}
+#' Displays a nicely formatted table when the R Markdown file knits.
+#'
+#' @param table The input data frame to be printed.
+#' @param kable_height The height of the output table (you can set it to NULL to display the full table without scrolling).
+#' @param kable_width The width of the output table.
+#'
+#' @returns A kable table.
+print_kable <- function(table, kable_height = "500px", kable_width = "100%") {
+  if (nrow(table) > 0) {
+    kable(table) %>%
+      kable_styling("striped") %>%
+      scroll_box(height = kable_height, width = kable_width)
+  }
+}
+```
+
+```{r func-print-dt}
+#' Displays a sortable, scrollable DataTable table when the R Markdown file knits.
+#'
+#' @param table The input data frame to be printed.
+#' @param dt_width The width of the output table.
+#'
+#' @returns A DataTable table.
+print_dt <- function(table, dt_width = "800px") {
+  DT::datatable(data = table, options = list(scrollX = TRUE),
+                rownames = FALSE, filter = "top", width = dt_width)
+}
+```
+
+### Table NAs
+
+```{r}
+# show NAs if there are any
+table <- function(..., useNA = "ifany") base::table(..., useNA = useNA)
+```
+
+## Meta
+
+### Metadata summary
+
+```{r func-metadata-summary}
+#' Metadata summary
+#'
+#' @description
+#' Gives an overview of the data in terms of files, samples and datasets.
+#'
+#' @details
+#' Can take in metadata files representing multiple diseases and datasets.
+#'
+#' @param meta_file The analyst-created metadata csv file.
+#' Must contain the following columns: `Dataset`, `Disease`, `SampleName`, `Subject.`
+#'
+#' @returns A text description of the provided metadata file.
+print_metadata_summary <- function(meta_file) {
+  for (disease in unique(meta_file$Disease)) {
+      for (dataset in unique((dplyr::filter(meta_file, Disease == disease))$Dataset)) {
+          meta_dataset <- dplyr::filter(meta_file, Dataset == dataset)
+          subjects_list <- paste(unique(meta_dataset$Subject), collapse = ", ")
+
+          cat(paste("There are", n_distinct(meta_dataset$Subject),
+              paste0("subjects (", subjects_list, ")"), "and",
+              n_distinct(meta_dataset$SampleName), "samples for a total of",
+              nrow(meta_dataset), "total files in dataset", dataset, "of the",
+              str_to_sentence(disease), "data.\n"))
+      }
+  }
+}
+```
+
+## General plots
+
+These functions can be used in multiple analysis sections.
+
+### Top info bar
+
+```{r func-add-info-bar}
+
+
+#' Add an information bar on top.
+#'
+#' @description
+#' This function will add information of interest on top of a given `ggplot` plot.
+#'
+#' @details
+#' This is very useful for splitting by dataset, showing cell types, etc.
+#' `contains` is not really needed.
+#' Note that providing a named list of features to a DotPlot will automatically group them without the need for this function.
+#'
+#' @param plot A ggplot2 object
+#' @param method The method for getting the info bar information; one of `add`, `contains`, `join`.
+#' @param info_type What to add e.g. Dataset, Cell_Type, etc.
+#' @param info The information being added. Make sure this contains the same column as plot$data to join by.
+#' @param sort Sort the info alphanumerically.
+#' @param text_size The size of the text in the bars.
+#' @param label Whether or not to include what you are adding info for (good for datasets).
+#' @param angle Rotation degree.
+#' @param top_side Plot on top (by default) or on the right side.
+#'
+#' @returns A ggplot plot.
+add_info_bar <- function(plot, method = "contains", info_type, info,
+                         sort = TRUE, text_size = 8, label = TRUE, angle = 0,
+                         top_side = TRUE) {
+  # add the information to the plot data if needed
+  if (method == "add") {
+    plot$data[info_type] <- info[[info_type]]
+  }
+  else if (method == "join") {
+    plot_data <- suppressMessages(left_join(plot$data, info, # by = {{info_type}},
+                                            multiple = "all",
+                                            relationship = "many-to-many"))
+    
+    # sort each group of features alphanumerically within each group
+    # (especially useful for markers on a DotPlot)
+    # might not be accurate for features that show up in multiple groups
+    # if it wasn't for numbers, we could get rid of sort and just do
+    if (sort) {
+      plot_data <- plot_data %>%
+                     group_by(!!sym(info_type)) %>% 
+                     mutate(features.plot =
+                              factor(features.plot,
+                                     levels = str_sort(unique(features.plot),
+                                                       numeric = TRUE))) %>%
+                     ungroup()
+    }
+    
+    plot$data <- plot_data
+  }
+
+  # explain the label or not
+  if (label) {
+    labels <- purrr::partial(label_both, sep = " ")
+  }
+  else {
+    if (angle == 90) {
+      #  adjust the width as desired
+      labels <- label_wrap_gen(width = 10, multi_line = TRUE)
+    }
+    else {
+      labels <- labeller()
+    }
+  }
+  
+  # split up the plot
+  if (top_side) {
+    plot + facet_grid(cols = vars(!!rlang::sym(info_type)),
+                      scales = "free_x", space = "free", labeller = labels) +
+      theme(strip.text.x = element_text(size = text_size, angle = angle))
+  } else {
+    plot + facet_grid(rows = vars(!!rlang::sym(info_type)),
+                      scales = "free_y", space = "free", labeller = labels) +
+      theme(strip.text.x = element_text(size = text_size, angle = angle))
+  }
+}
+```
+
+### Bar plot with stacked percentages
+
+```{r func-calc-pcts}
+
+
+#' Bar plot with stacked percentages
+#'
+#' @description
+#' This function calculates the percentages of a group of interest.
+#'
+#' @details
+#' Not very elegant, but seems to work (dealing with string args is weird).
+#' Make sure to filter your data as needed (e.g. no NA isotypes) beforehand.
+#' Made for cell types and isotypes.
+#' The percentages will be doubles between 0 and 100.
+#' It will fill in missing values.
+#' You could alternatively use the fill option in geom_bar() instead
+#'
+#' @param data Any data frame with numerical values or a Seurat object.
+#' @param meta_group_by The metadata to group the data by.
+#' @param focus_group  The column you are interested in calculating percentages of.
+#'
+#' @returns A tibble with a percentages column.
+calc_pcts <- function(data, meta_group_by = c("SampleName", "Dataset"),
+                      focus_group) {
+  data %>%
+    group_by(across(all_of(meta_group_by)), !!rlang::sym(focus_group)) %>%
+    dplyr::summarize(Count = n(), .groups = "drop_last") %>%
+    dplyr::rename(focus = !!rlang::sym(focus_group)) %>%
+    complete(focus = unique(data[[focus_group]]), fill = list(Count = 0)) %>%
+    mutate(Percent = 100 * Count / sum(Count)) %>%
+    dplyr::rename(!!rlang::sym(focus_group) := focus)
+}
+```
+
+```{r func-plot-pcts}
+
+
+#' Plot percentages.
+#'
+#' @description
+#' This function plots a stacked bar plot of percentages.
+#'
+#' @details
+#' Give the percentages already as percents (* 100 in the calculations).
+#' Make sure pcts includes Dataset if you want to split by dataset.
+#' Note that the percentages may seem inaccurate because of the accuracy.
+#' There was a big issue with the combo of geom_text() & facet_grid().
+#' This assumes that you want to show the counts for binary plots.
+#'
+#' @param pcts The output of `calc_pcts`.
+#' @param tissue_type The type of tissue being plotted e.g. Blood or Skin.
+#' @param clrs_specific A specific (must have names) color palette.
+#' @param plot_type One of `All`, `Binary`.
+#' @param plot_value What is being plotted.
+#' @param x_axis What to put along the x axis.
+#' @param x_axis_label The label for the x axis.
+#' @param fill_type What to group the bar plot by.
+#' @param fill_label The description of what you're filling by.
+#' @param perc_min The minimum percentage to show in the plot.
+#' @param label_size The size of the percentage labels.
+#' @param label_fill Add a white background for clarity.
+#' @param include_counts Plot the counts on top/bottom.
+#' @param drop_zeroes Remove percentages of zeroes.
+#' @param reverse_order Change the fill order for a stacked plot
+#' @param inverted
+#' @param use_white Use white borders instead of black
+#' @param details The optional subtitle.
+#'
+#' @returns A stacked ggplot bar plot
+plot_pcts <- function(pcts, tissue_type = "", clrs_specific,
+                      plot_type = "All", plot_value = "Cell Type",
+                      x_axis = "SampleName", x_axis_label = "Sample",
+                      fill_type = "annotated_clusters", fill_label = fill_type,
+                      perc_min = 3, label_size = 3, label_fill = FALSE,
+                      include_counts = TRUE, drop_zeroes = TRUE,
+                      reverse_order = FALSE, inverted = TRUE, use_white = FALSE,
+                      details = NULL) {
+  border_color <- ifelse(use_white, "white", "black")
+
+  # if you want to use the default ggplot2 colors
+  if (is_missing(clrs_specific))
+    clrs_specific <- hue_pal()(n_distinct(pcts %>%
+                                            ungroup() %>%
+                                            select(all_of(fill_type))))
+
+  # mainly affects the legend
+  if (drop_zeroes) pcts <- dplyr::filter(pcts, Percent != 0)
+
+  # set up the plotting layers properly
+  if (plot_type == "All") {
+    # add the total counts to the data
+    pcts <- pcts %>%
+              group_by(across(all_of(x_axis))) %>%
+              mutate(Total = sum(Count), Total = replace(Total, -n(), ""))
+
+    if (reverse_order) {
+      pcts[[fill_type]] <- factor(pcts[[fill_type]],
+                                  levels = rev(levels(factor(pcts[[fill_type]]))))
+      # clrs_specific <- rev(clrs_specific)
+    }
+  }
+  else if (plot_type == "Binary") {
+    # so that TRUE plots on top of FALSE
+    pcts[[fill_type]] <- factor(pcts[[fill_type]], levels = c(TRUE, FALSE))
+  }
+  else {
+    stop("Please enter a valid plot type.")
+  }
+
+  # set up the plot
+  p <- ggplot(data = pcts,
+              aes(x = !!rlang::sym(x_axis), y = Percent,
+                  fill = !!rlang::sym(fill_type))) +
+        geom_bar(stat = "identity", color = border_color, linewidth = 0.2) +
+        labs(title = paste(tissue_type, "Percent of",
+                           plot_value, "per", x_axis_label),
+             subtitle = details,
+             x = x_axis_label, y = paste(plot_value, "Percentage"),
+             fill = fill_label)
+  # fill = paste(lapply(str_split(fill_type, "_"), str_to_title)[[1]],
+  #              collapse = "_")
+
+  # add aesthetics
+  p <- p + scale_fill_manual(values = clrs_specific, limits = force) +
+           scale_y_continuous(labels = label_percent(scale = 1),
+                              expand = expansion(mult = 0.05))
+
+  # add labels
+  if (!label_fill) {
+    p <-
+      p +
+      geom_text(aes(label =
+                      label_percent(accuracy = 1, scale = 1)(ifelse(Percent > perc_min,
+                                                                    Percent,
+                                                                    NA)),
+                    group = !!rlang::sym(fill_type)),
+                    size = label_size, position = position_stack(vjust = 0.5))
+  }
+  else {
+    p <-
+      p +
+      geom_label(aes(label =
+                       label_percent(accuracy = 1, scale = 1)(ifelse(Percent > perc_min,
+                                                                     Percent,
+                                                                     NA)),
+                     group = !!rlang::sym(fill_type)),
+                     color = "black", fill = "white",
+                     size = label_size, position = position_stack(vjust = 0.5))
+  }
+
+  if (include_counts) {
+    # actually add in the total counts
+    if (plot_type == "All") {
+      if (inverted) {
+        p <- p + geom_text(mapping = aes(y = 102, label = Total, fill = NULL),
+                           vjust = 0.5, color = "black", size = label_size)
+      } else {
+        p <- p + geom_text(mapping = aes(x = !!rlang::sym(x_axis), y = 100,
+                                         label = Total, fill = NULL),
+                           vjust = -0.5, color = "black", size = label_size)
+      }
+
+    }
+    # just for TRUE v FALSE plots
+    else if (plot_type == "Binary") {
+      p <-
+        p +
+        # counts on top
+        geom_text(mapping = aes(label = ifelse(!!rlang::sym(fill_type) == TRUE,
+                                                   Count, "")),
+                  position = position_stack(), vjust = -0.5,
+                  color = "black", size = label_size) +
+        # counts on bottom
+        geom_text(mapping = aes(label = ifelse(!!rlang::sym(fill_type) == FALSE,
+                                               Count, ""), y = -1),
+                  color = "black", size = label_size)
+    }
+  }
+
+  # add remaining styling
+  p <- p + theme_bw + labels_standard
+
+  # remove horizontal gridlines
+  p <- p + theme(panel.grid.major.y = element_blank())
+
+  # fix the legend if needed
+  if (reverse_order) {
+    p <- p + guides(fill = guide_legend(reverse = TRUE))
+  }
+
+  # rotate (typically) long names
+  if (x_axis %in% c("SampleName", "annotated_clusters",
+                    "annotated_subclusters")) {
+    p <- p + labels_rotate_x
+  }
+
+  return(p)
+}
+```
+
+### Dot plot color scale
+
+```{r func-plot-dot-color-scale}
+
+
+#' Generates a proper color scale for a Seurat DotPlot (with white at zero).
+#'
+#' @details
+#' Seurat's `col` option frequently is misleading with where the zeroes fall.
+#' I don't want to rescale the expression.
+#' You could also just do something like `scale_color_gradient2(low = "#2166AC",
+#' mid = "white", high = "#B2182B")`
+#'
+#' @param plot The generated Seurat DotPlot.
+#' @param palette A palette of colors to go off of.
+#'
+#' @returns A Seurat dot plot with an updated color scale.
+dot_color_scale <- function(plot, palette = rev(pals::brewer.rdbu(n = 7))) {
+  # expression ranges
+  max_val <- max(plot[["data"]][["avg.exp.scaled"]], na.rm = TRUE)
+  min_val <- min(plot[["data"]][["avg.exp.scaled"]], na.rm = TRUE)
+
+  # make a full range of colors
+  nclrs <- 100
+  abs_val <- max(abs(max_val), abs(min_val))
+  breaks <- seq(-abs_val, abs_val, length.out = nclrs + 1) # should be odd
+  colors <- colorRampPalette(palette)(length(breaks))
+  names(colors) <- breaks
+  colors["0"] <- "white" # manually set zero to be white
+  
+  # now cut the range to only cover the actual expression
+  # might be slightly off from the actual min/max value, but whatever
+  if (abs(max_val) >= abs(min_val)) {
+    min_val_loc <- which.min(abs(breaks - min_val))
+    colors <- colors[min_val_loc:(nclrs + 1)]
+  } else {
+    max_val_loc <- which.min(abs(breaks - max_val))
+    colors <- colors[0:max_val_loc]
+  }
+  
+  # return the plot with the new color scale
+  plot + scale_color_gradientn(colors = colors)
+}
+```
+
+### Dot plot with side info
+
+Along the right side for easy comparison (plus dot plots only show GEX info)
+
+```{r func-plot-dot-side}
+
+
+#' Adds AIRR (and other) info along the right side of an existing Seurat DotPlot.
+#'
+#' @details
+#  This will rounds the percentages for the percent AIRR info. If you do this, it "splits" the plot so other things like coloring specific x and y axis labels will be more difficult.
+#' This is especially useful for AIRR-related information since dot plot like these show GEX info.
+#' The font family should be monospace so that the spacing works properly (the '|'s line up). You can list what fonts you have installed if you're using Linux with `fc-list : family | sort | uniq`.
+#'
+#' @param plot The generated Seurat DotPlot.
+#' @param seurat_obj The Seurat object.
+#' @param row_identity The y axis identities.
+#' @param facet_col The column to facet by e.g. "Cell_Type_Full".
+#' @param info_to_add The options are: `cluster_size`, `mean_mu_freq`, `percent_BCR`, `percent_TCR`, and `TRUST4`.
+#'
+#' @returns A Seurat DotPlot with annotations along the right side.
+plot_dot_side <- function(plot, seurat_obj, row_identity = "seurat_clusters",
+                          facet_col, info_to_add = c("cluster_size")) {
+  # get the clusters in order
+  row_idents <- levels(plot$data$id)
+  side_labels <- data.frame("row_idents" = row_idents)
+
+  # calculate extra useful information
+  if ("cluster_size" %in% info_to_add) {
+    counts_sum <- seurat_obj[[]] %>%
+                    count(!!rlang::sym(row_identity)) %>%
+                    arrange(factor(!!rlang::sym(row_identity), levels = row_idents)) %>%
+                    pull(n)
+
+    # reformat
+    counts_sum <- str_pad(string = as.character(counts_sum),
+                          width = max(nchar(counts_sum)),
+                          side = "left", pad = " ")
+
+    side_labels <- bind_cols(side_labels, "total counts" = counts_sum)
+  }
+
+  if ("mean_mu_freq" %in% info_to_add) {
+    mean_mu_freq <- seurat_obj[[]] %>%
+                      group_by(!!rlang::sym(row_identity)) %>%
+                      arrange(factor(!!rlang::sym(row_identity), levels = row_idents)) %>%
+                      mutate(mean_mu_freq = mean(mu_freq, na.rm = TRUE)) %>%
+                      distinct(mean_mu_freq) %>%
+                      pull()
+
+    # reformat
+    # mean_mu_freq <- sprintf("%.2f", mean_mu_freq)
+    mean_mu_freq <- label_percent(accuracy = 0.1)(mean_mu_freq)
+    mean_mu_freq <- replace_na(mean_mu_freq, replace = "NA")
+    mean_mu_freq <- str_pad(string = as.character(mean_mu_freq),
+                            width = max(nchar(mean_mu_freq)),
+                            side = "left", pad = " ")
+
+    side_labels <- bind_cols(side_labels, "mean mutation frequency" = mean_mu_freq)
+  }
+
+  if ("percent_BCR" %in% info_to_add) {
+    # needs more work
+    percent_BCR <- calc_pcts(data = seurat_obj[[]],
+                             meta_group_by = row_identity,
+                             focus_group = "Has_BCR") %>%
+                    dplyr::filter(Has_BCR) %>%
+                    # mutate(Percent = round(Percent, digits = 1)) %>%
+                    arrange(factor(!!rlang::sym(row_identity), levels = row_idents)) %>%
+                    pull(Percent)
+
+    # reformat
+    percent_BCR <- label_percent(accuracy = 1, scale = 1)(percent_BCR)
+    percent_BCR <- str_pad(string = as.character(percent_BCR),
+                           width = max(nchar(percent_BCR)),
+                           side = "left", pad = " ")
+
+    side_labels <- bind_cols(side_labels, "percent BCR" = percent_BCR)
+  }
+
+  if ("percent_TCR" %in% info_to_add) {
+    # needs more work
+    percent_TCR <- calc_pcts(data = seurat_obj[[]],
+                             meta_group_by = row_identity,
+                             focus_group = "Has_TCR") %>%
+                    dplyr::filter(Has_TCR) %>%
+                    # mutate(Percent = round(Percent, digits = 1)) %>%
+                    arrange(factor(!!rlang::sym(row_identity), levels = row_idents)) %>%
+                    pull(Percent)
+
+    # reformat
+    percent_TCR <- label_percent(accuracy = 1, scale = 1)(percent_TCR)
+    percent_TCR <- str_pad(string = as.character(percent_TCR),
+                           width = max(nchar(percent_TCR)),
+                           side = "left", pad = " ")
+
+    side_labels <- bind_cols(side_labels, "percent TCR" = percent_TCR)
+  }
+
+  if ("TRUST4" %in% info_to_add) {
+    # needs more work
+    percent_TRUST4 <- calc_pcts(data = seurat_obj[[]],
+                                meta_group_by = row_identity,
+                                focus_group = "TRUST4") %>%
+      dplyr::filter(TRUST4) %>%
+      # mutate(Percent = round(Percent, digits = 1)) %>%
+      arrange(factor(!!rlang::sym(row_identity), levels = row_idents)) %>%
+      pull(Percent)
+
+    # reformat
+    percent_TRUST4 <- label_percent(accuracy = 1, scale = 1)(percent_TRUST4)
+    percent_TRUST4 <- str_pad(string = as.character(percent_TRUST4),
+                              width = max(nchar(percent_TRUST4)),
+                              side = "left", pad = " ")
+
+    side_labels <- bind_cols(side_labels, "percent TRUST4" = percent_TRUST4)
+  }
+
+  # add info along the right side
+  subtitle_details <- side_labels %>%
+                        select(-row_idents) %>%
+                        colnames() %>%
+                        str_c(collapse = " | ")
+  side_labels <- unite(side_labels, col = "final_labels", -row_idents,
+                       sep = " | ") %>%
+                   pull(final_labels, name = row_idents)
+
+  if (rlang::is_missing(facet_col)) {
+    plot <- plot + facet_grid(rows = vars(id),
+                              scales = "free", space = "free",
+                              labeller = labeller(id = side_labels))
+  }
+  else {
+    plot <- plot + facet_grid(rows = vars(id), cols = vars(!!rlang::sym(facet_col)),
+                              scales = "free", space = "free",
+                              labeller = labeller(id = side_labels))
+  }
+
+  # final plot
+  plot +
+    labs(subtitle = subtitle_details) +
+    theme(strip.text.y = element_text(angle = 0, size = 8,
+                                      # changed as needed:
+                                      family = "Fira Code"), # Noto Sans Mono
+          strip.background.y = element_rect(fill = "white"),
+          plot.subtitle = element_text(size = 9))
+}
+```
+
+### UMAPs
+
+#### General UMAP
+
+Includes whether or not the object has been annotated with specific cell types
+
+```{r func-plot-umap}
+
+
+#' This function plots a Seurat UMAP(s) in several useful ways.
+#'
+#' @param seurat_obj The Seurat object.
+#' @param tissue_type Blood, Skin.
+#' @param clrs_specific The specific color palette (should be named).
+#' @param use_hues Use the iwanthue hues instead of the default ggplot colors. Doesn't let you set any other settings.
+#' @param plot_by What to plot by: by dataset, by sample type (control vs EM/blood), by cluster, by sample, with all samples, or with all subjects.
+#' @param specific_clusters Can overlay clusters of interest e.g. B cell or by #.
+#' @param specific_col
+#' @param plot_label Add labels to the plot (or not).
+#' @param label_box Whether or not to give the labels a background.
+#' @param label_size The size of the plot labels.
+#' @param clusters_col Which column in the object stores the clusters.
+#' @param annotated If the cell types have been identified.
+#' @param annotations_col Which column in the object stores the cell types.
+#' @param annotations_type The method for annotation e.g. Manual, singleR, etc..
+#' @param include_legend Include the legend or not.
+#' @param ncol The number of columns if outputting multiple plots.
+#' @param details The optional subtitle.
+#'
+#' @returns A Seurat UMAPPlot.
+plot_umap <- function(seurat_obj, tissue_type = "", clrs_specific,
+                      use_hues = FALSE, plot_by = "cluster_all",
+                      specific_clusters = c(), specific_col,
+                      plot_label = TRUE, label_size = 3,
+                      label_box = TRUE, clusters_col = "seurat_clusters",
+                      annotated = FALSE, annotations_col = "annotated_clusters",
+                      annotations_type, include_legend = TRUE, ncol = 4,
+                      details) {
+  # set identities in case they aren't already set
+  if (annotated) {
+    # don't include "Manual" in the title since we can consider it implied
+    if (!missing(annotations_type)) {
+      plot_title <- paste0("Annotated (", annotations_type, ") ", tissue_type)
+    }
+    else {
+      plot_title <- paste("Annotated", tissue_type)
+    }
+
+    cluster_legend <- "Cell Type"
+    Idents(seurat_obj) <- annotations_col
+
+    # subclustered only
+    if (sum(str_detect(names(seurat_obj[[]]), "subcluster")) > 0) {
+      cluster_legend <- paste("Subclustered", cluster_legend)
+    }
+
+    # alphabetize just in case
+    Idents(seurat_obj) <- factor(Idents(seurat_obj),
+                                 levels = sort(levels(seurat_obj)))
+  }
+  else {
+    plot_title <- tissue_type
+    cluster_legend <- "Cluster"
+
+    # subclustered only
+    if (clusters_col == "seurat_subclusters") {
+      cluster_legend <- "Subcluster"
+    }
+
+    Idents(seurat_obj) <- clusters_col
+  }
+
+  # like an overlay
+  if (!missing(specific_col)) {
+    Idents(seurat_obj) <- specific_col
+    cluster_legend <- specific_col
+  }
+
+  # plot options
+  pt_size <- 0.2
+  sizes_highlight <- 0.2
+
+  # if you want to use default ggplot2 or generated iwanthue colors
+  # this needs fixing
+  if (is_missing(clrs_specific)) {
+    if (plot_by == "all") {
+      if (use_hues) clrs_specific <- iwanthue(length(unique(seurat_obj$SampleName)))
+      else clrs_specific <- hue_pal()(length(unique(seurat_obj$SampleName)))
+    }
+    else {
+      if (use_hues) clrs_specific <- iwanthue(nlevels(seurat_obj))
+      else clrs_specific <- hue_pal()(nlevels(seurat_obj))
+
+      clrs_specific <- setNames(clrs_specific, levels(Idents(seurat_obj)))
+    }
+  }
+
+  # this option needs a little more setup
+  if (plot_by == "cluster_specific") {
+    # has to be a list for the labels to work later
+    cells_total <- CellsByIdentities(seurat_obj, idents = specific_clusters)
+
+    cols_highlight <- clrs_specific[specific_clusters]
+    cols_highlight <- rev(cols_highlight) # for some reason
+  }
+
+  # specific plots
+  p <- switch(plot_by,
+              "all" = UMAPPlot(seurat_obj, cols = clrs_specific,
+                               pt.size = pt_size,
+                               group.by = "SampleName",
+                               label = plot_label,
+                               label.size = label_size, label.box = label_box,
+                               raster = FALSE) +
+                      labs(subtitle = "All Samples",
+                           color = "Sample"),
+
+              "subject" = UMAPPlot(seurat_obj, cols = clrs_specific,
+                                   pt.size = pt_size,
+                                   group.by = "Subject",
+                                   label = plot_label,
+                                   label.size = label_size, label.box = label_box,
+                                   raster = FALSE) +
+                      labs(subtitle = "All Subjects",
+                           color = "Subject"),
+
+              "dataset" = UMAPPlot(seurat_obj, cols = clrs_specific,
+                                   pt.size = pt_size,
+                                   group.by = "Dataset",
+                                   label.box = label_box, raster = FALSE) +
+                          labs(subtitle = "by Dataset",
+                               color = "Dataset"),
+
+              "sample_type" = UMAPPlot(seurat_obj, cols = clrs_specific,
+                                       pt.size = pt_size,
+                                       group.by = "SampleType",
+                                       label.box = label_box, raster = FALSE) +
+                              labs(subtitle = "by Sample Type",
+                                   color = "Sample Type"),
+
+              "cluster_all" = UMAPPlot(seurat_obj, cols = clrs_specific,
+                                       pt.size = pt_size,
+                                       label = plot_label,
+                                       label.size = label_size,
+                                       label.box = label_box,
+                                       repel = TRUE, raster = FALSE) +
+                              labs(subtitle = paste("by", cluster_legend),
+                                   color = cluster_legend),
+
+              "cluster_sample" = UMAPPlot(seurat_obj, cols = clrs_specific,
+                                          pt.size = pt_size,
+                                          split.by = "SampleName",
+                                          label.box = label_box, ncol = ncol,
+                                          raster = FALSE) +
+                                 labs(subtitle = paste(cluster_legend, "by Sample"),
+                                      color = cluster_legend),
+
+              # only if annotated, plot all cells on top
+              # https://github.com/samuel-marsh/scCustomize/blob/HEAD/R/Seurat_Plotting.R#L1257
+              "cluster_specific" =
+                UMAPPlot(seurat_obj, pt.size = pt_size, order = TRUE,
+                         label = plot_label, label.size = label_size,
+                         label.box = label_box,
+                         cells.highlight = cells_total,
+                         cols.highlight = cols_highlight,
+                         sizes.highlight = sizes_highlight,
+                         repel = TRUE, raster = FALSE) +
+                labs(subtitle = toString(specific_clusters),
+                     color = "Highlighted") +
+                scale_color_manual(breaks = c("Unselected",
+                                              str_sort(names(x = cells_total),
+                                                       numeric = TRUE)),
+                                   values = c(cols_highlight,
+                                              "Unselected" = "lightgray"),
+                                   na.value = "lightgray"),
+
+              "sample_type_split" = UMAPPlot(seurat_obj, cols = clrs_specific,
+                                             pt.size = pt_size,
+                                             split.by = "SampleType",
+                                             label = plot_label, label.size = label_size,
+                                             label.box = label_box, repel = TRUE,
+                                             raster = FALSE) +
+                                    labs(subtitle = paste(cluster_legend,
+                                                          "Split by Sample Type"),
+                                         color = cluster_legend)
+  )
+
+  # add the plot title
+  p <- p + labs(title = plot_title)
+
+  # don't plot super long subtitles (change nchar as needed)
+  if (nchar(toString(specific_clusters)) > 80) p <- p + labs(subtitle = NULL)
+
+  # custom subtitle
+  if (!is_missing(details)) p <- p + labs(subtitle = details)
+
+  # remove the legend if desired
+  if (!include_legend) p <- p + NoLegend()
+
+  # give white background to the boxes
+  if (label_box) {
+    p <- p + scale_fill_manual(values = rep("#FFFFFF", length(clrs_specific)))
+  }
+
+  # standardize the labels
+  p <- p + labels_standard & clean_umap
+
+  return(p)
+}
+```
+
+#### Overlay a condition
+
+Can be used for plotting QC metrics, isolating specific cell types, overlaying AIRR data, overlaying B cell isotypes, etc.
+
+```{r func-plot-umap-condition}
+
+
+#' Plot a specific condition on a Seurat UMAPPlot.
+#'
+#' @details
+#' Based on: https://github.com/satijalab/seurat/issues/1053
+#'
+#' @param seurat_obj The Seurat object.
+#' @param tissue_type The tissue type e.g. Blood, Skin.
+#' @param condition_name
+#' @param operator <, >, ==
+#' @param condition_val
+#' @param color_by name, value
+#' @param clrs_specific The specific color palette (should be named).
+#' @param plot_type general, overlay (BCR/TCR)
+#' @param label_plot Put labels on the plot (or not).
+#' @param include_subtitle Include a subtitle (or not).
+#' @param include_legend Include a legend (or not).
+#'
+#' @returns A Seurat UMAPPlot.
+plot_umap_condition <- function(seurat_obj, tissue_type,
+                                condition_name, operator, condition_val,
+                                color_by = "value",
+                                clrs_specific, plot_type = "general",
+                                label_plot = TRUE, include_subtitle = TRUE,
+                                include_legend = FALSE) {
+  # plot options
+  pt_size <- 0.2
+  label_size <- 4
+  sizes_highlight <- 0.2
+
+  # cells of interest
+  condition <- FetchData(seurat_obj, vars = condition_name)
+  cells_highlight <-
+    switch(operator,
+           "<" = Cells(seurat_obj[, which(x = condition < condition_val)]),
+           ">" = Cells(seurat_obj[, which(x = condition > condition_val)]),
+           "==" = Cells(seurat_obj[, which(x = condition == condition_val)]),
+           stop("Invalid operator, please try again."))
+
+  # color by
+  if (color_by == "name") {
+    cols_highlight <- clrs_specific[[condition_name]]
+    plot_title <- paste(condition_name, operator, condition_val)
+  }
+  else if (color_by == "value") {
+    cols_highlight <- clrs_specific[[condition_val]]
+    plot_title <- condition_val
+  }
+  else {
+    cat("Invalid coloring system, please try again.")
+  }
+
+  # set up the plot
+  p <- UMAPPlot(seurat_obj, pt.size = pt_size,
+                label = label_plot, label.size = label_size,
+                cells.highlight = cells_highlight,
+                cols.highlight = cols_highlight,
+                sizes.highlight = sizes_highlight,
+                raster = FALSE) +
+        labs(title = paste(tissue_type, paste0("(", plot_title, ")")))
+
+  # include a subtitle counting the condition
+  if (include_subtitle) {
+    p <- p + labs(subtitle = paste("Count:", length(cells_highlight)))
+  }
+
+  # remove the legend if desired
+  if (!include_legend) {
+    p <- p + NoLegend()
+  }
+  else {
+    if (plot_type == "overlay") {
+      data_type <- substr(condition_name, nchar(condition_name) - 2,
+                          nchar(condition_name)) # BCR or TCR
+
+      p <- p + scale_color_manual(name = "Data Type",
+                                  labels = c(paste0("non-", data_type), data_type),
+                                  values = c("lightgray",
+                                             unname(clrs_specific[data_type]))
+      )
+    }
+    else {
+      p <- p + scale_color_manual(name = paste(condition_name, operator, condition_val),
+                                  labels = c("False", "True"),
+                                  values = c("lightgray",
+                                             unname(clrs_specific[condition_name]))
+      )
+    }
+  }
+
+  # standardize the labels
+  p <- p + labels_standard + clean_umap
+
+  return(p)
+}
+```
+
+#### Plot booleans
+
+From Roy:
+
+```{r}
+plotBool <- function(object, plot_cell, select_cell, type = "pca",
+                     COLORS = SUBSET_COLORS, ASSIGN_DICT = SUBSET_DICT) {
+  if (is.null(plot_cell)) {
+    plot_cell <- rep(TRUE, length(object@active.ident))
+  }
+
+  identity_df <- data.frame(IDENTITY = object@active.ident[plot_cell]) %>%
+                   rowwise() %>%
+                   mutate(SUBSET = ASSIGN_DICT[IDENTITY])
+
+  if (type == "pca") {
+    projection_df <- data.frame(object@reductions$pca@cell.embeddings)[plot_cell, ]
+    p <- ggplot(projection_df[plot_cell, ], aes(x = PC1, y = PC2))
+  }
+  if (type == "umap") {
+    projection_df <- data.frame(object@reductions$umap@cell.embeddings)[plot_cell, ]
+    p <- ggplot(projection_df, aes(x = UMAP_1, y = UMAP_2))
+  }
+
+  projection_df <- projection_df %>%
+                     add_rownames("CELL") %>%
+                     mutate(BOOL = (CELL %in% select_cell))
+
+  # plot the UMAP
+  p + geom_point(size = 0.5, aes(color = identity_df$SUBSET), alpha = 0.4) +
+      geom_point(data = dplyr::filter(projection_df, BOOL == TRUE),
+                 size = 0.5, alpha = 0.8) +
+      scale_color_manual(values = COLORS) +
+      labs(x = "Component 1", y = "Component 2") +
+      theme_bw() + labels_standard + clean_umap +
+      theme(legend.position = "none",
+            panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(),
+            axis.text.x = element_blank(), axis.text.y = element_blank(),
+            axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
+}
+```
+
+## Unprocessed data
+
+### Create or update Seurat objects
+
+You can provide a specific list of samples or sample types to make objects for if you don't want to use everything in the given metadata file.
+
+If you are using aggregated data, then the list of objs created by splitting the initial object made from the aggr output can be used as input instead.
+
+```{r func-create-objects}
+
+
+#' Create or update Seurat objects.
+#'
+#' @description
+#' Create Seurat objects from the Cell Ranger outputs.
+#'
+#' @details
+#' You can provide a specific list of samples or sample types to make objects
+#' for if you don't want to use everything in the given metadata file.
+#' If you are using aggregated data, then the list of objs created by splitting
+#' the initial object made from the aggr output can be used as input instead.
+#' It is good to keep different tissue types separate in the analysis.
+#' The details of Read10X and read.csv may change depending upon your file names.
+#'
+#' @param objs_list The list of Seurat objects (if aggregation was run).
+#' @param meta_file The analyst-created metadata file.
+#' @param sample_names (Optional) The list of specific sample names.
+#' @param tissue_types (Optional) The list of specific tissues.
+#' @param different_location (Optional) A different data location.
+#'
+#' @returns Seurat object(s).
+create_seurat_objs <- function(objs_list, meta_file,
+                               sample_names, tissue_types, different_location) {
+  # set up what data will be used
+  objs <- list() # output list
+  if (rlang::is_missing(tissue_types)) tissue_types <- sort(unique(meta_file$TissueType))
+
+  # only GEX data in the tissues of interest
+  meta_file <- dplyr::filter(meta_file,
+                             DataType == "GEX", TissueType %in% tissue_types)
+
+  # pick the samples to create objects for
+  if (rlang::is_missing(sample_names)) {
+    # prefer to be in alphanumeric order
+    sample_names <- meta_file %>% distinct(SampleName) %>% arrange() %>% pull()
+  }
+
+  # create or pull each object
+  for (sample in sample_names) {
+    cat(sample, "\n")
+
+    # metadata info
+    # you should have only one row after this point, so unique()'s are omitted
+    meta_sample <- dplyr::filter(meta_file, SampleName == sample)
+
+    if (is_missing(different_location)) {
+      path_dataset <- file.path(path_data_root,
+                                paste0("dataset", meta_sample$Dataset))
+    }
+    else {
+      # if for whatever strange reason the data is being stored in an alternative way
+      path_dataset <- different_location
+    }
+
+    # set up the object
+    if (rlang::is_missing(objs_list)) {
+      # read in the data
+      data_GEX <- Read10X(file.path(path_dataset,
+                                    "default", meta_sample$SampleDir,
+                                    "outs", "filtered_feature_bc_matrix"),
+                          strip.suffix = TRUE) # remove the -1's
+
+      # create the Seurat object (assay = "RNA")
+      obj <- CreateSeuratObject(counts = data_GEX, project = sample)
+    }
+    else {
+      # already created when aggregated object is loaded
+      obj <- objs_list[[sample]]
+      obj$SampleName <- c() # this will be set again down below
+
+      # remove the suffixes
+      obj <- RenameCells(object = obj,
+                         new.names = sapply(strsplit(Cells(obj), "-"),
+                                            getElement, 1))
+    }
+
+    # add in the sample name to keep unique cell names during combination later
+    obj <- RenameCells(obj, add.cell.id = sample)
+    obj$Cell_ID_Unique <- colnames(obj) # unique barcodes
+
+    # add useful metadata
+    obj <-
+      PercentageFeatureSet(obj, pattern = "^MT-", col.name = "percent.mt")
+    # obj <-
+    #   PercentageFeatureSet(obj, pattern = "^RP[SL]", col.name = "percent.ribo")
+    obj$SampleName <- meta_sample$SampleName # same as orig.ident
+    obj$Subject <- meta_sample$Subject # HIPC ID
+    obj$TissueType <- meta_sample$TissueType # Blood or Skin
+    obj$SampleType <- meta_sample$SampleType # Blood, Control, or EM
+    obj$Dataset <- meta_sample$Dataset # 2, 3 or 4
+    obj$Disease <- meta_sample$Disease # lyme
+
+    # save in the appropriate location
+    objs[[sample]] <- obj
+  }
+
+  return(objs)
+}
+```
+
+## Quality control
+
+You can provide a specific list of samples or data types to create summaries for if you don't want to use everything in the given metadata file.
+
+### Create the metrics summary
+
+```{r func-create-metrics-summary}
+
+
+#' Create a metrics summary table with some info from 10x's metric summary file
+#'
+#' @param meta The metadata file.
+#' @param path_data_specific Where the data is located.
+#' @param data_types e.g. BCR, GEX, TCR
+#' @param samples_list The samples you would like to examine.
+#'
+#' @returns A data.frame.
+create_metrics_summary <- function(meta, path_data_specific,
+                                   data_types, samples_list) {
+  metrics_summary <- tibble()
+  if (rlang::is_missing(data_types)) data_types <- unique(meta$DataType) # depends on dataset
+  if (rlang::is_missing(samples_list)) samples_list <- sort(unique(meta$SampleName))
+
+  for (sample in samples_list) {
+    for (data_type in data_types) {
+      # metadata info
+      meta_sample <- dplyr::filter(meta, SampleName == sample, DataType == data_type)
+      sample_type <- unique(meta_sample$SampleType) # Blood, Control, or EM
+      subject <- unique(meta_sample$Subject)
+      dataset <- unique(meta_sample$Dataset) # 2, 3 or 4
+      timepoint <- unique(meta_sample$Timepoint) # 0, 1 or 2
+
+      # read in the summary table
+      path_data <- file.path(path_data_specific, paste0("dataset", dataset), "default")
+      data <- read_csv(file.path(path_data, meta_sample$SampleDir,
+                                 "outs", "metrics_summary.csv"),
+                       show_col_types = FALSE)
+
+      # set the columns of interest
+      estimated_number_of_cells <- data[["Estimated Number of Cells"]]
+      num_reads <- data[grepl("Number of Read", colnames(data))][[1]] # Number of Read Pairs (VDJ), Number of Reads (GEX)
+      reads_per_cell <- num_reads %/% estimated_number_of_cells  # mean read pairs per cell is also a col
+      median_genes <- data[["Median Genes per Cell"]] # GEX only
+
+      # update the combined summary table
+      metrics_summary <- bind_rows(metrics_summary,
+                                   tibble(sample, subject, sample_type,
+                                          data_type, timepoint, dataset,
+                                          estimated_number_of_cells, num_reads,
+                                          reads_per_cell, median_genes))
+    }
+  }
+
+  colnames(metrics_summary) <- c("SampleName", "Subject", "SampleType",
+                                 "DataType", "Timepoint", "Dataset",
+                                 "EstimatedNumberofCells", "NumberofReads",
+                                 "ReadsPerCell", "MedianGenesperCell")
+  return(metrics_summary)
+}
+```
+
+### Reformat VDJ barcodes
+
+```{r func-reformat-vdj-barcodes}
+
+
+#' Adds the sample name to the beginning and removes the "-1" from the ends.
+#'
+#' @param data The input dataset which contains a barcode column.
+#' @param sample_name The sample to add to make the barcode unique.
+#' @param barcode_col The column in the data that contains the barcodes.
+#'
+#' @returns
+
+reformat_vdj_barcode_sample <- function(data, sample_name, barcode_col = "barcode") {
+  unlist(lapply(strsplit(as.character(data[[barcode_col]]), "-"),
+                function(x) paste0(sample_name, "_", x[1])))
+}
+
+
+reformat_vdj_barcode <- function(data, col_samples = "SampleName",
+                                 col_barcodes = "cell_id",
+                                 col_output = "Cell_ID_Unique") {
+  data <- data %>%
+            select(all_of(col_samples), all_of(col_barcodes)) %>%
+            separate(!!rlang::sym(col_barcodes), sep = "-",
+                     into = "barcodes", remove = FALSE, extra = "drop") %>%
+            unite(col_output, c(!!rlang::sym(col_samples), "barcodes"),
+                  sep = "_", remove = FALSE)
+
+  return(data$col_output)
+}
+```
+
+### Count barcode overlaps
+
+```{r func-count-barcode-overlaps}
+
+
+#' Counts the overlaps between barcodes.
+#'
+#' @details only counts unique barcodes
+#'
+#' @param barcodes_list1 The first list of barcodes.
+#' @param barcodes_list2 The second list of barcodes.
+#' @param sample_i The "i"th sample in the first list.
+#' @param sample_j The "j"th sample in the second list.
+#' @param remove_sample_names Whether or not to trim the (previously added) sample names.
+#'
+#' @returns A count of the overlaps.
+count_barcode_overlaps <- function(barcodes_list1, barcodes_list2,
+                                   sample_i, sample_j,
+                                   remove_sample_names = FALSE) {
+  barcodes_i <- barcodes_list1[[sample_i]]
+  barcodes_j <- barcodes_list2[[sample_j]]
+
+  if (remove_sample_names) {
+      barcodes_i <- str_sub(barcodes_i, nchar(sample_i) + 2, nchar(barcodes_i))
+      barcodes_j <- str_sub(barcodes_j, nchar(sample_j) + 2, nchar(barcodes_j))
+  }
+
+  length(intersect(barcodes_i, barcodes_j))
+}
+```
+
+### Plot counts
+
+```{r func-plot-counts}
+
+
+#' Bar plot of read or cell counts for QC.
+#'
+#' @param summary_df output of create_metrics_summary()
+#' @param data_types e.g. BCR, GEX, TCR
+#' @param count_type Read, Cell, Barcode
+#' @param aggregation_state Aggregated or Unaggregated (`cellranger aggr`)
+#' @param samples
+#' @param fill_type_label Data Type, Chain Type
+#' @param x_axis what to plot along the bottom
+#' @param x_axis_label what to call the x axis
+#' @param clrs_datatype must be given in the correct order if plotting barcodes
+#' @param include_hlines
+#'
+#' @returns
+plot_counts <- function(summary_df, data_types = "All",
+                        count_type, aggregation_state = "Unaggregated",
+                        samples = "All Samples",
+                        fill_type_label = "Data Type",
+                        x_axis = "SampleName", x_axis_label = "Sample",
+                        clrs_datatype, include_hlines = TRUE) {
+  # data details
+  if ("All" %in% data_types) {
+    data_types <- unique(summary_df$DataType)
+    data_type_desc <- "All"
+  }
+  else {
+    data_type_desc <- paste(data_types, collapse = "/")
+  }
+
+  # setup the aesthetics
+  if (count_type != "Barcode") {
+    if (count_type == "Read") y_axis_label <- "Number of Reads"
+    else if (count_type == "reads_per_cell") y_axis_label <- "Reads Per Cell"
+    else y_axis_label <- "Estimated Number of Cells"
+    y_axis <- str_replace_all(y_axis_label, " ", "") # remove spaces
+
+    summary_df <- dplyr::filter(summary_df, DataType %in% data_types)
+    data_type_desc <- paste(data_type_desc, aggregation_state)
+  }
+  else {
+    y_axis <- "Count"
+    y_axis_label <- "Barcodes"
+  }
+
+  fill_type <- str_replace_all(fill_type_label, " ", "") # remove spaces
+
+  # set up the plot
+  p <- ggplot(summary_df, aes(x = !!rlang::sym(x_axis), y = !!rlang::sym(y_axis),
+                              fill = !!rlang::sym(fill_type))) +
+         labs(title = paste(y_axis_label, "Counts for", samples, "and",
+                            data_type_desc, "Data"),
+              x = x_axis_label, y = y_axis_label)
+
+  # split bars for reads/counts, stack for barcodes
+  if (count_type == "Barcode") {
+      p <- p + geom_bar(stat = "identity", color = "black", linewidth = 0.2) +
+               scale_fill_manual(name = fill_type_label,
+                                 values = unname(clrs_datatype))
+  }
+  else {
+      p <- p + geom_bar(stat = "identity", position = "dodge",
+                        color = "black", linewidth = 0.2) + #
+               scale_fill_manual(name = fill_type_label,
+                                 values = unname(clrs_datatype[data_types]))
+  }
+
+  # remove scientific notation
+  p <- p + scale_y_continuous(labels = label_comma(), breaks = breaks_pretty())
+
+  # add information horizontal lines based on YCGA information
+  if (include_hlines & count_type != "Barcode" & "GEX" %in% data_types) {
+    summary_df_gex <- dplyr::filter(summary_df, DataType == "GEX")
+
+    if (count_type == "Read") {
+      p <-
+        p + labs(subtitle = "YCGA recommends 200 million reads",
+                 caption = "Solid line: recommended amount | dotted line: current GEX minimum") +
+            geom_hline(yintercept = min(summary_df_gex[[y_axis]]),
+                       linetype = "dotted", linewidth = 0.5) +
+            geom_hline(yintercept = 2*10^8, linetype = "solid", linewidth = 0.5)
+    }
+    else if (count_type == "reads_per_cell") {
+      p <-
+        p + labs(subtitle = "10x recommends 20,000 reads per cell",
+                 caption = "Solid line: suggested amount | dot-dashed line: current GEX average") +
+            geom_hline(yintercept = mean(summary_df_gex[[y_axis]], na.rm = TRUE),
+                       linetype = "dotdash", linewidth = 0.5) +
+            geom_hline(yintercept = 20000, linetype = "solid", linewidth = 0.5)
+    }
+    else if (count_type == "Cell") {
+      p <-
+        p + labs(subtitle = "We tend to ask for 10,000 cells",
+                 caption = "Solid line: requested amount | dot-dashed line: current GEX average | dashed line: current GEX median") +
+            geom_hline(yintercept = mean(summary_df_gex[[y_axis]], na.rm = TRUE),
+                       linetype = "dotdash", linewidth = 0.5) +
+            geom_hline(yintercept = median(summary_df_gex[[y_axis]], na.rm = TRUE),
+                       linetype = "dashed", linewidth = 0.5) +
+            geom_hline(yintercept = 10^4, linetype = "solid", linewidth = 0.5)
+    }
+  }
+
+  # add remaining styling
+  p <- p + theme_bw + labels_rotate_x + labels_standard
+
+  return(p)
+}
+```
+
+### Plot heatmap
+
+```{r func-plot-qc-heatmap}
+
+
+#' Returns a heatmap representing barcode overlaps.
+#'
+#' @details colors the sample names by the sample type and splits by dataset
+#'
+#' @param input_matrix the matrix you would like to plot
+#' @param data_types list of 2 values (GEX, BCR, TCR), preferably alphanumeric
+#' @param row_cluster if you would like to cluster the rows or not
+#' @param col_cluster if you would like to cluster the columns or not
+#' @param text_size a character vector of the inner text, border text and title text sizes respectively
+#' @param matrix_annos named list of annotations to display along the side if desired
+#' @param by_percent if the input matrix is for percentages or not
+#'
+#' @returns
+plot_qc_heatmap <- function(input_matrix, data_types,
+                            row_cluster = FALSE, col_cluster = FALSE,
+                            text_sizes = c(6, 8, 12), matrix_annos, by_percent) {
+  # set up the titles
+  title <- paste(data_types[[1]], "vs.", data_types[[2]], "Barcode Overlaps")
+  if (by_percent) {
+    title <- paste(title, "(By Percent)")
+    legend_title <- "Percentage"
+    col_split <- NULL # matrix_annos$Dataset
+  }
+  else {
+    title <- paste(title, "(By Counts)")
+    legend_title <- "Barcodes"
+    col_split <- matrix_annos$Dataset
+  }
+
+  # only annotating by dataset here
+  col_ha <- columnAnnotation(df = matrix_annos %>% select(Dataset),
+                             col = list(Dataset = colors_dataset),
+                             show_annotation_name = FALSE, show_legend = FALSE,
+                             height = unit(text_sizes[1], "pt"),
+                             simple_anno_size_adjust = TRUE)
+  row_ha <- rowAnnotation(df = matrix_annos %>% select(Dataset),
+                          col = list(Dataset = colors_dataset),
+                          show_annotation_name = FALSE,
+                          width = unit(text_sizes[1], "pt"),
+                          simple_anno_size_adjust = TRUE)
+
+  ComplexHeatmap::Heatmap(matrix = input_matrix,
+                          col = rev(brewer.pal(n = 7, name = "RdYlBu")), # like in pheatmap
+                          name = legend_title,
+                          rect_gp = gpar(col = "lightgray", lwd = 0.5),
+                          layer_fun = function(j, i, x, y, width, height, fill) {
+                                        v = pindex(input_matrix, i, j)
+                                        l = v > 0
+                                        grid.text(v[l], x[l], y[l],
+                                                  gp = gpar(fontsize = text_sizes[1]))
+                          },
+                          row_title = NULL,
+                          column_title = title,
+                          column_title_gp = gpar(fontsize = text_sizes[3]),
+                          cluster_rows = row_cluster,
+                          cluster_columns = col_cluster,
+                          row_names_gp = gpar(col = matrix_annos$SampleTypeCol,
+                                              fontsize = text_sizes[2],
+                                              fontface = "bold"),
+                          column_names_gp = gpar(col = matrix_annos$SampleTypeCol,
+                                                 fontsize = text_sizes[2],
+                                                 fontface = "bold"),
+                          column_names_rot = 45,
+                          top_annotation = col_ha,
+                          left_annotation = row_ha,
+                          row_split = matrix_annos$Dataset,
+                          column_split = col_split)
+}
+```
+
+### Doublets
+
+```{r func-layout-doublets}
+
+
+#' This function plots an overview of a doublet identification method
+#'
+#' It assumes that colors_doublet has been defined
+#' Depends on other plots
+#'
+#' @param seurat_obj The Seurat object.
+#' @param tissue_type Blood, Skin.
+#' @param clrs_specific The specific color palette (should be named).
+#' @param plot_by
+#' @param clusters_col Which column in the object stores the clusters.
+#' @param annotated If the cell types have been identified.
+#' @param annotations_col Which column in the object stores the cell types.
+#' @param doublet_col The column containing the doublets information
+#' @param details The optional subtitle.
+#'
+#' @returns
+layout_doublets <- function(seurat_obj, tissue_type, clrs_specific,
+                            clusters_col = "seurat_clusters",
+                            annotated = FALSE,
+                            annotations_col = "annotated_clusters",
+                            doublet_col, doublet_package, details = NULL) {
+  # if you want to use the default ggplot2 colors
+  if (is_missing(clrs_specific)) {
+    clrs_specific <- hue_pal()(n_distinct(seurat_obj[[clusters_col]]))
+  }
+
+  # define the legends
+  if (annotated) {
+    plot_col <- annotations_col
+    cluster_legend <- "Cell Type"
+
+    # subclustered only
+    if (annotations_col == "annotated_subclusters") {
+      cluster_legend <- paste("Subclustered", cluster_legend)
+    }
+
+    Idents(seurat_obj) <- annotations_col
+  }
+  else {
+    plot_col <- clusters_col
+    cluster_legend <- "Cluster"
+
+    # subclustered only
+    if (clusters_col == "seurat_subclusters") {
+      cluster_legend <- "Subcluster"
+    }
+
+    Idents(seurat_obj) <- clusters_col
+  }
+
+  # UMAP colored by doublets/singlets
+  p1 <- plot_umap(seurat_obj = seurat_obj, tissue_type = tissue_type,
+                  clrs_specific = colors_doublet, specific_clusters = "Doublet",
+                  specific_col = doublet_col,
+                  plot_by = "cluster_all", plot_label = FALSE,
+                  include_legend = FALSE) +
+          labs(subtitle = details)
+
+  # bar plot of doublets with raw counts
+  df <- data.frame(table(seurat_obj[[]] %>%
+                           select(all_of(plot_col), all_of(doublet_col))))
+  p2 <- ggplot(df,
+               aes(x = !!rlang::sym(plot_col), y = Freq,
+                   fill = !!rlang::sym(doublet_col))) +
+          geom_bar(stat = "identity", position = "dodge",
+                   color = "black", linewidth = 0.2) +
+          geom_text(aes(label = Freq), position = position_dodge(width = 0.9),
+                    vjust = -1, size = 3) +
+          labs(title = paste(tissue_type, "Doublets by", cluster_legend),
+               subtitle = details, x = cluster_legend,
+               y = "Count", fill = doublet_package) +
+          scale_fill_manual(values = colors_doublet) +
+          theme_bw + labels_standard
+
+  # UMAP colored by clusters/annotations
+  if (annotated) {
+    # since we're checking annotation status anyways
+    p2 <- p2 + labels_rotate_x
+
+    p3 <- plot_umap(seurat_obj = seurat_obj, tissue_type = tissue_type,
+                    clrs_specific = clrs_specific,
+                    plot_by = "cluster_all", annotated = TRUE,
+                    annotations_col = plot_col,
+                    include_legend = FALSE)
+  } else {
+    p3 <- plot_umap(seurat_obj = seurat_obj, tissue_type = tissue_type,
+                    plot_by = "cluster_all", clusters_col = clusters_col,
+                    include_legend = FALSE)
+  }
+
+  # bar plot of doublets with percentage counts
+  p4 <- plot_pcts(pcts = calc_pcts(data = seurat_obj[[]],
+                                   meta_group_by = plot_col,
+                                   focus_group = doublet_col),
+                  tissue_type = tissue_type, plot_type = "All",
+                  plot_value = "Doublets",
+                  x_axis = plot_col, x_axis_label = cluster_legend,
+                  fill_type = doublet_col, fill_label = doublet_package,
+                  clrs_specific = colors_doublet, details = details)
+
+  # combine plots
+  p1 + p2 + p3 + p4 +
+    plot_layout(guides = "collect", widths = c(1, 3)) + plot_anno
+}
+```
+
+## GEX
+
+### Standard pipeline
+
+This pipeline is loosely based on [Seurat's pipeline](https://satijalab.org/seurat/articles/pbmc3k_tutorial). Unlike previous analyses, `features = rownames(obj)` was removed from the `ScaleData` step since the data is too large and only the top variable features are needed to do `RunPCA.`
+
+```{r func-seurat-pipeline}
+
+
+#' Runs Seurat's clustering pipeline with given parameters.
+#'
+#' @details
+#' It is highly recommended to save the resulting object as an RDS.
+#' Note that this assumes that subclustered objects were annotated on the "higher" level.
+#'
+#' @param seurat_obj already combined GEX data
+#' @param subcluster Whether or not the data is subclustered
+#' @param nfeatures_RNA minimum number of RNA features
+#' @param perc_mt maximum percentage of mitochondrial genes included
+#' @param num_features desired number of variable features
+#' @param num_pcs number of principal components
+#' @param num_dims number of dimensions to reduce to
+#' @param cluster_res clustering resolution
+#' @param filter_genes Whether or not to filter out IG/TR genes.
+#'
+#' @returns description
+seurat_pipeline <- function(seurat_obj, subcluster = FALSE,
+                            nfeatures_RNA = 200, perc_mt = 15,
+                            num_features = 2000, num_pcs = 30, num_dims = 20,
+                            cluster_res = 0.4, filter_genes = TRUE) {
+  # filtration
+  if (!subcluster) {
+    seurat_obj <- subset(seurat_obj, subset = nFeature_RNA > nfeatures_RNA &
+                                              percent.mt < perc_mt)
+  }
+
+  # standard normalization
+  seurat_obj <- NormalizeData(seurat_obj,
+                              normalization.method = "LogNormalize",
+                              scale.factor = 10000)
+
+  # highly variable features
+  seurat_obj <- FindVariableFeatures(seurat_obj,
+                                     selection.method = "vst",
+                                     nfeatures = num_features)
+
+  # scaling
+  # note: `features = rownames(seurat_obj)` can cause crashes
+  seurat_obj <- ScaleData(seurat_obj)
+
+  # filter out the IG and TR genes
+  # assumes that features_meta is already loaded and remove_genes defined
+  # see the "Features to be filtered out" section in 04-data_unprocessed.Rmd
+  if (filter_genes) {
+    remove_feats <- VariableFeatures(seurat_obj) %in% remove_genes
+    VariableFeatures(seurat_obj) <- VariableFeatures(seurat_obj)[!remove_feats]
+    cat("After removing IG/TR genes, the total number of variable features is:",
+        length(VariableFeatures(seurat_obj)), "\n")
+  }
+
+  # dimensionality reduction
+  seurat_obj <- RunPCA(seurat_obj, npcs = num_pcs)
+
+  # clustering
+  if (!subcluster) {
+    seurat_obj <- FindNeighbors(seurat_obj, reduction = "pca",
+                                dims = 1:num_dims)
+    seurat_obj <- FindClusters(seurat_obj, resolution = cluster_res)
+  }
+  else {
+    # don't overwrite the original clustering column
+    seurat_obj$seurat_clusters_orig <- seurat_obj$seurat_clusters
+
+    seurat_obj <- FindNeighbors(seurat_obj, reduction = "pca",
+                                dims = 1:num_dims,
+                                graph.name = c("RNA_nn_sub", "RNA_snn_sub"))
+    seurat_obj <- FindClusters(seurat_obj, resolution = cluster_res,
+                               graph.name = "RNA_snn_sub")
+
+    # fix the cluster metadata
+    seurat_obj$seurat_subclusters <- seurat_obj$seurat_clusters
+    seurat_obj$seurat_clusters <- seurat_obj$seurat_clusters_orig
+    seurat_obj$seurat_clusters_orig <- c()
+    seurat_obj$annotated_clusters <- droplevels(seurat_obj$annotated_clusters)
+  }
+
+  seurat_obj <- RunUMAP(seurat_obj, reduction = "pca", dims = 1:num_dims)
+
+  return(seurat_obj)
+}
+```
+
+### Cell counts per cluster
+
+You can also plot other things e.g. sample names.
+
+```{r func-plot-counts-cluster}
+
+
+#' Visualize how many cells are in each Seurat cluster or cell type.
+#'
+#' @param clusters e.g. combined_blood$seurat_clusters or combined_skin_b$annotated_subclusters
+#' @param tissue_type Blood, Skin
+#' @param clrs_specific The specific color palette (should be named).
+#' @param x_axis Cluster, Cell Type
+#' @param x_axis_label description
+#' @param add_zeroes List of clusters to add with zero counts.
+#' @param details The optional subtitle e.g. the subclustering.
+#'
+#' @returns description
+plot_counts_cluster <- function(clusters, tissue_type = "", clrs_specific,
+                                x_axis = "Cluster", add_zeroes, details) {
+  # if you want to use the default ggplot2 colors
+  if (is_missing(clrs_specific)) clrs_specific <- hue_pal()(n_distinct(clusters))
+  
+  data <- data.frame(table(clusters)) %>% rename(Count = Freq)
+  
+  if (!is_missing(add_zeroes)) {
+    data <- bind_rows(data, data.frame(clusters = add_zeroes,
+                                       Count = rep(0, length(add_zeroes)))) %>%
+              arrange(clusters)
+  }
+
+  p <- ggplot(data,
+              aes(x = clusters, y = Count, fill = clusters)) +
+         geom_col(color = "black", linewidth = 0.2) +
+         geom_text(aes(label = Count), vjust = -1, size = 3) +
+         labs(title = paste(tissue_type, "Cell Counts per", x_axis),
+              x = x_axis) +
+         scale_fill_manual(values = clrs_specific) +
+         theme_bw + labels_standard + theme(legend.position = "none")
+
+  if (!is_missing(details)) p <- p + labs(subtitle = details)
+
+  # if (total_percentage) {
+  #   ggplot(combined_skin[[]] %>% select(Subject) %>% mutate(Type = "Subject"),
+  #      aes(x = Type, fill = Subject)) +
+  #   geom_bar(linewidth = 0.2, color = "black") +
+  #   scale_fill_manual(values = colors_subject) +
+  #   coord_flip() +
+  #   theme_bw + labels_standard
+  # }
+
+  if (x_axis == "Cell Type") p <- p + labels_rotate_x
+
+  # return the plot
+  return(p)
+}
+
+# plot_counts_cluster2 <- function(seurat_obj, groups, fill_group, tissue_type, details,
+#                                   x_axis = "Cluster", clrs_specific) {
+#   # if you want to use the default ggplot2 colors
+#   if (is_missing(clrs_specific)) clrs_specific <- hue_pal()(nlevels(clusters))
+#
+#   p <- ggplot(data.frame(table(clusters)) %>% rename(Count = Freq),
+#               aes(x = clusters, y = Count, fill = clusters)) +
+#          geom_col() +
+#          geom_text(aes(label = Count), vjust = -1, size = 3) +
+#          labs(title = paste(tissue_type, "Cell Counts per", x_axis),
+#               x = x_axis) +
+#          scale_fill_manual(values = clrs_specific) +
+#          theme_bw + labels_standard + theme(legend.position = "none")
+#
+#   ggplot(seurat_obj[[]] %>%
+#          select(all_of(groups)) %>%
+#          mutate_all(as.character),
+#        aes(x = seurat_subclusters, fill = fill_group)) +
+#   geom_bar(position = "stack", color = "black", linewidth = 0.2) +
+#   labs(title = "Blood B Cells by Cluster", x = "Cluster", y = "Count") +
+#   scale_y_continuous(breaks = breaks_pretty()) +
+#   scale_fill_manual(values = colors_binary) +
+#   theme_bw + labels_standard
+#
+#   if (!is_missing(details)) p <- p + labs(subtitle = details)
+#
+#   # return the plot
+#   return(p)
+# }
+```
+
+### Tile
+
+```{r func-plot-tile}
+
+
+#' Visualize which samples contribute to which Seurat clusters.
+#'
+#' @details
+#' You have to reverse the samples to have them plot alphabetically.
+#'
+#' @param seurat_obj The Seurat object.
+#' @param tissue_type The plot title (if you don't have a specific tissue).
+#' @param clrs_specific The specific color palette (should be named).
+#' @param y_axis What to plot on the y axis.
+#' @param y_axis_label A better y axis title if desired.
+#' @param x_axis What to plot on the x axis.
+#' @param x_axis_label A better x axis title if desired.
+#' @param details The optional subtitle.
+#'
+#' @returns description
+plot_tile <- function(seurat_obj, tissue_type, clrs_specific,
+                      y_axis = "SampleName", y_axis_label = "Sample",
+                      x_axis = "seurat_clusters",
+                      x_axis_label = "Seurat Cluster", details) {
+  # make sure the order is right
+  obj_meta <-
+    seurat_obj[[]] %>%
+      mutate(!!rlang::sym(y_axis) :=
+               factor(!!rlang::sym(y_axis),
+                      levels = rev(sort(unique(!!rlang::sym(y_axis))))))
+
+  p <- ggplot(obj_meta,
+              aes(x = !!rlang::sym(x_axis), y = !!rlang::sym(y_axis),
+                  fill = !!rlang::sym(y_axis))) +
+         geom_tile(color = "white", linewidth = 0.2) +
+         labs(title = paste(tissue_type, y_axis_label, "in each", x_axis_label),
+              x = x_axis_label, y = y_axis_label) +
+         scale_fill_manual(values = clrs_specific) +
+         theme_bw + labels_standard +
+         theme(panel.grid.major.y = element_blank(),
+               legend.position = "none")
+
+  if (!is_missing(details)) p <- p + labs(subtitle = details)
+
+  return(p)
+}
+```
+
+### Annotation
+
+#### Find markers
+
+```{r search-markers}
+
+
+#' This function will return a list of the full markers found within the provided Seurat object based on the provided partial matches.
+#'
+#'
+#' @param seurat_obj The Seurat object.
+#' @param markers List of the first few letters of the marker genes to search the object for.
+#'
+#' @returns A list of markers.
+search_markers <- function(seurat_obj, markers) {
+  markers_list <- c()
+
+  for (marker in markers) {
+    marker <- paste0("^", marker)
+
+    markers_list <-
+      c(markers_list,
+        sort(rownames(seurat_obj)[grepl(marker, rownames(seurat_obj))]))
+  }
+
+  markers_list
+}
+```
+
+#### Get features of interest
+
+```{r func-get-features-all}
+
+
+#' This function will return all specific markers in the marker genes dataframe.
+#'
+#' @details
+#' Seurat's `DotPlot` function doesn't work with duplicated features, which is why only the distinct features are returned.
+#' Uses str_sort() instead of sort() so that numbers in the marker names will be sorted correctly (if applicable) e.g. KRT1, KRT2, KRT10 instead of KRT1, KRT10, KRT2
+#'
+#' @param markers_df The database of marker genes.
+#' @param sources Who the markers came from if you want specific origins.
+#' @param contains To catch multiple cell types e.g. mDCs and pDCs.
+#' @param tissue_types The tissue types of interest e.g. blood, skin, etc.
+#' @param cell_types The cell types you want markers for.
+#' @param alphabetize_types Whether or not to return the markers alphabetized for each cell type.
+#' @param alphabetize_all Whether or not to return all of the selected markers alphabetized.
+#'
+#' @returns A list of markers.
+get_features_from_all <- function(markers_df,
+                                  sources, contains, tissue_types,
+                                  cell_types = unique(markers_df$Cell_Type),
+                                  alphabetize_types = TRUE, alphabetize_all = TRUE) {
+  # make specific selections if needed
+  if (!rlang::is_missing(sources)) {
+    markers_df <- dplyr::filter(markers_df, Source %in% sources)
+  }
+  if (!rlang::is_missing(contains)) {
+    cell_types <- grep(paste(contains, collapse = "|"),
+                       unique(markers_df$Cell_Type), value = TRUE)
+  }
+  if (!rlang::is_missing(tissue_types)) {
+    markers_df <-  dplyr::filter(markers_df, Tissue_Type %in% tissue_types)
+  }
+
+  features <- c()
+  for (cell_type in cell_types) {
+      markers <- (dplyr::filter(markers_df, Cell_Type == cell_type))$Marker
+      if (alphabetize_types) markers <- str_sort(markers, numeric = TRUE)
+      features <- append(features, markers)
+  }
+
+  if (alphabetize_all) features <- str_sort(features, numeric = TRUE)
+
+  return(unique(features)) # DotPlot doesn't work with duplicated features
+}
+```
+
+#### Display markers from source
+
+```{r func-source-markers}
+
+
+#' This function will return all specific markers as a table in the specified marker genes dataframe.
+#'
+#' @param filtered_markers_df
+#'
+#' @returns description
+source_markers <- function(filtered_markers_df) {
+  filtered_markers_df %>%
+    select(Cell_Type, Marker) %>%
+    group_by(Cell_Type) %>%
+    distinct() %>%
+    summarize(Markers = paste(Marker, collapse = ", "))
+}
+```
+
+#### Get full cell types
+
+```{r func-get-cell-type}
+#' Pulls the info needed for `add_info_bar()` to a `DotPlot`
+#'
+#' @param markers_df The markers data.frame filtered to match your input features
+#'
+#' @returns A data.frame with Cell_Type_Full and features.plot columns
+get_cell_types <- function(markers_df) {
+  markers_df %>%
+    select(Cell_Type_Full, Marker) %>%
+    rename(features.plot = Marker) %>%
+    mutate(Cell_Type_Full = str_replace_all(Cell_Type_Full, "_", " "))
+}
+```
+
+#### Generate title
+
+```{r func-gen-dot-title}
+#' Generates a title for the DotPlot
+#'
+#' @param data_desc Dataset description
+#' @param marker_sources The list of marker sources
+#'
+#' @returns A string with sources comma-separated and in parentheses
+gen_dot_title <- function(data_desc, marker_sources) {
+  paste0(data_desc, " (",
+         str_c(sort(str_replace_all(marker_sources, "_", " ")),
+               collapse = ", "),
+         ")")
+}
+```
+
+#### Feature + violin plot
+
+```{r func-vln-feat-plot}
+#' Plots a Seurat `VlnPlot` and a `FeaturePlot` side by side for the same marker
+#'
+#' @details
+#' Will put the highest expressing cells on top for the latter.
+#' Assumes that you are using the RNA assay.
+#'
+#' @param seurat_obj The Seurat object with GEX data.
+#' @param tissue_type
+#' @param feature The feature of interest
+#'
+#' @returns Two patchworked Seurat plots.
+vln_feat_plot <- function(seurat_obj, tissue_type, feature) {
+  p1 <- VlnPlot(seurat_obj, features = feature, pt.size = 0.1, raster = FALSE) +
+          labels_standard_vln + NoLegend()
+
+  p2 <- FeaturePlot(seurat_obj, features = feature, pt.size = 0.1, order = TRUE,
+                    min.cutoff = 0, label = TRUE, label.size = 3,
+                    raster = FALSE) +
+          labels_standard + clean_umap
+
+  if (!is_missing(tissue_type)) {
+    p2 <- p2 + labs(title = tissue_type)
+  }
+
+  (p1 | p2) & plot_layout(nrow = 1, widths = c(2, 1))
+}
+```
+
+#### Add annotations
+
+```{r func-add-annotations}
+
+
+#' Add a user-specified list of cluster annotations to the Seurat object.
+#'
+#' @details
+#' It can be used for both manual and automated annotation.
+#'
+#' @param seurat_obj The Seurat object.
+#' @param annotations_df A data.frame of "Cluster" and "CellType".
+#' @param cell_types_col The name of the column containing the cell type.
+#' @param relabel Sometimes you just want to add the metadata.
+#' @param alphabetize Alphabetize the cell types (or not).
+#' @param clusters_col The original clusters column.
+#' @param annotations_col The name of the metadata col for the annotations.
+#'
+#' @returns The provided Seurat object with new annotations added/updated.
+add_annotations <- function(seurat_obj, annotations_df,
+                            cell_types_col = "CellType",
+                            relabel = TRUE, alphabetize = TRUE,
+                            clusters_col = "seurat_clusters",
+                            annotations_col = "annotated_clusters") {
+  # prepare the annotation information
+  annotations <- annotations_df[[cell_types_col]] # you only need the cell type information
+  names(annotations) <- levels(seurat_obj[[clusters_col]] %>% pull())
+
+  # relabel the Seurat clusters
+  current_idents <- Idents(seurat_obj)
+  Idents(seurat_obj) <- clusters_col # reset to original clusters
+  seurat_obj <- RenameIdents(seurat_obj, annotations)
+
+  # alphabetize the cell types
+  if (alphabetize) {
+    Idents(seurat_obj) <- factor(Idents(seurat_obj),
+                                 levels = sort(levels(seurat_obj)))
+  }
+
+  # useful metadata (e.g. if you want to have multiple annotation sets)
+  seurat_obj[[annotations_col]] <- Idents(seurat_obj)
+
+  # if you just wanted to add the metadata
+  if (!relabel) Idents(seurat_obj) <- current_idents
+
+  return(seurat_obj)
+}
+```
+
+### Violin with cell info
+
+From Hailong:
+
+```{r func-vln-cell-info}
+#' @description
+#' Modifies Seurat's VlnPlot with cell count and cell percentage with feature expression > 0
+#' 
+#' @details
+#' You could also just use scCustomize::Percent_Expressing() for calculations
+#'
+#' @param seurat_obj The Seurat object.
+#' @param feature The gene whose expression level will be drawn and will be passed to parameter features of function VlnPlot.
+#' @param clrs_specific
+#' @param split_by The group that will be split by and will be passed to parameter split.by of function VlnPlot.
+#' @param pt_size VlnPlot point size.
+#' @param y_exp_percent The y position of the percentages.
+#' @param num_dec The number of decimal points in the percentages.
+#' @param label_size The font size of cell_count and exp_percent.
+#' @param label_largest_perc
+vln_cell_info <- function(seurat_obj, feature, clrs_specific,
+                          split_by = "SampleType", pt_size = 0.2,
+                          y_exp_percent, num_dec = 2, label_size = 4,
+                          label_largest_perc = TRUE) {
+  # check if the specified arguments exist in the Seurat object
+  if (!(feature %in% rownames(seurat_obj))) {
+    stop(paste("Feature", feature, "not found in the provided Seurat object."))
+  }
+  if (!is.null(split_by)) {
+    if (!(split_by %in% colnames(seurat_obj[[]]))) {
+      stop(paste("Column", split_by, "not found in the provided Seurat object."))
+    }
+  }
+  
+  # set up tracking info
+  clusters <- sort(unique(Idents(seurat_obj)))
+  cell_count <- c()
+  expression_perc <- c()
+
+  # just in case
+  if (is_missing(clrs_specific)) clrs_specific <- hue_pal()(n_distinct(clusters))
+  
+  # determine the sample groups if split_by is provided
+  sample_groups <-
+    if (!is.null(split_by)) sort(unique(seurat_obj[[split_by]][[split_by]]))
+    else list(NULL)  # single group if split_by is not provided
+
+  # for each cell type or cluster
+  for (cluster in clusters) {
+    seurat_obj_cluster <- subset(x = seurat_obj, idents = cluster)
+
+    # for each split_by group
+    for (sample_group in sample_groups) {
+      if (!is.null(split_by)) {
+        so.tmp <- tryCatch({
+          subset(x = seurat_obj_cluster, subset = !!sym(split_by) == sample_group)
+        }, error = function(e) {
+          NULL
+        })
+      } else {
+        so.tmp <- seurat_obj_cluster
+      }
+
+      # cell count in cluster and group
+      cell_count_cur <- length(Cells(so.tmp))
+      cell_count <- c(cell_count, cell_count_cur)
+
+      if (cell_count_cur > 0) {
+        so.tmp <- tryCatch({
+          subset(x = so.tmp, subset = !!sym(feature) > 0)
+        }, error = function(e) {
+          NULL
+        })
+
+        # percentage of cells with expression of the feature in each cluster and group
+        if (!is.null(so.tmp)) {
+          expression_perc <- c(expression_perc,
+                               length(Cells(so.tmp))/cell_count_cur)
+        } else {
+          expression_perc <- c(expression_perc, 0)
+        }
+      } else {
+        expression_perc <- c(expression_perc, 0)
+      }
+    }
+  }
+
+  # formatting for plotting
+  expression_perc_format <- label_percent(accuracy = 10^-num_dec)(expression_perc)
+  n_c <- length(cell_count)
+  if (!is.null(split_by)) {
+    x_axis <- (1:n_c) / 2 + 0.25
+  } else {
+    x_axis <- 1:n_c
+  }
+
+  # adjust spacing as desired
+  if (rlang::is_missing(y_exp_percent)) {
+    y_exp_percent <- ceiling(max(FetchData(seurat_obj, vars = feature))) + 0.1
+  }
+  y_cell_count <- y_exp_percent + 0.5 # 0.25
+  y_max <- y_exp_percent + 1 # 0.5
+  
+  # draw VlnPlot with annotations of cell count and percentage of cell with expression of the feature
+  p <- VlnPlot(object = seurat_obj, features = feature, split.by = split_by,
+               pt.size = pt_size, raster = FALSE) +
+         # label percentage with feature expression > 0
+         annotate(geom = "text", label = expression_perc_format, x = x_axis,
+                  y = rep(y_exp_percent, n_c), size = label_size,
+                  color = "black", fontface = 2) +
+         # label cell count
+         annotate(geom = "text", label = cell_count, x = x_axis,
+                  y = rep(y_cell_count, n_c), size = label_size,
+                  color = "black", fontface = 2) +
+         scale_fill_manual(values = clrs_specific) + # works better than cols
+         labels_standard_vln
+
+  if (label_largest_perc) {
+    # there could be ties
+    largest_perc <- which(expression_perc == max(expression_perc))
+    largest_perc <- ifelse(seq_along(expression_perc) %in% largest_perc,
+                           "^", "")
+
+    y_cell_count <- y_exp_percent + 0.5 # 0.25
+    y_largest_perc <- y_exp_percent + 1 # 0.5
+    y_max <- y_exp_percent + 1.5 # 0.75
+
+    # make the label a little larger
+    p <- p + annotate(geom = "text", label = largest_perc, x = x_axis,
+                      y = rep(y_largest_perc, n_c), size = label_size + 1,
+                      color = "black", fontface = 2)
+  }
+
+  # limit the y axis
+  p <- p + ylim(0, y_max)
+
+  # remove the legend
+  if (is.null(split_by)) p <- p + NoLegend()
+
+  # plot
+  p
+}
+```
+
+## AIRR
+
+### Read in the data
+
+This only adds isotypes for the heavy chains of the BCR data
+
+```{r func-read-immune-data}
+
+
+#' Read in and combine the BCR/TCR combined data from the changeo-10x pipeline.
+#'
+#' @param data_type BCR, TCR
+#' @param meta_file description
+#' @param data_dir description
+#' @param add_isotypes only for BCR data and uses the c_call column (it was previously an independent function)
+#' @param filter_isotypes_na description
+#' @param include_info description
+#'
+#' @returns description
+read_immune_data <- function(data_type, meta_file,
+                             data_dir = "changeo_combined",
+                             add_isotypes = FALSE, filter_isotypes_na = FALSE,
+                             include_info = TRUE) {
+  # setup
+  combined_vdj <- data.frame()
+
+  for (dataset in unique(meta_file$Dataset)) {
+    combined_file_name <- paste0(paste("combined", data_type, "productive",
+                                sep = "_"), ".tsv")
+
+    # read in the data
+    changeo <-
+      airr::read_rearrangement(file.path(path_data_root,
+                                         paste0("dataset", dataset),
+                                         data_dir, combined_file_name))
+    changeo <- changeo %>% mutate(across(c(SampleName, Subject, Dataset),
+                                         as.character)) # Dataset
+
+    # combine the files
+    combined_vdj <- bind_rows(combined_vdj, changeo)
+  }
+
+  # include isotype info for BCR data
+  if (add_isotypes) {
+    combined_vdj$Isotype <- NA # in case c_call is NA
+    combined_vdj <- mutate(combined_vdj,
+                           Isotype = case_when(str_detect(c_call, "IGHA") ~ "IgA",
+                                               str_detect(c_call, "IGHD") ~ "IgD",
+                                               str_detect(c_call, "IGHE") ~ "IgE",
+                                               str_detect(c_call, "IGHG") ~ "IgG",
+                                               str_detect(c_call, "IGHM") ~ "IgM"))
+  }
+
+  # make sure the levels are in alphanumeric order
+  # levels(combined_vdj$SampleType) <- sort(levels(combined_vdj$SampleType))
+
+  # remove NA isotypes (use with caution!)
+  if (filter_isotypes_na) {
+    combined_vdj <- combined_vdj[-which(is.na(combined_vdj$c_call)), ]
+  }
+
+  # print out some useful summary info
+  if (include_info) {
+    cat("The combined", data_type, "data has",
+        nrow(combined_vdj), "rows and", ncol(combined_vdj), "columns.\n")
+
+    num_na_calls <- sum(is.na(combined_vdj$c_call))
+    cat("There are", num_na_calls, "NA C calls out of", nrow(combined_vdj), "total calls",
+        paste0("(", round(100 * num_na_calls / nrow(combined_vdj), 2), "%).\n"))
+  }
+
+  return(combined_vdj)
+}
+```
+
+### Plots
+
+#### Immcantation
+
+```{r func-plot-immune-counts}
+
+
+#' Dot plot of Immcantation values.
+#'
+#' @param counts Immcantation data to plot e.g. countGenes() output.
+#'
+#' @returns
+plot_immune_counts <- function(plt_type, tissue_type = "All", counts, filter_by,
+                               plt_color, clrs_specific,
+                               x_axis, x_axis_label,
+                               y_axis, y_axis_label = "Repertoire Percentage",
+                               y_axis_percent = TRUE,
+                               plt_title, legend_title, legend_exist = FALSE,
+                               pt_size = 1) {
+  # filter out NAs if desired
+  if (!missing(filter_by)) counts <- dplyr::filter(counts, !is.na(!!rlang::sym(filter_by)))
+
+  # filter the data by tissue type if applicable
+  if (tissue_type != "All") {
+    counts <- dplyr::filter(counts, TissueType == tissue_type)
+  }
+
+  # x axis title
+  if (rlang::is_missing(x_axis_label)) x_axis_label <- x_axis
+
+  # legend title
+  if (rlang::is_missing(legend_title)) legend_title <- plt_color
+
+  # set up the plot
+  if (plt_type == "point") {
+    p <- ggplot(data = counts, aes(x = !!rlang::sym(x_axis), y = !!rlang::sym(y_axis))) +
+           geom_point(aes(color = !!rlang::sym(plt_color)), size = pt_size) +
+           scale_color_manual(name = legend_title,
+                              values = clrs_specific, limits = force)
+  }
+  else if (plt_type == "box") {
+    p <- ggplot(data = counts, aes(x = !!rlang::sym(x_axis), y = !!rlang::sym(y_axis),
+                                   fill = !!rlang::sym(plt_color))) +
+           geom_boxplot(outlier.size = pt_size) +
+           scale_fill_manual(name = legend_title,
+                             values = clrs_specific, limits = force)
+  }
+  else {
+    cat("Invalid plot type, please try again.")
+  }
+
+  # add plot labels
+  p <- p + labs(title = paste0(plt_title, " (", tissue_type, ")"),
+                x = x_axis_label, y = y_axis_label)
+
+  # convert to percentage if applicable
+  if (y_axis_percent) {
+    p <- p + scale_y_continuous(labels = percent, expand = expansion(mult = .02))
+  }
+
+  # add remaining styling
+  p <- p + theme_bw + labels_standard
+  if (!legend_exist) p <- p + theme(legend.position = "none")
+
+  return(p)
+}
+```
+
+#### Heatmaps
+
+Based on **OverlapHeatmap_singlecell.R** from Hailong (and Susanna)
+
+##### Sharing matrix
+
+```{r}
+
+
+# This function modified previous overlap heatmap function and is used to show, between two samples
+# in single cell data, the overlap of cells which has same barcode and sequences
+# This script deal wiht samples "P05_PBMC_2_5_Y1" &&  jj == "P05_PBMC_2_0_Y1" separately
+# Will keep all duplicated cells in Year 1
+
+# library(alakazam)
+# library(gplots)
+# library(reshape)
+# library('RColorBrewer')
+# suppressMessages(library(scales))
+# suppressMessages(library(gridExtra))
+
+# find cells having same seq and cell barcode
+
+#' This function modified previous overlap heatmap function and is used to show, between two samples.
+#'
+#' @param
+#'
+#' @returns
+singlecell_sharing_matrix <- function(clip_df, group, cell = "CELL",
+                                      seq = "SEQUENCE_IMGT", order_by = NULL) {
+  # checking the validity of input parameters
+  if (!(group %in% names(clip_df))) {
+    stop("Please supply a valid column label for the 'group' parameter")
+  }
+
+  # extract group names
+  GROUPS <- unique(clip_df[, group])
+  NUM_GROUPS <- length(GROUPS)
+
+  # define clone overlap matrices to be plotted
+  overlap_matrix <- matrix(0, NUM_GROUPS, NUM_GROUPS)
+  dimnames(overlap_matrix) <- list(GROUPS, GROUPS)
+
+  overlap_count <- overlap_matrix # matrix of overlap count
+  overlap_total <- overlap_matrix # matrix of overlap total
+  overlap_percent <- overlap_matrix # matrix of overlap percent
+
+  # calculate the number of overlapped cells
+  for (ii in GROUPS) {
+    for (jj in GROUPS) {
+      # cell in groups i and j
+      cells_ii <- clip_df[clip_df[, group] == ii, cell]
+      cells_jj <- clip_df[clip_df[, group] == jj, cell]
+      # seqs in groups i and j
+      seqs_ii <- clip_df[clip_df[, group] == ii, seq]
+      seqs_jj <- clip_df[clip_df[, group] == jj, seq]
+
+      # find the number of cells having same seq and cell barcode shared between groups i and j
+      # TO reduce match time, find shared cells first and then compare seq for those cells
+      shared_cells <- unique(intersect(cells_ii, cells_jj))
+      index_ii <- match(shared_cells, cells_ii)
+      index_jj <- match(shared_cells, cells_jj)
+
+      num_shared_cells <- length(which(seqs_ii[index_ii] == seqs_jj[index_jj]))
+
+      total_ii_cells <- length(unique(cells_ii))
+      total_jj_cells <- length(unique(cells_jj))
+      total_cells <- min(total_ii_cells, total_jj_cells)
+      # total_cells = length(union(seqs_ii, seqs_jj))
+
+      # find the percentage of clones shared relative to the total number of clones
+      perc_shared_clones <- round(num_shared_cells / total_cells * 100, 4)
+
+      # Fill in matrices
+      overlap_count[ii, jj] <- num_shared_cells
+      overlap_total[ii, jj] <- total_cells
+      overlap_percent[ii, jj] <- perc_shared_clones
+
+      #if (ii == jj) { overlap_perc_matrix[ii, jj] = length(seqs_ii) }
+    }
+  }
+  if (!is.null(order_by)) {
+    overlap_count <- overlap_count[order_by, order_by]
+    overlap_total <- overlap_total[order_by, order_by]
+    overlap_percent <- overlap_percent[order_by, order_by]
+  }
+
+  return(createOverlap(overlap_count, overlap_total, overlap_percent))
+}
+```
+
+##### Remove duplicates 1
+
+```{r}
+
+
+#' Remove cells with same 1) barcode and 2) sequences between samples (group)
+#'
+#' @param
+#'
+#' @returns
+removeSingleCellDuplicate <- function(clip_df, group,
+                                      cell = "CELL", seq = "SEQUENCE_IMGT") {
+  # checking the validity of input parameters
+  if (!(group %in% names(clip_df))) {
+    stop("Please supply a valid column label for the 'group' parameter")
+  }
+
+  GROUPS <- unique(clip_df[, group])
+  dup_index <- c() # index of duplicates
+
+  # cells with same 1) barcode and 2) sequences between samples (group)
+  for (ii in GROUPS) {
+    for (jj in GROUPS) {
+      if (ii != jj) {
+      # cells in groups i and j
+      cells_ii <- clip_df[clip_df[, group] == ii, cell]
+      cells_jj <- clip_df[clip_df[, group] == jj, cell]
+
+      # seqs in groups i and j
+      seqs_ii <- clip_df[clip_df[, group] == ii, seq]
+      seqs_jj <- clip_df[clip_df[, group] == jj, seq]
+
+      # find the number of cells having same seq and cell barcode shared between groups i and j
+      # TO reduce match time, find shared cells first and then compare seq for those cells
+      shared_cells <- unique(intersect(cells_ii, cells_jj))
+      if (length(shared_cells) != 0) {
+        #find index of shared cells in original data
+        index_ii <- match(shared_cells, cells_ii)
+        index_jj <- match(shared_cells, cells_jj)
+
+        for (i in 1:length(shared_cells)) {
+          # indicate removal if seqs are same too
+          if (seqs_ii[index_ii[i]] == seqs_jj[index_jj[i]]) {
+            index_tmp1 <- intersect(which(clip_df[, cell] == shared_cells[i]),
+                                    which(clip_df[, seq] == seqs_ii[index_ii[i]]))
+              dup_index <- c(dup_index,
+                             intersect(index_tmp1, which(clip_df[, group] == ii)))
+              dup_index <- c(dup_index,
+                             intersect(index_tmp1, which(clip_df[, group] == jj)))
+          }
+        }
+      }
+      }
+    }
+  }
+
+  dup_index <- unique(dup_index)
+
+  if (length(dup_index) == 0) { # no duplicate is found
+    return(clip_df)
+  }
+  else {
+    return(clip_df[-dup_index, ])
+  }
+}
+```
+
+##### Remove duplicates 2
+
+```{r}
+
+
+#' This is the main function to remove duplicates in single cell data, it calls function removeSingleCellDuplicate to remove duplicates until none is found.
+#'
+#' @param
+#'
+#' @returns
+removeSingleCellDuplicates <- function(clip_df, group,
+                                       cell = "CELL", seq = "SEQUENCE_IMGT") {
+  # may need multiple cycles to remove duplicates
+  cycle.index <- 1
+  cat("Remove duplicates - cycle", cycle.index, "\n")
+
+  df1 <- removeSingleCellDuplicate(clip_df, group, cell, seq)
+  df2 <- removeSingleCellDuplicate(df1, group, cell, seq)
+
+  while (dim(df1)[1] != dim(df2)[1]) { # stop until no duplicate is found
+    cycle.index <- cycle.index + 1
+    cat("De-duplication cycle", cycle.index, ".\n")
+
+    df1 <- df2
+    df2 <- removeSingleCellDuplicate(df1, group, cell, seq)
+  }
+
+  return(df2)
+}
+```
+
+##### Create overlaps
+
+```{r}
+
+
+# S4 class defining a Overlap object
+setClass("Overlap", slots = c(overlap_count = "matrix",
+                              overlap_total = "matrix",
+                              overlap_percent = "matrix"))
+
+
+#' @description
+#'
+#' @param
+#'
+#' @returns
+createOverlap <- function(overlap_count = overlap_count,
+                          overlap_total = overlap_total,
+                          overlap_percent = overlap_percent ) {
+  # Define RegionDefinition object
+  overlap <- new("Overlap", overlap_count = overlap_count,
+                            overlap_total = overlap_total,
+                            overlap_percent = overlap_percent)
+
+  return(overlap)
+}
+```
+
+##### Plot overlaps
+
+```{r}
+
+
+# https://stackoverflow.com/questions/69666867/constant-warning-message-with-reshapemelt-in-r
+
+#' @description
+#'
+#' @param
+#'
+#' @returns
+plotOverlapSingleCell <- function(list_objOverlap = "",
+                                  titleText = "", subtitleText = "",
+                                  ROI = NULL, order_by = NULL,
+                                  sizeDiag = 3.5, sizeCount = 5,
+                                  sizePercent = 4) {
+  list_data_m <- list()
+
+  for (x in seq_along(list_objOverlap)) {
+    objOverlap <- list_objOverlap[[x]]
+    if (!is.null(ROI)) {
+      if (length(ROI) > 1) {
+        roi <- match(ROI, row.names(objOverlap@overlap_count))
+        roi <- roi[!is.na(roi)]
+      }
+      else {
+        roi <- which(grepl(ROI, row.names(objOverlap@overlap_count)))
+      }
+
+      objOverlap@overlap_count <- objOverlap@overlap_count[roi, roi]
+      objOverlap@overlap_total <- objOverlap@overlap_total[roi, roi]
+      objOverlap@overlap_percent <- objOverlap@overlap_percent[roi, roi]
+    }
+
+    data_m_count <- reshape::melt(objOverlap@overlap_count)
+    data_m <- reshape::melt(objOverlap@overlap_percent)
+
+    data_m$Y1 <- cut(data_m$value,
+                     breaks = c(0, 0.00001, 1, 2, 3, 4, 6,
+                                10, 20, 30, 99.99999, 100),
+                     right = FALSE, include.lowest = TRUE)
+    copa <- c("white",
+              colorRampPalette(brewer.pal(9, "Oranges"))(nlevels(data_m$Y1) - 1))
+    names(copa) <- levels(data_m$Y1)
+
+    names(data_m)[3] <- "Percent"
+    data_m$Count <- data_m_count$value
+    data_m <- data_m[ is.finite(data_m$Percent), ]
+
+    # Format value to print
+    data_m$Value <- round(data_m$Percent, 2)
+    data_m$Value[ data_m$Value == 0 ] <- ""
+
+    # Non diagonals are counts/percent
+    data_m$Value[ data_m$Value != "" ] <- data_m$Count[ data_m$Value != "" ]
+    data_m$Value[ as.vector(data_m$X1) == as.vector(data_m$X2) ] <- ""
+
+    data_m$ValuePercent <- data_m$Value
+    data_m$ValuePercent[ data_m$Value != "" ] <- data_m$Percent[ data_m$Value != "" ]
+
+    data_m$ValuePercent <- unlist(
+      sapply(data_m$ValuePercent,
+             function(x) {
+               if (x != "") return(paste0(format(round(as.numeric(x), 1), nsmall = 1), "%"))
+               else return("")
+               }
+             )
+      )
+
+    # Diagonals are counts
+    data_m$DiagonalCount <- ""
+    data_m$DiagonalCount[as.vector(data_m$X1) == as.vector(data_m$X2)] <-
+      data_m$Count[as.vector(data_m$X1) == as.vector(data_m$X2)]
+
+    data_m$X1 <- factor(data_m$X1, levels = order_by)
+    data_m$X2 <- factor(data_m$X2, levels = order_by)
+
+    list_data_m[[x]] <- data_m
+  }
+
+  data_m1 <- list_data_m[[1]]
+  data_m2 <- list_data_m[[2]]
+
+  data_m <- data_m1
+  numbItems <- nrow(list_objOverlap[[1]]@overlap_count)
+  pos <- as.vector(upper.tri(matrix(NA, nrow = numbItems, ncol = numbItems, byrow = TRUE)))
+
+  data_m$Value[pos] <- data_m2$Value[pos]
+  data_m$ValuePercent[pos] <- data_m2$ValuePercent[pos]
+  data_m$DiagonalCountLower <- data_m$DiagonalCount
+  data_m$DiagonalCount <- data_m2$DiagonalCount
+  data_m$Y1[pos] <- data_m2$Y1[pos]
+
+  p <- ggplot(data = data_m, aes(X1, X2)) +
+        geom_tile(aes(fill = Y1), color = "gray90") +
+        geom_text(aes(label = DiagonalCount), size = sizeDiag,
+                  angle = 50, color = "white", vjust = -.5, hjust = 0.5) +
+        geom_text(aes(label = DiagonalCountLower), size = sizeDiag,
+                  angle = 50, color = "white", vjust = 1.5, hjust = 0.5) +
+        geom_text(aes(label = Value), size = sizeCount,
+                  color = "black", vjust = 0) +
+        geom_text(aes(label = ValuePercent), size = sizePercent,
+                  color = "black", vjust = 1.4) +
+        scale_fill_manual(name = "% Overlap",
+                          breaks = names(copa), values = copa,
+                          na.value = "white") + # guide = "none"
+        annotate("segment", x = 0.5, xend = numbItems + .5, y = 0.5,
+                 yend = numbItems + .5, color = "white") +
+        labs(title = titleText, subtitle = subtitleText, x = "", y = "") +
+        theme_bw + labels_standard + labels_rotate_x +
+        theme(axis.text.x = element_text(color = "black", size = 10),
+              axis.text.y = element_text(color = "black", size = 10, hjust = 0),
+              axis.ticks = element_blank(),
+              text = element_text(size = 12, color = "black"))
+
+  return(p)
+}
+```
+
+#### Overlays
+
+##### General
+
+```{r func-plot-immune-overlay}
+
+
+#' This function plots the annotated UMAPs alongside the BCR/TCR overlays.
+#'
+#' @details
+#' lightgray is Seurat's default background color and cells_total has to be a list for the labels to work later.
+#'
+#' @param seurat_obj The Seurat object (must contain Has_BCR/Has_TCR cols)
+#' @param tissue_type The tissue type e.g. Blood, Skin
+#' @param airr_type BCR or TCR
+#' @param clrs_specific The specific color palette (should be named).
+#' @param barcode_col barcode, cell_id, Cell_ID_Unique
+#' @param plot_label Whether or not to include the labels.
+#' @param plot_by all samples, by dataset, by sample, by isotype (for BCR data)
+#' @param ncol_sample
+#'
+#' @returns
+plot_immune_overlay <- function(seurat_obj, tissue_type, airr_type,
+                                clrs_specific, plot_by = "all",
+                                barcode_col = "Cell_ID_Unique",
+                                plot_label = FALSE, ncol_sample = 6) {
+  # plot options
+  pt_size <- 0.2
+  label_size <- 4
+  sizes_highlight <- 0.2 # should probably be the same size as the points
+  plot_title <- paste(tissue_type, airr_type, "Overlay")
+
+  # if you want to use the default Seurat colors
+  # if (is_missing(clrs_specific)) clrs_specific <- hue_pal()(num_clusts)
+
+  # AIRR info
+  airr_col <- paste0("Has_", airr_type)
+  combined_vdj_gex <- dplyr::filter(seurat_obj[[]], !!rlang::sym(airr_col))
+
+  if (plot_by == "dataset" || plot_by == "sample") {
+    # set up the cells to be highlighted
+    cells_total <- c()
+    datasets <- as.character(unique(combined_vdj_gex$Dataset))
+
+    for (dataset in datasets) {
+        cells_dataset <- dplyr::filter(combined_vdj_gex,
+                                       Dataset == dataset)[[barcode_col]]
+        cells_total[dataset] <- list(cells_dataset)
+    }
+
+    # main plot (coloring the samples by dataset is helpful)
+    if (plot_by == "sample") {
+      p <- UMAPPlot(object = seurat_obj,
+                    pt.size = pt_size,
+                    split.by = "SampleName",
+                    repel = TRUE,
+                    cells.highlight = cells_total,
+                    sizes.highlight = sizes_highlight,
+                    ncol = ncol_sample, raster = FALSE) +
+             labs(title = paste(plot_title, "by Sample"), color = "Dataset")
+    }
+    else { # dataset
+      p <- UMAPPlot(object = seurat_obj,
+                    pt.size = pt_size,
+                    label = plot_label, label.size = label_size,
+                    repel = TRUE,
+                    cells.highlight = cells_total,
+                    sizes.highlight = sizes_highlight,
+                    raster = FALSE) +
+             labs(title = paste(plot_title, "by Dataset"), color = "Dataset")
+    }
+
+    # the legend
+    p <- p + scale_color_manual(labels = c(paste0("non-", airr_type), rev(datasets)),
+                                values = c("lightgray", unname(clrs_specific[rev(datasets)])))
+  }
+
+  else if (plot_by == "isotype") {
+    # set up the cells to be highlighted
+    cells_total <- c()
+    isotypes <- sort(unique(combined_vdj_gex$Isotype))
+
+    for (isotype in isotypes) {
+        cells_isotype <- dplyr::filter(combined_vdj_gex,
+                                       Isotype == isotype)[[barcode_col]]
+        cells_total[isotype] <- list(cells_isotype)
+    }
+
+    # main plot
+    p <- UMAPPlot(object = seurat_obj,
+                  pt.size = pt_size,
+                  label = plot_label, label.size = label_size,
+                  repel = TRUE,
+                  cells.highlight = cells_total,
+                  sizes.highlight = sizes_highlight,
+                  raster = FALSE) +
+         labs(title = paste(plot_title, "by Isotype"), color = "Isotype")
+
+    # the legend
+    p <- p + scale_color_manual(labels = c(paste0("non-", airr_type), rev(isotypes)),
+                                values = c("lightgray", unname(clrs_specific[rev(isotypes)])))
+  }
+
+  else { # all
+    # set up the cells to be highlighted
+    cells_total <- combined_vdj_gex[[barcode_col]]
+
+    # plot all samples
+    p <- UMAPPlot(object = seurat_obj, pt.size = pt_size,
+                  label = plot_label, label.size = label_size,
+                  repel = TRUE,
+                  cols.highlight = clrs_specific[airr_type],
+                  cells.highlight = cells_total,
+                  sizes.highlight = sizes_highlight,
+                  raster = FALSE) +
+           labs(title = plot_title, color = "Data Type")
+
+    # the legend
+    p <- p + scale_color_manual(name = "Data Type",
+                                labels = c(paste0("non-", airr_type), airr_type),
+                                values = c("lightgray", unname(clrs_specific[airr_type])))
+  }
+
+  # standardize the labels
+  p <- p & labels_standard & clean_umap
+
+  return(p)
+}
+```
+
+##### Mutation freqs
+
+```{r func-plot-mu-freq}
+
+
+#' This function plots mutation frequencies on an annotated UMAP.
+#'
+#' @details
+#'   * "lightgray" is Seurat's default background color
+#'   * FeaturePlot can't do a label box like UMAPPlot can
+#'
+#' @param seurat_obj The Seurat object.
+#' @param tissue_type Blood or Skin.
+#' @param plot_label Add labels to the plot (or not).
+#' @param label_size The size of the plot labels.
+#' @param include_legend
+#'
+#' @returns
+plot_mu_freq <- function(seurat_obj, tissue_type = "", plot_label = TRUE,
+                         label_size = 4, include_legend = FALSE) {
+  # you need the NAs for the background
+  max_freq <- max(seurat_obj$mu_freq, na.rm = TRUE)
+  # for a consistent legend scale
+  max_freq <- round(max_freq, digits = 2)
+
+  # set up the plot
+  p <- FeaturePlot(seurat_obj, features = "mu_freq", pt.size = 0.2,
+                   order = TRUE, label = plot_label, label.size = label_size,
+                   raster = FALSE) +
+         labs(title = paste(tissue_type, "SHM Frequencies"),
+              subtitle = paste0("Max: ", percent(max_freq), ", Mean: ",
+                                percent(mean(seurat_obj$mu_freq, na.rm = TRUE)))) +
+         scale_color_viridis_c(name = "SHM Frequency",
+                               labels = percent, direction = -1,
+                               option = "C", na.value = "lightgray",
+                               breaks = seq(0, max_freq, 0.05),
+                               limits = c(0, max_freq))
+
+  # standardize the labels
+  p <- p + labels_standard + clean_umap
+
+  # remove the legend
+  if (!include_legend) p <- p + NoLegend()
+
+  return(p)
+}
+```
+
+##### Mutation freqs of isotypes
+
+```{r func-plot-mu-freq-isotype-overlay}
+
+
+#' This function plots mutation frequencies for specific isotypes.
+#'
+#' @details
+#'   * "lightgray" is Seurat's default background color
+#'   * it's a little slow
+#'
+#' @param seurat_obj The Seurat object.
+#' @param isotype The Isotype to overlay (IgA, IgD, IgE, IgG, IgM).
+#' @param tissue_type Blood or Skin.
+#'
+#' @returns
+plot_mu_freq_isotype_overlay <- function(seurat_obj, isotype, tissue_type) {
+  # you need the NAs for the background
+  obj <- subset(seurat_obj, Isotype == isotype | is.na(Isotype))
+  max_freq <- max(seurat_obj$mu_freq, na.rm = TRUE) # for a consistent legend scale
+
+  # set up the plot
+  p <- FeaturePlot(obj, features = "mu_freq", pt.size = 0.2,
+                   order = TRUE, raster = FALSE) +
+         labs(title = paste0(tissue_type, " (", isotype, ")"),
+              subtitle = paste0("Max: ", percent(max(obj$mu_freq, na.rm = TRUE)),
+                                ", Mean: ", percent(mean(obj$mu_freq, na.rm = TRUE)))) +
+         scale_color_viridis_c(name = "SHM Frequency",
+                               labels = percent, direction = -1,
+                               option = "C", na.value = "lightgray",
+                               breaks = seq(0, max_freq, 0.05),
+                               limits = c(0, max_freq))
+
+  # standardize the labels
+  p <- p + labels_standard + clean_umap
+
+  return(p)
+}
+```
+
+### Add information
+
+#### Families and genes
+
+```{r func-add-family-info}
+# TO DO: Add an option to add them in a particular order in the columns
+
+#' Add in family and gene information from `alakazam.`
+#'
+#' @param airr_db An AIRR-formatted data.frame.
+#'
+#' @returns A data.frame with six new columns.
+add_family_info <- function(airr_db) {
+  airr_db %>% mutate(v_call_family = alakazam::getFamily(airr_db$v_call),
+                     v_call_gene = alakazam::getGene(airr_db$v_call),
+                     d_call_family = alakazam::getFamily(airr_db$d_call),
+                     d_call_gene = alakazam::getGene(airr_db$d_call),
+                     j_call_family = alakazam::getFamily(airr_db$j_call),
+                     j_call_gene = alakazam::getGene(airr_db$j_call))
+}
+```
+
+```{r func-factor-family-info}
+#' Add in family and gene information from `alakazam.`
+#'
+#' @details
+#' For after add_family_info() has been run
+#'
+#' @param airr_db An AIRR-formatted data.frame.
+#'
+#' @returns A data.frame with six new columns.
+factor_family_info <- function(airr_db) {
+  airr_db %>%
+  mutate(v_call_family =
+           factor(v_call_family,
+                  str_sort((unique(v_call_family)), numeric = TRUE)),
+         v_call_gene =
+           factor(v_call_gene,
+                  str_sort((unique(v_call_gene)), numeric = TRUE)),
+         d_call_family =
+           factor(d_call_family,
+                  str_sort((unique(d_call_family)), numeric = TRUE)),
+         d_call_gene =
+           factor(d_call_gene,
+                  str_sort((unique(d_call_gene)), numeric = TRUE)),
+         j_call_family =
+           factor(j_call_family,
+                  str_sort((unique(j_call_family)), numeric = TRUE)),
+         j_call_gene =
+           factor(j_call_gene,
+                  str_sort((unique(j_call_gene)), numeric = TRUE)))
+}
+```
+
+#### Bin mutation frequency
+
+```{r}
+#' Bin the mutation frequency
+#'
+#' @param seurat_obj The Seurat object.
+#' @param more_groups Use more bins.
+#' @param col The name of the new column.
+#'
+#' @returns The provided Seurat object with a new binned mu_freq column.
+bin_mu_freq <- function(seurat_obj, more_bins = TRUE, col = "mu_freq_bins") {
+  # get the current mutation frequencies
+  mutation_frequencies <- seurat_obj$mu_freq
+  mutation_frequencies[is.na(mutation_frequencies)] <- -1
+  # mutation_frequencies <- mutation_frequencies[!is.na(mutation_frequencies)]
+  max_mu_freq <- max(mutation_frequencies)
+  
+  # define the bins
+  if (more_bins) {
+    # bins <- seq(0, round(max_mu_freq, digits = 1), by = 0.05)
+    bins <- c(-1, 0, 0.01, 0.04, 0.1, max_mu_freq + 0.001) # for rounding
+    labels <- c("0%", "0% to 1%", "1% to 5%", "5% to 10%",
+                paste0("10% to ", round(100 * max_mu_freq), "%"))
+    
+    seurat_obj[[col]] <-
+      cut(mutation_frequencies, breaks = bins, labels = labels)
+  }
+  else { # keep it simple
+    bins <- c(-1, 0, 0.01, max_mu_freq + 0.001) # for rounding
+    labels <- c("0%", "0% to 1%", ">1%")
+    
+    seurat_obj[[col]] <-
+      cut(mutation_frequencies, breaks = bins, labels = labels)
+  }
+  
+  return(seurat_obj)
+}
+```
+
+## GEX & AIRR
+
+### Add AIRR to GEX
+
+```{r func-gex-add-airr}
+#' Add AIRR information to a GEX Seurat object.
+#'
+#' @details
+#' Assumes that the BCR/TCR data includes light/alpha chains.
+#' Collapsed light chains are alphabetized.
+#'
+#' @param seurat_obj The Seurat object.
+#' @param airr_type BCR or TCR.
+#' @param combined_airr AIRR formatted data frame with heavy and light chains
+#' @param airr_cols
+#' @param overview
+#'
+#' @returns The Seurat object with AIRR columns added to the metadata.
+gex_add_airr <- function(seurat_obj, airr_type = "BCR",
+                         combined_airr, airr_cols, overview = TRUE) {
+  airr_col <- paste0("Has_", airr_type)
+  airr_type <- paste0(airr_type, "s")
+
+  # Seurat only takes unique cell ids, hence the filter to heavy/beta chains
+  if (airr_type == "BCRs") {
+    # save light chain information
+    data_heavy <- (dplyr::filter(combined_airr, locus == "IGH"))$Cell_ID_Unique
+    data_light <- (dplyr::filter(combined_airr, locus != "IGH"))$Cell_ID_Unique
+    data_paired <- data_heavy[which(data_heavy %in% data_light)]
+  
+    # select columns of interest from the AIRR data
+    combined_airr_select_heavy <-
+      combined_airr %>%
+        dplyr::filter(locus == "IGH") %>%
+        select(all_of(airr_cols)) %>%
+        mutate(Has_BCR = TRUE, paired_light = Cell_ID_Unique %in% data_paired,
+               .before = Cell_ID_Unique)
+  
+    # pick out some light chain info (this is inelegant, but roll with it)
+    # you have to pivot and combine since there can be multiple light chains
+    combined_airr_select_light <-
+      combined_airr %>%
+      dplyr::filter(locus != "IGH") %>%
+      select(Cell_ID_Unique, locus, v_call_family, j_call_family) %>%
+      pivot_wider(names_from = locus,
+                  values_from = c(v_call_family, j_call_family),
+                  values_fn = function(x) paste(sort(x), collapse = ", "))
+  
+    # add in the light chain info
+    combined_airr_select <-
+      left_join(combined_airr_select_heavy, combined_airr_select_light,
+                by = join_by(Cell_ID_Unique)) %>%
+      relocate(v_call_family_IGK, v_call_family_IGL, .before = v_call_gene) %>%
+      relocate(j_call_family_IGK, j_call_family_IGL, .before = j_call_gene)
+  } else { # TCRs
+    # save alpha chain information
+    data_beta <- (dplyr::filter(combined_airr, locus == "TRB"))$Cell_ID_Unique
+    data_alpha <- (dplyr::filter(combined_airr, locus != "TRB"))$Cell_ID_Unique
+    data_paired <- data_beta[which(data_beta %in% data_alpha)]
+  
+    # select columns of interest from the AIRR data
+    combined_airr_select_beta <-
+      combined_airr %>%
+        dplyr::filter(locus == "TRB") %>%
+        select(all_of(airr_cols)) %>%
+        mutate(Has_TCR = TRUE, paired_alpha = Cell_ID_Unique %in% data_paired,
+               .before = Cell_ID_Unique)
+  
+    # pick out some alpha chain info (this is inelegant, but roll with it)
+    combined_airr_select_alpha <-
+      combined_airr %>%
+      dplyr::filter(locus != "TRB") %>%
+      select(Cell_ID_Unique, locus, v_call_family, j_call_family) %>%
+      pivot_wider(names_from = locus,
+                  values_from = c(v_call_family, j_call_family),
+                  values_fn = function(x) paste(sort(x), collapse = ", "))
+  
+    # add in the alpha chain info
+    combined_airr_select <-
+      left_join(combined_airr_select_beta, combined_airr_select_alpha,
+                by = join_by(Cell_ID_Unique)) %>%
+      relocate(v_call_family_TRA, .before = v_call_gene) %>%
+      relocate(j_call_family_TRA, .before = j_call_gene)
+  }
+
+  # make select columns into alphabetized factors (useful for plotting later)
+  for (col in c("paired_light", "paired_alpha", "Isotype", "c_call", "locus")) {
+    if (col %in% names(combined_airr_select)) {
+      combined_airr_select[[col]] <-
+        factor(combined_airr_select[[col]],
+               levels = sort(unique(combined_airr_select[[col]])))
+    }
+  }
+
+  # for columns that have numbers in them
+  # genes have numbers too though
+  for (col in str_subset(names(combined_airr_select), "call_")) {
+    combined_airr_select[[col]] <-
+      factor(combined_airr_select[[col]],
+             levels = str_sort(unique(combined_airr_select[[col]]),
+                               numeric = TRUE))
+  }
+
+  # combine the two sources of barcodes using the unique cell ids
+  combined_airr_select_obj <-
+    left_join(seurat_obj[["Cell_ID_Unique"]], combined_airr_select,
+              by = "Cell_ID_Unique") %>%
+    mutate({{airr_col}} := replace_na(get(airr_col), FALSE))
+
+  # print out an overview of the integration
+  if (overview) {
+    # paired chain info
+    if (airr_type == "BCRs") {
+      main_chain <- "heavy"
+      
+      message <-
+        paste("There are",
+              nrow(dplyr::filter(combined_airr_select, get(airr_col))),
+              main_chain, "chain", airr_type, "being integrated in,",
+              nrow(dplyr::filter(combined_airr_select, paired_light == "TRUE")),
+              "of which have at least one paired light chain.")
+    } else {
+      main_chain <- "beta"
+      
+      message <-
+        paste("There are",
+              nrow(dplyr::filter(combined_airr_select, get(airr_col))),
+              main_chain, "chain", airr_type, "being integrated in,",
+              nrow(dplyr::filter(combined_airr_select, paired_alpha == "TRUE")),
+              "of which have at least one paired alpha chain.")
+    }
+
+    # final output
+    cat(paste0(message,
+               " When filtered to just the ones that match by cell_id, they cover ",
+               nrow(filter(combined_airr_select_obj, get(airr_col))),
+               " cells (",
+               label_percent(accuracy = 0.1)(mean(Cells(seurat_obj) %in%
+                                                    combined_airr_select$Cell_ID_Unique)),
+               ") of the GEX data (", ncol(seurat_obj), " cells). ",
+               nrow(filter(combined_airr_select, get(airr_col))) -
+                 nrow(filter(combined_airr_select_obj, get(airr_col))),
+               " of these ", airr_type, " (",
+               label_percent(accuracy = 0.1)(1 - mean(combined_airr_select$Cell_ID_Unique %in% 
+                                                        Cells(seurat_obj))),
+               " of the total ", main_chain, " heavy chains) did not have a",
+               " match with the GEX cell ids and were excluded."))
+  }
+
+  # check that cell counts match
+  # ncol(seurat_obj@assays$RNA) == nrow(combined_airr_select_obj)
+
+  # integrate BCR data with the GEX Seurat object
+  # you could also just bind_cols with seurat_obj[[]]
+  for (meta_col in colnames(combined_airr_select_obj)) {
+    seurat_obj[[meta_col]] <- combined_airr_select_obj[[meta_col]]
+  }
+
+  seurat_obj
+}
+```
+
+### Integration overview
+
+```{r func-gex-airr-overview}
+
+
+#' Overview of the GEX/AIRR integration.
+#'
+#' @details
+#' Assumes that you have a `paired_light` column
+#'
+#' @param seurat_obj The Seurat object.
+#' @param tissue_type
+#' @param airr_type
+#' @param airr_select
+#' @param gex_airr_select
+#'
+#' @returns A text printout of the GEX/AIRR integration.
+gex_airr_overview <- function(seurat_obj, tissue_type, airr_type,
+                              airr_select, gex_airr_select) {
+  airr_col <- paste0("Has_", airr_type)
+  airr_type <- paste0(airr_type, "s")
+
+  message <- paste("There are",
+                   nrow(dplyr::filter(gex_airr_select, get(airr_col))),
+                   tolower(tissue_type), airr_type, "being integrated in")
+
+  # paired light chain info
+  if (airr_type == "BCRs") {
+    message <- paste0(message, " (",
+                      nrow(dplyr::filter(gex_airr_select, paired_light)),
+                      " of which have paired light chains),")
+  }
+
+  message <- paste(message, "which covers",
+                   label_percent(accuracy = 0.01)(mean(Cells(seurat_obj) %in%
+                                                         airr_select$Cell_ID_Unique)),
+                   "of the total GEX data",
+                   paste0("(", ncol(seurat_obj), " cells)."),
+                   nrow(dplyr::filter(airr_select, get(airr_col))) -
+                   nrow(dplyr::filter(gex_airr_select, get(airr_col))),
+                   "of these", airr_type,
+                   paste0("(", label_percent()(1 - mean(airr_select$Cell_ID_Unique %in% Cells(seurat_obj))), ")"),
+                   "did not have a match with the GEX cell ids and were excluded.")
+
+  cat(message)
+}
+```
+
+### Cluster checks
+
+```{r func-clusters-gex-airr}
+
+
+#' [Description]
+#'
+#' @details
+#' * If there are multiple groups in `cell_types`, then their percentages will be summed.
+#'
+#' @param seurat_obj The Seurat object.
+#' @param clusters_col The current column in the Seurat object that you want to annotate on e.g. seurat_clusters or seurat_subclusters.
+#' @param annotations_col
+#' @param airr_type BCR or TCR.
+#' @param cell_types
+#' @param paired Whether or not to include paired light/alpha information.
+#'
+#' @returns A table with percentages for the AIRR data and main cell type
+clusters_gex_airr <- function(seurat_obj, clusters_col, annotations_col,
+                              airr_type, cell_types, paired = TRUE) {
+  airr_col <- paste0("Has_", airr_type)
+  gex_col <- paste("Has", substr(airr_type, 0, 1), "Cells", sep = "_")
+
+  seurat_obj_gex <- calc_pcts(data = seurat_obj[[]],
+                              meta_group_by = clusters_col,
+                              focus_group = annotations_col) %>%
+                      dplyr::filter(!!rlang::sym(annotations_col) %in% cell_types) %>%
+                      mutate({{gex_col}} := round(Percent, digits = 1)) %>%
+                      select({{clusters_col}}, {{gex_col}}) %>%
+                      summarize({{gex_col}} := sum(!!rlang::sym(gex_col)))
+
+  seurat_obj_airr <- calc_pcts(data = seurat_obj[[]],
+                               meta_group_by = clusters_col,
+                               focus_group = airr_col) %>%
+                       dplyr::filter(!!rlang::sym(airr_col)) %>%
+                       mutate({{airr_col}} := round(Percent, digits = 1)) %>%
+                       select({{clusters_col}}, {{airr_col}})
+
+  # combine the base checks
+  percs <- merge(seurat_obj_gex, seurat_obj_airr)
+
+  if (paired) {
+    if (airr_type == "BCR") paired_col <- "paired_light"
+    else paired_col <- "paired_alpha"
+    
+    seurat_obj_paired <- calc_pcts(data = seurat_obj[[]],
+                                   meta_group_by = clusters_col,
+                                   focus_group = paired_col) %>%
+                           dplyr::filter(get(paired_col) == "TRUE") %>%
+                           mutate({{paired_col}} := round(Percent, digits = 1)) %>%
+                           select({{clusters_col}}, {{paired_col}})
+
+    percs <- merge(percs, seurat_obj_paired)
+  }
+
+  # make sure the clusters are in order
+  return(arrange(percs, !!rlang::sym(clusters_col)))
+}
+```
+
+## Subclustering
+
+### Selection overview
+
+```{r func-subcluster-overview}
+
+
+#' This function provides an overview of subclusters based on the given parameters.
+#'
+#' @param seurat_obj The main Seurat object.
+#' @param seurat_obj_sub The sub Seurat object.
+#' @param tissue_type The type of tissue.
+#' @param airr_type The type of AIRR data.
+#' @param cell_types A vector of cell types.
+#'
+#' @returns A printout of the subclustering choices.
+subcluster_overview <- function(seurat_obj, seurat_obj_sub,
+                                tissue_type, airr_type, cell_types) {
+  airr_col <- paste0("Has_", airr_type)
+
+  paste("There were", ncol(seurat_obj_sub),
+        substr(airr_type, 0, 1), "cells selected from the",
+        tolower(tissue_type), airr_type, "data",
+        paste0("(", ncol(seurat_obj)), "total cells with",
+        sum(seurat_obj[[airr_col]]), "paired", paste0(airr_type, "s"), "and",
+        sum(seurat_obj$annotated_clusters %in% cell_types),
+        paste0("`", str_c(cell_types, collapse = ", "), "`).")) %>%
+  cat()
+}
+```
+
+## Recombination
+
+### Match clusters
+
+```{r func-match-sub-orig}
+
+
+#' This function returns the original Seurat clusters from the full tissues that the annotated subclusters map back to
+#'
+#' @param seurat_obj The Seurat object for the full tissue.
+#' @param seurat_obj_sub The Seurat object for the subclustered tissue.
+#' @param cell_types The full tissue cell types that were pulled for subclustering.
+#'
+#' @returns A list of clusters
+match_sub_orig <- function(seurat_obj, seurat_obj_sub, cell_types,
+                           output_summary = TRUE) {
+  cluster_info <- left_join(seurat_obj[[]],
+                            seurat_obj_sub[[]] %>%
+                              select(Cell_ID_Unique, annotated_subclusters),
+                            by = "Cell_ID_Unique")
+
+  # pull any cluster that contains cells that matched with the annotated subclusters
+  if (rlang::is_missing(cell_types)) {
+    cluster_info <- dplyr::filter(cluster_info,
+                                  !is.na(annotated_subclusters))
+
+    if (output_summary) {
+      cat(paste("There are", nrow(cluster_info),
+                "subclustered cell labels being integrated in using all label matches."))
+    }
+  }
+
+  # pull just the clusters that were used for their GEX labels
+  else {
+    cluster_info <- dplyr::filter(cluster_info,
+                                  annotated_clusters %in% cell_types)
+
+    if (output_summary) {
+      cat(paste("There are", nrow(cluster_info),
+                "subclustered cell labels being integrated in using only GEX label matches."))
+    }
+  }
+
+  return(as.character(sort(unique(cluster_info$seurat_clusters))))
+}
+```
+
+### Recombine subclusters
+
+```{r func-recombine-subclusters}
+
+
+#' This function replaced B and/or T cell type labels with annotated subpopulations based on cell ID.
+#'
+#' @details
+#' Assumes that you are adding in both B and T cell information.
+#'
+#' @param seurat_obj The Seurat object for the full tissue.
+#' @param seurat_obj_b The Seurat object for the subclustered B cells.
+#' @param seurat_obj_t The Seurat object for the subclustered T cells.
+#' @param annotations_col The column in the full tissue object with the cell type labels.
+#' @param annotations_col_b The column in the B cells object with the cell type labels.
+#' @param annotations_col_t The column in the T cells object with the cell type labels.
+#' @param annotations_col_new The name for a new column to be created in the full tissue object (so you don't overwrite the "primary" labels). You could alternatively provide `annotations_col`.
+#'
+#' @returns A Seurat object with a new or updated column for cell type annotations.
+recombine_subclusters <- function(seurat_obj,
+                                  seurat_obj_b = NULL, seurat_obj_t = NULL,
+                                  annotations_col = "annotated_clusters",
+                                  annotations_col_b = "annotated_subclusters",
+                                  annotations_col_t = "annotated_subclusters",
+                                  annotations_col_new = "annotated_clusters_expanded") {
+  # create a new metadata column with the B cell info
+  if (!is.null(seurat_obj_b)) {
+    seurat_obj[[annotations_col_new]] <-
+      left_join(seurat_obj[[]],
+                seurat_obj_b[[]] %>%
+                  select(Cell_ID_Unique, all_of(annotations_col_b)),
+                by = "Cell_ID_Unique") %>%
+      mutate(!!annotations_col_new :=
+             case_when(!is.na(!!sym(annotations_col_b)) ~
+                         as.character(!!sym(annotations_col_b)),
+                       TRUE ~ as.character(!!sym(annotations_col)))) %>%
+      pull(!!sym(annotations_col_new))
+  }
+
+  # add in the T cell info
+  if (!is.null(seurat_obj_t)) {
+    new_col <-
+      left_join(seurat_obj[[]],
+                seurat_obj_t[[]] %>%
+                  select(Cell_ID_Unique, all_of(annotations_col_t)),
+                by = "Cell_ID_Unique")
+
+    if (!is.null(seurat_obj_b)) {
+      new_col <- new_col %>%
+        mutate(!!annotations_col_new :=
+             case_when(!is.na(!!sym(annotations_col_t)) ~
+                         as.character(!!sym(annotations_col_t)),
+                       TRUE ~ as.character(!!sym(annotations_col_new))))
+    }
+    else {
+      new_col <- new_col %>%
+        mutate(!!annotations_col_new :=
+             case_when(!is.na(!!sym(annotations_col_t)) ~
+                         as.character(!!sym(annotations_col_t)),
+                       TRUE ~ as.character(!!sym(annotations_col))))
+    }
+
+    seurat_obj[[annotations_col_new]] <-
+      new_col %>% pull(!!sym(annotations_col_new))
+  }
+
+
+  # alphabetize and (re)factorize the expanded annotations
+  seurat_obj[[annotations_col_new]] <-
+    factor(seurat_obj[[annotations_col_new]][[annotations_col_new]])
+  Idents(seurat_obj) <- annotations_col_new
+  
+  # just for style
+  seurat_obj@meta.data <-
+    relocate(seurat_obj[[]], !!annotations_col_new, .after = !!annotations_col)
+
+  return(seurat_obj)
+}
+```
+
+## Downstream
+
+### Subset frequencies
+
+```{r func-plot-subsets}
+
+
+#' This function will return a ggplot2 of subset frequencies for blood or skin data.
+#'
+#' @details
+#' This currently assumes blood has no controls, so it counts by number of unique sample types (blood, EM, control).
+#' Uses a Wilcoxon Signed Rank Test for paired data.
+#'
+#' @param seurat_obj The Seurat object.
+#' @param tissue_type Type of tissue being analyzed.
+#' @param clrs_specific The specific color palette (should be named).
+#' @param plot_by The variable to plot by, e.g., CellType (blood) or SampleType (skin).
+#' @param facet_by
+#' @param points_by
+#' @param paired Control and disease.
+#' @param meta_group_by A character vector specifying the metadata columns to include in the output table. Must include Subject and SampleType.
+#' @param ncol Number of columns in the plot.
+#' @param include_legend Boolean indicating whether to include a legend.
+#' @param label_points Boolean indicating whether to label points.
+#' @param split_by_dataset Boolean indicating whether to split by dataset.
+#' @param filter_to Filter criteria to apply.
+#' @param highlights Specific elements to highlight in the plot.
+#' @param outlines Specific elements to outline in the plot
+#' @param clrs_outline The outline color
+#' @param include_signif Boolean indicating whether to include significance markers.
+#' @param signif_stars
+#' @param signif_test
+#' @param signif_caption
+#' @param details
+#'
+#' @returns
+plot_subsets <- function(seurat_obj, tissue_type, clrs_specific,
+                         plot_by = "SampleType",
+                         facet_by = "annotated_clusters",
+                         points_by = "Subject", paired = TRUE,
+                         meta_group_by = c("Subject", "SampleType", "Dataset"),
+                         ncol, include_legend = FALSE, label_points = FALSE,
+                         split_by_dataset = FALSE, filter_to, highlights,
+                         outlines, clrs_outline = "red",
+                         include_signif = TRUE, signif_stars = TRUE,
+                         signif_test = "wilcox.test", signif_caption = TRUE,
+                         details) {
+  # general set up
+  plot_by <- rlang::sym(plot_by)
+  y_axis <- rlang::sym("Fraction")
+  
+  # unpaired
+  # unpaired_subjects <- c("192563", "202939"), # known from the metadata
+  unpaired_subjects <- seurat_obj[[]] %>%
+                         select({{plot_by}}, {{points_by}}) %>%
+                         distinct() %>%
+                         group_by(!!sym(points_by)) %>%
+                         filter(n_distinct({{plot_by}}) == 1) %>%
+                         pull({{points_by}})
+
+  # set up labels and colors
+  cluster_labels <- sort(unique(seurat_obj[[]][[facet_by]]))
+  points <- unique(seurat_obj[[]][[plot_by]])
+  if (rlang::is_missing(clrs_specific)) {
+    clrs_specific <- setNames(iwanthue(n = length(points)), points)
+  }
+
+  # make sure to include everything we're plotting by
+  if (!points_by %in% meta_group_by) {
+    meta_group_by <- c(meta_group_by, points_by)
+  }
+  
+  # we'll have to fill in missing values
+  complete_cols <- c("Subject", "SampleType")
+  if (!facet_by %in% complete_cols) complete_cols <- c(complete_cols, facet_by)
+
+  # pick the number of columns
+  if (rlang::is_missing(ncol)) {
+    ncol <- length(cluster_labels)
+    if (ncol > 7) ncol <- min(ceiling(ncol / 2), 7) # but not too wide
+  }
+
+  # TODO: Clean this up
+  # needed calculations (these have to be done here and not in make_identity_df
+  # because of the facet variable)
+  identity_df <-
+    seurat_obj[[]] %>%
+      select({{facet_by}}, all_of({{meta_group_by}})) %>%
+      group_by(!!rlang::sym(facet_by), across(all_of(meta_group_by))) %>%
+      summarize(Count = n(), .groups = "drop") %>%
+      ungroup() %>%
+      # you can genuinely have cell types without any counts for that subject
+      complete(!!!syms(complete_cols), fill = list(Count = 0)) %>%
+      # these must be in meta_group_by
+      group_by(Subject, SampleType) %>%
+      mutate(Fraction = ifelse(Count == 0, 0, Count / sum(Count))) %>%
+      ungroup() %>%
+      mutate({{facet_by}} := factor(!!rlang::sym(facet_by),
+                                    levels = sort(cluster_labels))) %>%
+      # there are no controls for these samples
+      mutate(SubjectSampleType = paste0(Subject, "_", SampleType)) %>%
+      dplyr::filter(!SubjectSampleType %in%
+                      str_c(unpaired_subjects, "_Control")) %>% # or whatever sample type
+      select(-SubjectSampleType) # no longer needed
+
+  # only show specified facet values
+  if (!rlang::is_missing(filter_to)) {
+    identity_df <-
+      dplyr::filter(identity_df, !!rlang::sym(facet_by) %in% filter_to)
+  }
+
+  # box plots show the median line, so calculate the mean too
+  identity_df_sum <- identity_df %>%
+                       group_by(SampleType, !!rlang::sym(facet_by)) %>%
+                       summarize(Mean = mean(!!y_axis, na.rm = TRUE),
+                                 .groups = "drop")
+
+  # the plot itself
+  p <- ggplot(identity_df, aes(x = !!plot_by, y = !!y_axis)) +
+         labs(title = paste(tissue_type, "Subset Frequencies by Cell Type"),
+              x = NULL, y = "Subset Frequency")
+
+  # plot the violins and error bars
+  p <- p + geom_boxplot(aes(fill = !!plot_by), alpha = 0.4) +
+           # geom_violin(aes(fill = !!plot_by), color = NA, alpha = 0.4,
+           #             scale = "width", trim = TRUE, adjust = 2, width = 0.5) +
+           geom_errorbarh(data = identity_df_sum,
+                          mapping = aes(y = Mean, color = !!plot_by,
+                                        xmin = after_stat(x) - 0.4,
+                                        xmax = after_stat(x) + 0.4),
+                          height = 0, linewidth = 0.75,
+                          position = position_dodge(0.9), alpha = 0.9) +
+           scale_y_continuous(labels = label_percent(scale = 100),
+                              limits = c(0, NA),
+                              expand = expansion(mult = c(0.1, 0.2)))
+
+  # fill the points with the corresponding violin colors
+  p <- p + scale_fill_manual(values = clrs_specific, name = plot_by) +
+           scale_color_manual(values = clrs_specific, name = plot_by)
+
+  # only the skin data is paired
+  if (paired) {
+    # add dashed lines for comparison between sample types (skin data)
+    p <- p + geom_line(mapping = aes(group = !!sym(points_by)),
+                       linetype = "dashed")
+
+    # include significance testing
+    if (include_signif) {
+      # TODO: Deal with not every subject showing in every cell type
+      # won't work with unpaired points
+      data_df <- dplyr::filter(identity_df, !Subject %in% unpaired_subjects)
+      
+      if (signif_stars) {
+        p <- p + geom_signif(data = data_df,
+                             comparisons = list(c("Control", "EM")),
+                             test = signif_test,
+                             test.args = list(paired = TRUE),
+                             map_signif_level = TRUE)
+        
+        if (signif_caption) {
+          p <- p + labs(caption = "***P < 0.001; **P < 0.01; *P < 0.05")
+        }
+      }
+      else {
+        p <- p + geom_signif(data = data_df,
+                             comparisons = list(c("Control", "EM")),
+                             test = signif_test,
+                             test.args = list(paired = TRUE),
+                             map_signif_level =
+                               function(p) sprintf("p = %.2g", p))
+      }
+    }
+  }
+
+  # label the points with the subjects
+  if (label_points) {
+      p <- p + geom_text_repel(size = 3,
+                               mapping = aes(label = !!sym(points_by),
+                                             segment.alpha = 0.5),
+                               nudge_x = 0.1, max.overlaps = Inf)
+  }
+
+  # add points on top
+  if (!split_by_dataset) {
+      p <- p + geom_point(mapping = aes(color = !!plot_by),
+                          position = position_dodge(0.9), size = 3, pch = 18)
+  }
+  else {
+    # split into two groups by dataset (only datasets 2 to 4)
+      p <- p + geom_point(mapping = aes(shape = Dataset, color = !!plot_by),
+                          position = position_dodge(0.9), size = 3) +
+               scale_shape_manual(values = c(18, 20, 16))
+  }
+
+  # plot in multiple rows/columns
+  p <- p + facet_wrap(as.formula(paste("~", facet_by)),
+                      nrow = ceiling(length(cluster_labels)/ncol),
+                      ncol = ncol, scale = "free")
+
+  # highlight cell types of interest in white and put everything else in gray
+  if (!rlang::is_missing(highlights)) {
+    p <- p + geom_rect(data =
+                         dplyr::filter(identity_df,
+                                       !(!!rlang::sym(facet_by) %in%
+                                           highlights)) %>% distinct(),
+                       color = "gray90", alpha = 0.005,
+                       xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf)
+  }
+  # outlines cell types of interest
+  if (!rlang::is_missing(outlines)) {
+    p <- p + geom_rect(data =
+                         dplyr::filter(identity_df,
+                                       !!rlang::sym(facet_by) %in%
+                                         outlines) %>% distinct(),
+                       fill = NA, color = clrs_outline,
+                       linewidth = 2, # change as desired
+                       xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf)
+  }
+
+  # custom subtitle
+  if (!rlang::is_missing(details)) p <- p + labs(subtitle = details)
+
+  # add remaining styling
+  p <- p + theme_bw + labels_standard
+
+  # we don't need the x axis labels for this case (it's just cell type)
+  if (!paired) {
+    p <- p + theme(axis.ticks.x = element_blank(),
+                   axis.text.x = element_blank())
+  }
+
+  # include a legend or not
+  if (include_legend) p <- p + theme(legend.position = "top")
+  else p <- p + theme(legend.position = "none")
+
+  return(p)
+}
+```
+
+### Differential expression
+
+Taken directly from Hailong's "run_de.R" file, which itself pulls from the
+[original manuscript's analysis](https://github.com/neurorestore/DE-analysis/tree/167f55a5bff09f23cfd5b535763e13db2bc278b3).
+
+#### Seurat
+
+```{r func-seurat-de}
+
+
+#' Run a DE analysis within each cell type using Seurat
+#'
+#' @details
+#' Custom fork of Seurat is available at https://github.com/jordansquair/Seurat
+#'
+#' @param sc
+#' @param de_test
+#' @param params
+#'
+#' @returns
+seurat_DE = function(sc, de_test, params = list()) {
+  # get classes
+  meta = sc@meta.data %>%
+    # convert cell_type from factor to character, if applicable
+    mutate(cell_type = as.character(cell_type))
+  labels = unique(meta$label)
+  if (is.factor(labels)) {
+    ## https://github.com/satijalab/seurat/issues/741
+    ## avg_logFC: log fold-chage of the average expression between the two
+    ## groups. Positive values indicate that the gene is more highly expressed
+    ## in the first group
+    label1 = levels(labels)[2]
+    label2 = levels(labels)[1]
+  } else {
+    label1 = labels[1]
+    label2 = labels[2]
+  }
+  # get cell types
+  cell_types = unique(meta$cell_type)
+  # make sure idents are set right in the Seurat object
+  Idents(sc) = meta$cell_type
+
+  # check if integer or already normalized, normalize if needed
+  mat = GetAssayData(sc, slot = "counts")
+  if ((sum(mat %% 1 == 0) == length(mat)) == T) {
+    sc %<>% NormalizeData()
+  } else {
+    sc[["RNA"]]@data = mat
+  }
+
+  # check if we are doing mixed model
+  if (de_test %in% c("mixed_lm", "mixed_nbinom", "mixed_poisson")) {
+    replicate.var = "replicate"
+  } else {
+    replicate.var = NULL
+  }
+
+  # check for extra parameters for the mixed models
+  if (!is.null(params$test)) {
+    if (params$test == "LRT") {
+      use.lrt = T
+    } else {
+      use.lrt = F
+    }
+  } else {
+    use.lrt = F
+  }
+
+  if (!is.null(params$offset)) {
+    if (params$offset == "YES") {
+      use.offset = T
+    } else {
+      use.offset = F
+    }
+  } else {
+    use.offset = F
+  }
+
+  # run Seurat DE
+  DE = list()
+  for (cell_type_idx in seq_along(cell_types)) {
+    cell_type = cell_types[cell_type_idx]
+    message("[", cell_type_idx, "/", length(cell_types),
+            "] working on cell type: ", cell_type, " ...")
+
+    # check to make sure there are enough cells
+    n_cells = table(meta$cell_type, meta$label)
+    if (min(n_cells[cell_type, ]) < 3) {
+      message(" .. not enough cells, skipping ...")
+      next
+    } else {
+      tryCatch({
+        # subset to the right cell type
+        Idents(sc) = sc$cell_type
+        sub = sc %>% subset(idents = cell_type)
+        # drop genes that are never expressed, as Seurat does
+        keep = rowSums(sub) > 0
+        sub = sub[keep, ]
+        # run DE analysis
+        markers = FindMarkers(sub, ident.1 = label1, ident.2 = label2,
+                              assay = "RNA", slot = "data",
+                              min.pct = -Inf, min.cells.feature = 0,
+                              min.cells.group = 3, logfc.threshold = -Inf,
+                              group.by = "label", subset.ident = cell_type,
+                              test.use = de_test, replicate.var = replicate.var,
+                              use.offset = use.offset, use.lrt = use.lrt) %>%
+          rownames_to_column("gene") %>%
+          mutate(test = de_test)
+        DE[[cell_type]] = markers
+      }, error = function(e) message(e))
+    }
+  }
+  return(DE)
+}
+```
+
+#### Pseudobulk
+
+```{r func-pseudobulk-de}
+
+
+#' Run a DE analysis within each cell type using pseudobulk methods
+#' 
+#' @details
+#' The reference comparison should be first in the label
+#'
+#' @param sc
+#' @param de_test
+#' @param params
+#'
+#' @returns
+pseudobulk_DE = function(sc,
+                         de_test = c("pseudobulk_limma", "pseudobulk_DESeq2",
+                                     "pseudobulk_edgeR"),
+                         params = list()) {
+  # metadata must contain replicate column
+  meta = sc@meta.data %>%
+    # convert cell_type from factor to character, if applicable
+    mutate(cell_type = as.character(cell_type))
+  if (!"replicate" %in% colnames(meta))
+    stop("metadata does not contain replicate information")
+
+  # keep only cell types with enough cells
+  keep = meta %>%
+    dplyr::count(cell_type, label) %>%
+    group_by(cell_type) %>%
+    filter(all(n >= 3)) %>%
+    pull(cell_type) %>%
+    unique()
+
+  # process data into gene x replicate x cell_type matrices
+  Idents(sc) = sc$cell_type
+  pseudobulks = keep %>%
+    purrr::map( ~ {
+      print(.)
+      sc_sub = subset(sc, idents = .)
+      meta_sub = sc_sub@meta.data %>%
+        mutate(label = as.character(label),
+               replicate = as.character(replicate))
+      # catch cell types without replicates or conditions
+      if (n_distinct(meta_sub$label) < 2)
+        return(NA)
+      if (!is.null(params$replicate)) {
+        # optionally, turn off replicate summarization
+        if (params$replicate == "cells") {
+          meta_sub$replicate = colnames(sc_sub)
+          # make sure there are no ":" in the rownames - causes a bug downstream
+          if (any(grepl("\\:", meta_sub$replicate))) {
+            meta_sub$replicate = gsub(".*\\:", "", meta_sub$replicate)
+          }
+        }
+      } else {
+        replicate_counts = distinct(meta_sub, label, replicate) %>%
+          group_by(label) %>%
+          summarise(replicates = n_distinct(replicate)) %>%
+          pull(replicates)
+        if (any(replicate_counts < 2))
+          return(NA)
+      }
+
+      # process data into gene X replicate X cell_type matrices
+      # https://jef.works/blog/2020/04/06/quickly-creating-pseudobulks/
+      mm = model.matrix(~ 0 + replicate:label, data = meta_sub)
+      mat_mm = GetAssayData(sc_sub, slot = "counts") %*% mm
+      keep_genes = rowSums(mat_mm > 0) > 0
+      mat_mm = mat_mm[keep_genes, ] %>% as.data.frame()
+      mat_mm %<>% as.data.frame()
+      colnames(mat_mm) = gsub("replicate|label", "", colnames(mat_mm))
+      # drop empty columns
+      keep_samples = colSums(mat_mm) > 0
+      mat_mm %<>% magrittr::extract(, keep_samples)
+      return(mat_mm)
+    }) %>%
+    setNames(keep)
+  # drop NAs
+  pseudobulks %<>% magrittr::extract(!is.na(.))
+
+  # also filter out cell types with no retained genes
+  min_dim = purrr::map(pseudobulks, as.data.frame) %>% purrr::map(nrow)
+  pseudobulks %<>% magrittr::extract(min_dim > 1)
+
+  # also filter out types without replicates
+  min_repl = purrr::map_int(pseudobulks, ~ {
+    # make sure we have a data frame a not a vector
+    tmp = as.data.frame(.)
+    targets = data.frame(group_sample = colnames(tmp)) %>%
+      mutate(group = gsub(".*\\:", "", group_sample))
+    if (n_distinct(targets$group) == 1)
+      return(as.integer(0))
+    min(table(targets$group))
+  })
+  pseudobulks %<>% magrittr::extract(min_repl >= 2)
+
+  # run pseudobulk DE
+  if (de_test == "pseudobulk_limma") {
+    # library(limma)
+
+    # run limma on each cell type
+    DE = pseudobulks %>%
+      purrr::map(function(x) {
+        tryCatch({
+          # create targets matrix
+          targets = data.frame(group_sample = colnames(x)) %>%
+            mutate(group = gsub(".*\\:", "", group_sample))
+          ## optionally, carry over factor levels from entire dataset
+          if (is.factor(meta$label)) {
+            targets$group %<>% factor(levels = levels(meta$label))
+          }
+          if (n_distinct(targets$group) > 2)
+            return(NULL)
+          # create design
+          design = model.matrix(~ group, data = targets)
+
+          # limma-trend vs. limma-voom
+          used_voom = FALSE
+          if (params$mode == "trend") {
+            # library(edgeR)
+            dge = DGEList(as.matrix(x), group = targets$group)
+            dge = calcNormFactors(dge)
+            x = new("EList")
+            x$E = edgeR::cpm(dge, log = TRUE, prior.count = 3)
+          } else {
+            ## limma-voom: default
+            counts = all(as.matrix(x) %% 1 == 0)
+            if (counts) {
+              x = voom(as.matrix(x), design)
+              used_voom = T
+            }
+          }
+          # run lmFit
+          trend_bool = params$mode == "trend"
+          fit = lmFit(x, design) %>%
+            eBayes(trend = trend_bool, robust = trend_bool)
+          # format the results
+          res = fit %>%
+            # extract all coefs except intercept
+            topTable(number = Inf, coef = -1) %>%
+            rownames_to_column("gene") %>%
+            # flag voom usage
+            mutate(used_voom = used_voom) %>%
+            # flag test used
+            mutate(test = "pseudobulk_limma")
+          return(res)
+        }, error = function(e) {
+          message(e)
+          return(data.frame())
+        })
+      })
+  } else if (de_test == "pseudobulk_DESeq2") {
+    # library(DESeq2)
+
+    # run DEseq2 for each cell_type
+    DE = pseudobulks %>%
+      purrr::map(function(x) {
+        tryCatch({
+          # create DESeq dataset
+          targets = data.frame(group_sample = colnames(x)) %>%
+            mutate(group = gsub(".*\\:", "", group_sample))
+          ## optionally, carry over factor levels from entire dataset
+          if (is.factor(meta$label)) {
+            targets$group %<>% factor(levels = levels(meta$label))
+          }
+          dds = DESeqDataSetFromMatrix(countData = x,
+                                       colData = targets,
+                                       design = ~ group)
+
+          # set defaults on params
+          if (!"test" %in% names(params))
+            params$test = "LRT"
+          if (!"fitType" %in% names(params))
+            params$fitType = "parametric"
+          if (!"sfType" %in% names(params))
+            params$sfType = "poscounts"
+          if (!"independentFiltering" %in% names(params))
+            params$independentFiltering = FALSE
+          if (!"betaPrior" %in% names(params))
+            params$betaPrior = FALSE
+
+          # run differential expression
+          if (params$test == "Wald") {
+            # remove "reduced" argument for Wald test
+            dds = try(DESeq(dds,
+                            test = params$test,
+                            # reduced = ~ 1,
+                            fitType = params$fitType,
+                            sfType = params$sfType,
+                            betaPrior = params$betaPrior))
+
+          } else {
+            dds = try(DESeq(dds,
+                            test = params$test,
+                            reduced = ~ 1,
+                            fitType = params$fitType,
+                            sfType = params$sfType,
+                            betaPrior = params$betaPrior))
+          }
+          res = results(dds,
+                        independentFiltering = params$independentFiltering)
+          # write
+          result = as.data.frame(res) %>%
+            mutate(gene = rownames(x)) %>%
+            # flag test used
+            mutate(test = "pseudobulk_DESeq2")
+          return(result)
+        }, error = function(e) {
+          message(e)
+          return(data.frame())
+        })
+      })
+  } else if (de_test == "pseudobulk_edgeR") {
+    # library(edgeR)
+    # run edgeR for each cell_type
+    DE = pseudobulks %>%
+      purrr::map(function(x) {
+        tryCatch({
+          targets = data.frame(group_sample = colnames(x)) %>%
+            mutate(group = gsub(".*\\:", "", group_sample))
+          ## optionally, carry over factor levels from entire dataset
+          if (is.factor(meta$label)) {
+            targets$group %<>% factor(levels = levels(meta$label))
+          }
+          design = model.matrix(~ group, data = targets)
+          y = DGEList(counts = x, group = targets$group)
+
+          # set defaults on params
+          if (!"test" %in% names(params))
+            params$test = "LRT"
+          if (!"method" %in% names(params))
+            params$method = "TMM"
+          if (!"trend.method" %in% names(params))
+            params$trend.method = "locfit"
+          if (!"robust" %in% names(params))
+            params$robust = FALSE
+          if (!"tagwise" %in% names(params))
+            params$tagwise = TRUE
+          if (!"prior" %in% names(params))
+            params$prior = NULL
+
+          # catch some parameter type errors
+          if (!is.null(params$prior)) {
+            params$prior = as.numeric(params$prior)
+          }
+          if (params$tagwise == "FALSE") {
+            params$tagwise = FALSE
+          }
+
+          y = calcNormFactors(y, method = params$method)
+          if (params$robust) {
+            y = estimateGLMRobustDisp(y, design,
+                                      trend.method = params$trend.method)
+          } else {
+            y = estimateDisp(y, design, trend.method = params$trend.method,
+                             tagwise = params$tagwise, prior.df = params$prior)
+          }
+
+          if (params$test == "LRT") {
+            fit = glmFit(y, design = design)
+            test = glmLRT(fit)
+          } else {
+            # QLF: default
+            fit = glmQLFit(y, design)
+            test = glmQLFTest(fit, coef = -1)
+          }
+          res = topTags(test, n = Inf) %>%
+            as.data.frame() %>%
+            rownames_to_column("gene") %>%
+            # flag test used
+            mutate(test = "pseudobulk_edgeR")
+        }, error = function(e) {
+          message(e)
+          return(data.frame())
+        })
+      })
+  }
+
+  # standardize column names to match Seurat output
+  DE %<>% purrr::map(~ {
+    colnames(.) %<>%
+      fct_recode("p_val" = "p.value",  ## DESeq2
+                 "p_val" = "p.value",  ## t/wilcox
+                 "p_val" = "P.Value",  ## limma
+                 "p_val" = "PValue", ## edgeR
+                 "p_val_adj" = "padj", ## DESeq2/t/wilcox
+                 "p_val_adj" = "adj.P.Val", ## limma
+                 "p_val_adj" = "FDR", ## edgeER
+                 "avg_logFC" = "log2FoldChange", ## DESEeq2
+                 "avg_logFC" = "logFC" ## limma/edgeR
+      ) %>%
+      as.character()
+    return(.)
+  })
+
+  return(DE)
+}
+```
+
+#### Bulk
+
+```{r func-bulk-de}
+
+
+#' Run a DE analysis on a bulk dataset object including targets
+#'
+#' @param x
+#' @param targets
+#' @param de_test
+#' @param used_voom
+#' @param params
+#'
+#' @returns
+bulk_DE = function(x, targets,
+                   de_test = c("bulk_limma", "bulk_DESeq2", "bulk_edgeR"),
+                   used_voom = "auto", params = list()) {
+  # split out params
+  params_vec = strsplit(de_test, ",") %>%
+    unlist() %>%
+    extract(-1)
+  for (param_idx in seq_along(params_vec)) {
+    param_name = gsub("\\?.*$", "", params_vec[param_idx])
+    param_value = gsub("^.*\\?", "", params_vec[param_idx])
+    params[[param_name]] = param_value
+  }
+  de_test = gsub(",.*$", "", de_test)
+  ## print them
+  message("running ", de_test, " with params: ", names(params), params)
+
+  if (de_test == "bulk_limma") {
+    # library(limma)
+
+    # run limma
+    if (n_distinct(targets$label) > 2)
+      return(NULL)
+    # create design
+    design = model.matrix(~ label, data = targets)
+
+    # limma-trend vs. limma-voom
+    used_voom = FALSE
+    if (params$mode == "trend") {
+      # library(edgeR)
+      dge = DGEList(as.matrix(x), group = targets$label)
+      dge = calcNormFactors(dge)
+      x = new("EList")
+      x$E = edgeR::cpm(dge, log = TRUE, prior.count = 3)
+    } else {
+      ## limma-voom: default
+      counts = all(as.matrix(x) %% 1 == 0)
+      if (counts) {
+        x = voom(as.matrix(x), design)
+        used_voom = T
+      }
+    }
+
+    # run limma
+    trend_bool = params$mode == "trend"
+    DE = lmFit(x, design) %>%
+      eBayes(trend = trend_bool, robust = trend_bool) %>%
+      # extract all coefs except intercept
+      topTable(number = Inf, coef = -1) %>%
+      rownames_to_column("gene") %>%
+      # flag voom usage
+      mutate(used_voom = used_voom) %>%
+      # flag test used
+      mutate(test = "bulk_limma")
+    return(DE)
+  } else if (de_test == "bulk_DESeq2") {
+    # library(DESeq2)
+
+    # run DEseq2
+    # create DESeq dataset
+    dds = DESeqDataSetFromMatrix(countData = x, colData = targets,
+                                 design = ~ label)
+
+    # set defaults on params
+    if (!"test" %in% names(params))
+      params$test = "LRT"
+    if (!"fitType" %in% names(params))
+      params$fitType = "parametric"
+    if (!"sfType" %in% names(params))
+      params$sfType = "poscounts"
+    if (!"independentFiltering" %in% names(params))
+      params$independentFiltering = FALSE
+    if (!"betaPrior" %in% names(params))
+      params$betaPrior = FALSE
+
+    # run differential expression
+    if (params$test == "Wald") {
+      # remove "reduced" argument for Wald test
+      dds = try(DESeq(dds,
+                      test = params$test,
+                      # reduced = ~ 1,
+                      fitType = params$fitType,
+                      sfType = params$sfType,
+                      betaPrior = params$betaPrior))
+
+    } else {
+      dds = try(DESeq(dds,
+                      test = params$test,
+                      reduced = ~ 1,
+                      fitType = params$fitType,
+                      sfType = params$sfType,
+                      betaPrior = params$betaPrior))
+    }
+    res = results(dds,
+                  independentFiltering = params$independentFiltering)
+
+    # write
+    DE = as.data.frame(res) %>%
+      mutate(gene = rownames(x)) %>%
+      # flag test used
+      mutate(test = "bulk_DESeq2")
+    return(DE)
+  } else if (de_test == "bulk_edgeR") {
+    # library(edgeR)
+
+    # run edgeR
+    design = model.matrix(~ label, data = targets)
+    y = DGEList(counts = x, group = targets$label)
+
+    # set defaults on params
+    if (!"test" %in% names(params))
+      params$test = "LRT"
+    if (!"method" %in% names(params))
+      params$method = "TMM"
+    if (!"trend.method" %in% names(params))
+      params$trend.method = "locfit"
+    if (!"robust" %in% names(params))
+      params$robust = FALSE
+
+    y = calcNormFactors(y, method = params$method)
+    if (params$robust) {
+      y = estimateGLMRobustDisp(y, design,
+                                trend.method = params$trend.method)
+    } else {
+      y = estimateDisp(y, design, trend.method = params$trend.method)
+    }
+
+    if (params$test == "LRT") {
+      fit = glmFit(y, design = design)
+      test = glmLRT(fit)
+    } else {
+      # QLF: default
+      fit = glmQLFit(y, design)
+      test = glmQLFTest(fit, coef = -1)
+    }
+
+    # write
+    DE = topTags(test, n = Inf) %>%
+      as.data.frame() %>%
+      rownames_to_column("gene") %>%
+      # flag test used
+      mutate(test = "bulk_edgeR")
+    return(DE)
+  }
+
+  # standardize column names to match Seurat output
+  colnames(DE) %<>%
+    fct_recode("p_val" = "p.value",  ## DESeq2
+               "p_val" = "p.value",  ## t/wilcox
+               "p_val" = "P.Value",  ## limma
+               "p_val" = "PValue", ## edgeR
+               "p_val_adj" = "padj", ## DESeq2/t/wilcox
+               "p_val_adj" = "adj.P.Val", ## limma
+               "p_val_adj" = "FDR", ## edgeER
+               "avg_logFC" = "log2FoldChange", ## DESEeq2
+               "avg_logFC" = "logFC" ## limma/edgeR
+    ) %>%
+    as.character()
+  return(DE)
+}
+```
+
+#### Run
+
+```{r func-run-de}
+
+
+#' Run a scRNAseq differential expression analysis, given a Seurat object.
+#'
+#' @param sc
+#' @param de_test
+#' @param params
+#'
+#' @returns
+run_DE = function(sc, de_test, params = list(), ...) {
+  # library(peakRAM)
+  # check there are exactly two labels
+  meta = sc@meta.data
+  n_labels = n_distinct(meta$label)
+  if (n_labels != 2) {
+    labels = paste0(unique(meta$label), collapse = " | ")
+    stop("can't run pairwise DE on ", n_labels, " labels (", labels, ")")
+  }
+
+  # split out params
+  params_vec = strsplit(de_test, ",") %>%
+    unlist() %>%
+    extract(-1)
+  for (param_idx in seq_along(params_vec)) {
+    param_name = gsub("\\?.*$", "", params_vec[param_idx])
+    param_value = gsub("^.*\\?", "", params_vec[param_idx])
+    params[[param_name]] = param_value
+  }
+
+  de_test = gsub(",.*$", "", de_test)
+  ## print them
+  message("running ", de_test, " with params: ", names(params), params)
+
+  # run DE tests
+  if (grepl("pseudobulk", de_test)) {
+    time = system.time({
+      mem = peakRAM({
+        DE = pseudobulk_DE(sc, de_test, params) %>%
+          bind_rows(.id = "cell_type")
+      })
+    })
+    DE %<>% mutate(runtime = time[3], mem_usage = mem[1, 4])
+  } else {
+    DE = data.frame()
+    tryCatch({
+      time = system.time({
+        mem = peakRAM({
+          DE = seurat_DE(sc, de_test, params) %>%
+            bind_rows(.id = "cell_type")
+        })
+      })
+      DE %<>% mutate(runtime = time[3], mem_usage = mem[1, 4])
+    }, error = function(e) message(e))
+  }
+  return(DE)
+}
+```
+
+#### Plotting
+
+```{r func-plot-pathways}
+
+
+#' Plot pathways for each cell type using Enrichr.
+#'
+#' @details
+#' This will upload data to Enrichr.
+#' Note that the labels for the x and y axes are inverted. There are also some labelling options within `plotEnrich` itself.
+#'
+#' @param de The DE results.
+#' @param dbs The reference gene set.
+#' @param tissue_type The tissue type.
+#' @param label_genes Whether or not to label the genes on the plot.
+#'
+#' @returns
+plot_pathways <- function(de, dbs, tissue_type, label_genes = FALSE) {
+  for (cell_type in names(de)) {
+    temp <- de[[cell_type]][de[[cell_type]]$p_val_adj < 0.1, ]
+
+    # sometimes NAs can get through
+    temp <- dplyr::filter(temp, !is.na(gene))
+    enriched <- enrichr(genes = temp$gene, databases = dbs)[[dbs]]
+
+    # if (nrow(temp) > 0) {
+    if (!is.null(enriched) && nrow(enriched) > 0) {
+      p <- plotEnrich(enriched, showTerms = 20,
+                      numChar = 40, y = "Count", orderBy = "P.value") +
+             labs(title = paste0(tissue_type, " (", cell_type, ")"),
+                  subtitle = paste("Genes with q_val < 0.05:", length(temp$gene)),
+                  caption = paste("Gene set:", str_replace_all(dbs, "_", " ")),
+                  x = "Enriched Terms", y = "Gene Count") +
+             labels_standard
+
+      if (label_genes) {
+        p <-
+          p +
+          geom_text(aes(label = str_replace_all(p$data$Genes, ";", ", "),
+                        y = 0),
+                    color = "white", size = 2.5, hjust = 0, fontface = "bold")
+        }
+
+      plot(p)
+      # }
+    }
+    else {
+      cat(paste0("No enriched terms found for ", cell_type, ".\n\n"))
+    }
+  }
+}
+```
+
+## Supplemental
+
+### Clones
+
+```{r func-plot-clones}
+
+
+#' Plot the clones.
+#'
+#' @details
+#' Helps with selecting monoclonal antibodies
+#'
+#' @param barcodes A dataframe contains info about BCRs of interest
+#' @param groups For `countClones`
+#' @param clone For `countClones`
+#' @param barcodes_type The reason for looking at those particular BCRs e.g. isotype
+#' @param title_details More information for the title
+#' @param mult_clones Whether or not to highlight multiple clones vs. singletons
+#' @param clrs_specific The specific color palette (should be named).
+#'
+#' @returns
+plot_clones <- function(barcodes, groups = NULL, clone = "clone_id",
+                        barcodes_type, title_details = "Clone Count",
+                        mult_clones = TRUE,
+                        clrs_specific = colors_binary_clones) {
+  count_clones <- countClones(barcodes, groups = groups, clone = clone)
+
+  # set up the base plot
+  p <- ggplot(count_clones, aes(x = clone_id, y = seq_count)) +
+         labs(title = paste(barcodes_type, "Clone Sizes by", title_details),
+              x = "Clone ID", y = "Count",
+              caption = paste("Total Clones:", nrow(count_clones), "|",
+                              "Total Barcodes:", nrow(barcodes)))
+
+  # if you want to highlight expanded clones
+  if (mult_clones) {
+    p <- p + geom_bar(stat = "identity", aes(fill = seq_count > 1),
+                      color = "black", linewidth = 0.2) +
+             labs(fill = "More than 1 Clone?")
+  }
+  else {
+    p <- p + geom_bar(stat = "identity", aes(fill = !!rlang::sym(groups)),
+                  color = "black", linewidth = 0.2) +
+             labs(fill = title_details)
+  }
+
+  # plot with the remaining settings
+  p + scale_y_continuous(breaks = breaks_pretty(), expand = c(0, 0)) +
+      scale_fill_manual(values = clrs_specific) +
+      theme_bw + labels_standard + labels_rotate_x
+}
+```
+
+### Lineage trees
+
+```{r read-trees}
+
+
+#' Reads in the trees RDS file from airrflow if it exists in the sample subdirectory
+#'
+#' @param dir The directory that contains the tree info.
+#'
+#' @returns A trees object
+read_trees <- function(dir) {
+  file_path <- file.path(dir, "trees_object.RDS")
+
+  if (file.exists(file_path)) readRDS(file_path)
+  else NULL
+}
+```
+
+### Reduce a Seurat object
+
+This is especially useful if you are making a Shiny app and want it to load/run
+faster. When run, this has been shown to reduce objects from several gigabytes
+down to a few hundred megabytes (this greatly depends on the input data).
+
+The main function is not specific to the data type (as long as the Seurat object
+has gone through "standard" processing.
+
+```{r func-reduce-object}
+#' Significantly shrinks a given Seurat object by removing the counts matrices and just keeping the UMAP reduction.
+#'
+#' @details
+#'  Modify this as needed if your object is built differently (e.g. with tSNE).
+#'  You can also change what is being removed e.g. the scaled data instead.
+#'  Be careful - what you remove could affect visualizations e.g. dot plots.
+#'   Make sure that the Idents of the object are properly set if you are going to be adding in annotations e.g. `Idents(combined) <- "seurat_clusters"`.
+#'   The main function is not specific to the data type (as long as the Seurat object has gone through "standard" processing.
+#'
+#' @param seurat_obj The Seurat object to be reduced.
+#' @param dim_reducs List of dimensionality reductions to keep.
+#' @param print_size Print info about how much the object was reduced.
+#' @param load_annotations Set to FALSE since it isn't necessary to have the clusters be annotated or your object might already have cell types assigned.
+#' @param annotations_file File path to the csv file containing columns for thecluster (be sure to match clusters_col) and cell type e.g. `file.path(path_tables, "annotations.csv")`.
+#' @param clusters_col The current column in the Seurat object that you want to annotate on e.g. seurat_clusters or seurat_subclusters.
+#' @param annotations_col The column in the Seurat object that you want to save the annotations to e.g. annotated_clusters or annotated_subclusters.
+#'
+#' @returns A smaller Seurat object.
+reduce_object <- function(seurat_obj, dim_reducs = "umap", print_size = TRUE,
+                          load_annotations = FALSE, annotations_file,
+                          clusters_col = "seurat_clusters",
+                          annotations_col = "annotated_clusters") {
+  print(paste("Currently reducing:", deparse(substitute(seurat_obj))))
+
+  # modify this as desired
+  obj_reduced <- DietSeurat(seurat_obj,
+                            counts = FALSE, dimreducs = dim_reducs)
+
+  # print the before and after sizes
+  if (print_size) {
+    print(paste("Original object size:",
+                format(object.size(seurat_obj), units = "auto")))
+    print(paste("Reduced object size:",
+                format(object.size(obj_reduced), units = "auto")))
+  }
+
+  # add in the annotations (which should be in cluster order already) if desired
+  # you could also use add_annotations
+  if (load_annotations) {
+    # read in the data - you only need the cell type information
+    annotations <- read_csv(annotations_file,
+                            col_types = cols(.default = "c"))$CellType # change col name if needed
+
+    # add the annotations to the object
+    Idents(obj_reduced) <- clusters_col
+    names(annotations) <- levels(obj_reduced)
+    obj_reduced <- RenameIdents(obj_reduced, annotations)
+    Idents(obj_reduced) <- factor(Idents(obj_reduced),
+                                  levels = sort(levels(obj_reduced))) # alphabetize the cell types
+    obj_reduced[[annotations_col]] <- Idents(obj_reduced) # useful metadata
+  }
+
+  # saving the output as a separate object is recommended
+  return(obj_reduced)
+}
+```
+
+### DESeq2 heatmaps
+
+Modified from Hailong's code.
+
+```{r}
+#' This function is used to draw a heatmap from the output of DESeq2 for a list of genes
+#'
+#' @details
+#' If you decide to rotate the heatmap (e.g. for display on a PowerPoint slide),
+#' note that the asterisk will now be on the right side and you'll have to move
+#' the legends
+#'
+#'
+#' @param DESeq2_out
+#' @param gene_list
+#' @param FDR_cutoff
+#' @param anno_top
+#' @param clrs_anno_top
+#' @param clr_na
+#' @param clrs_plot
+#' @param nclrs
+#' @param zero_white
+#' @param split_row Must be a data.frame with "Type" and "Gene" columns.
+#' @param title The title of the heatmap.
+#' @param title_size The size of the title.
+#' @param plot_legend Whether or not to plot the legend.
+#' @param x_angle The angle of the x axis text.
+#' @param cell_height
+#' @param row_size The size of the text on the right side of the heatmap.
+#' @param col_size The size of the text on the bottom side of the heatmap.
+#' @param number_size The size of the significance asterisks.
+#' @param flip_rows For if you want to rotate the heatmap 90* manually
+#' @param draw You can't use draw when combining heatmaps
+#'
+#' @returns A pheatmap.
+heatmap_DESeq2 <- function(DESeq2_out, gene_list, FDR_cutoff = 0.05,
+                           anno_top, clrs_anno_top, clr_na = "grey70", # grey75
+                           clrs_plot =
+                             colorRampPalette(rev(pals::brewer.rdbu(n = 7))),
+                           nclrs = 100, zero_white = TRUE, split_row,
+                           title = NULL, title_size = 16,
+                           plot_legend = TRUE, x_angle = 90, cell_height = 20,
+                           row_size = 14, col_size = 14, number_size = 16,
+                           flip_rows = FALSE, draw = TRUE) {
+  de_genes_full <- enframe(DESeq2_out) %>%
+                     unnest(value) %>%
+                     rename(cell_type = name)
+  de_genes <- de_genes_full %>% dplyr::filter(gene %in% gene_list)
+  
+  # contains foldchanges
+  de_m <- de_genes %>%
+            select(gene, cell_type, avg_logFC) %>%
+            pivot_wider(names_from = cell_type, values_from = avg_logFC) %>%
+            mutate(gene = factor(gene,
+                                 levels = str_sort(gene, numeric = TRUE))) %>%
+            arrange(gene) %>%
+            as.data.frame()
+
+  # indicates if the statistical analysis is significant or not
+  de_p <- de_genes %>%
+            select(gene, cell_type, p_val_adj) %>%
+            pivot_wider(names_from = cell_type, values_from = p_val_adj) %>%
+            mutate(gene = factor(gene,
+                                 levels = str_sort(gene, numeric = TRUE))) %>%
+            arrange(gene) %>%
+            as.data.frame()
+
+  # convert genes to rownames
+  de_m <- column_to_rownames(de_m, var = "gene")
+  de_p <- column_to_rownames(de_p, var = "gene")
+
+  # fill in any missing cell types
+  missing_cell_types <- setdiff(unique(de_genes_full$cell_type), colnames(de_m))
+  for (cell_type in missing_cell_types) {
+    de_m[[cell_type]] <- NA
+    de_p[[cell_type]] <- NA
+  }
+  # fix the order for plotting
+  de_m <- de_m[unique(de_genes_full$cell_type)]
+  de_p <- de_p[unique(de_genes_full$cell_type)]
+  
+  # add stars to indicate significance
+  de_p[de_p <= FDR_cutoff] <- "*"
+  de_p[de_p > FDR_cutoff] <- ""
+  de_p[is.na(de_p)] <- ""
+
+  # need to provide anno_top and clrs_anno_top
+  plot_annotations <- TRUE
+  plot_colors <- TRUE
+  if (rlang::is_missing(anno_top)) {
+    plot_annotations <- FALSE
+  }
+  if (rlang::is_missing(clrs_anno_top)) {
+    plot_colors <- FALSE
+  }
+   
+  # add a color bar on top 
+  if (plot_annotations) {
+    # anno_top should only have one column
+    anno_top_types <- anno_top[[names(anno_top)]] # or as.character(unlist(anno_top))
+    
+    # add colored bars on top
+    if (plot_colors) {
+      clrs_anno_top <- list(clrs_anno_top[unique(anno_top_types)])
+      names(clrs_anno_top) <- names(anno_top)
+      
+      annotation_top <-
+        HeatmapAnnotation(df = anno_top, col = clrs_anno_top, na_col = clr_na,
+                          annotation_legend_param =
+                            list(title_gp = gpar(fontsize = row_size - 1),
+                                 labels_gp = gpar(fontsize = row_size - 2)),
+                          show_annotation_name = FALSE)
+    } else {
+      annotation_top <- NULL
+    }
+    
+    split_column <- anno_top_types
+    gap_column <- unit(3, "mm") # adjust as desired
+    
+  } else {
+    annotation_top <- NULL
+    split_column <- NULL
+    gap_column <- unit(1, "mm") # default
+  }
+  
+  # TODO: Change the order of the markers
+  if (flip_rows) {
+    annotation_right <-
+      rowAnnotation(text = anno_text(rownames(de_m), rot = 180,
+                                     location = unit(1, "mm"), just = "right"),
+                    annotation_height = max_text_width(rownames(de_m)),
+                    annotation_legend_param =
+                      list(labels_gp = gpar(fontsize = row_size)))
+  } else{
+    annotation_right <- NULL
+  }
+  
+  # split up the rows
+  # the names of the groups need to be in alphabetical order
+  if (!rlang::is_missing(split_row)) {
+    split_row <- split_row %>%
+                   filter(Genes %in% rownames(de_m)) %>%
+                   mutate(Genes =
+                            factor(Genes,
+                                   levels = str_sort(Genes, numeric = TRUE))) %>%
+                   arrange(Genes) %>%
+                   pull(Type)
+    gap_row <- unit(7, "mm") # adjust as desired
+  } else {
+    split_row <- NULL
+    gap_row <- unit(1, "mm") # default
+  }
+
+  # smallest and largest fold changes
+  min_break <- de_m %>% replace(is.na(.), 0) %>% min()
+  max_break <- de_m %>% replace(is.na(.), 0) %>% max()
+
+  # set zero to be at white
+  if (nclrs %% 2 == 1) nclrs <- nclrs + 1
+  breaks <- c(seq(min_break, 0, length.out = (nclrs/2) + 1),
+              seq(0, max_break, length.out = nclrs/2)[-1])
+  
+  hm <-
+    ComplexHeatmap::Heatmap(matrix = as.matrix(de_m), 
+                            # col = circlize::colorRamp2(c(min_break, 0, max_break),
+                            #                  c("#2166AC", "white", "#B2182B")),
+                            col = circlize::colorRamp2(breaks = breaks,
+                                                       colors = clrs_plot(length(breaks))),
+                            na_col = clr_na,
+                            rect_gp = gpar(col = "black"),
+                            # layer_fun = function(j, i, x, y, w, h, f) {
+                            #   	grid.text(pindex(de_p, i, j), x, y)
+                            #   },
+                            cell_fun = function(j, i, x, y, width, height, fill) {
+                                grid.text(de_p[i, j], x, y,
+                                          gp = gpar(fontsize = number_size,
+                                                    col = "black"))
+                            },
+                            row_title_gp = gpar(fontsize = row_size - 2),
+                            column_title = title,
+                            column_title_gp = gpar(fontsize = title_size),
+                            cluster_rows = FALSE,
+                            cluster_columns = FALSE,
+                            show_row_names = ifelse(flip_rows, FALSE, TRUE),
+                            row_names_max_width =
+                              max_text_width(rownames(de_m),
+                                             gp = gpar(fontsize = row_size)),
+                            row_names_gp = gpar(fontsize = row_size),
+                            show_column_names = TRUE,
+                            # adjust as needed
+                            column_names_max_height = unit(9, "cm"),
+                            column_names_gp = gpar(fontsize = col_size),
+                            column_names_rot = x_angle,
+                            top_annotation = annotation_top,
+                            right_annotation = annotation_right,
+                            row_split = split_row,
+                            row_gap = gap_row,
+                            column_split = split_column,
+                            column_gap = gap_column,
+                            height = nrow(de_m) * unit(cell_height, "pt"),
+                            show_heatmap_legend = plot_legend,
+                            heatmap_legend_param =
+                              list(title = "log2FC",
+                                   title_gp = gpar(fontsize = row_size - 1),
+                                   labels_gp = gpar(fontsize = row_size - 2)
+                                   ))
+  
+  # the draw function is for stacking the legends vertically (to save space)
+  if (draw) {
+    hm %>% draw(merge_legend = TRUE)
+  }
+  else {
+    hm
+  }
+}
+```
