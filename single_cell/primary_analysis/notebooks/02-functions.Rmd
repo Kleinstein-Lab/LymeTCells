@@ -36,8 +36,18 @@ print_dt <- function(table, dt_width = "800px") {
 
 ### Table NAs
 
-```{r}
-# show NAs if there are any
+```{r func-table}
+#' Enhanced table function that shows NAs by default.
+#'
+#' @description
+#' A wrapper around base::table() that includes NA values in the output by default.
+#' This is useful for data exploration where you want to see missing values.
+#'
+#' @param ... Arguments passed to base::table().
+#' @param useNA A character string indicating whether to include NA values.
+#' Default is "ifany" to show NAs if they exist.
+#'
+#' @returns A contingency table including NA values when present.
 table <- function(..., useNA = "ifany") base::table(..., useNA = useNA)
 ```
 
@@ -81,8 +91,6 @@ These functions can be used in multiple analysis sections.
 ### Top info bar
 
 ```{r func-add-info-bar}
-
-
 #' Add an information bar on top.
 #'
 #' @description
@@ -115,21 +123,21 @@ add_info_bar <- function(plot, method = "contains", info_type, info,
     plot_data <- suppressMessages(left_join(plot$data, info, # by = {{info_type}},
                                             multiple = "all",
                                             relationship = "many-to-many"))
-    
+
     # sort each group of features alphanumerically within each group
     # (especially useful for markers on a DotPlot)
     # might not be accurate for features that show up in multiple groups
     # if it wasn't for numbers, we could get rid of sort and just do
     if (sort) {
       plot_data <- plot_data %>%
-                     group_by(!!sym(info_type)) %>% 
+                     group_by(!!sym(info_type)) %>%
                      mutate(features.plot =
                               factor(features.plot,
                                      levels = str_sort(unique(features.plot),
                                                        numeric = TRUE))) %>%
                      ungroup()
     }
-    
+
     plot$data <- plot_data
   }
 
@@ -146,7 +154,7 @@ add_info_bar <- function(plot, method = "contains", info_type, info,
       labels <- labeller()
     }
   }
-  
+
   # split up the plot
   if (top_side) {
     plot + facet_grid(cols = vars(!!rlang::sym(info_type)),
@@ -163,8 +171,6 @@ add_info_bar <- function(plot, method = "contains", info_type, info,
 ### Bar plot with stacked percentages
 
 ```{r func-calc-pcts}
-
-
 #' Bar plot with stacked percentages
 #'
 #' @description
@@ -196,8 +202,6 @@ calc_pcts <- function(data, meta_group_by = c("SampleName", "Dataset"),
 ```
 
 ```{r func-plot-pcts}
-
-
 #' Plot percentages.
 #'
 #' @description
@@ -364,8 +368,6 @@ plot_pcts <- function(pcts, tissue_type = "", clrs_specific,
 ### Dot plot color scale
 
 ```{r func-plot-dot-color-scale}
-
-
 #' Generates a proper color scale for a Seurat DotPlot (with white at zero).
 #'
 #' @details
@@ -390,7 +392,7 @@ dot_color_scale <- function(plot, palette = rev(pals::brewer.rdbu(n = 7))) {
   colors <- colorRampPalette(palette)(length(breaks))
   names(colors) <- breaks
   colors["0"] <- "white" # manually set zero to be white
-  
+
   # now cut the range to only cover the actual expression
   # might be slightly off from the actual min/max value, but whatever
   if (abs(max_val) >= abs(min_val)) {
@@ -400,7 +402,7 @@ dot_color_scale <- function(plot, palette = rev(pals::brewer.rdbu(n = 7))) {
     max_val_loc <- which.min(abs(breaks - max_val))
     colors <- colors[0:max_val_loc]
   }
-  
+
   # return the plot with the new color scale
   plot + scale_color_gradientn(colors = colors)
 }
@@ -411,8 +413,6 @@ dot_color_scale <- function(plot, palette = rev(pals::brewer.rdbu(n = 7))) {
 Along the right side for easy comparison (plus dot plots only show GEX info)
 
 ```{r func-plot-dot-side}
-
-
 #' Adds AIRR (and other) info along the right side of an existing Seurat DotPlot.
 #'
 #' @details
@@ -562,8 +562,6 @@ plot_dot_side <- function(plot, seurat_obj, row_identity = "seurat_clusters",
 Includes whether or not the object has been annotated with specific cell types
 
 ```{r func-plot-umap}
-
-
 #' This function plots a Seurat UMAP(s) in several useful ways.
 #'
 #' @param seurat_obj The Seurat object.
@@ -771,8 +769,6 @@ plot_umap <- function(seurat_obj, tissue_type = "", clrs_specific,
 Can be used for plotting QC metrics, isolating specific cell types, overlaying AIRR data, overlaying B cell isotypes, etc.
 
 ```{r func-plot-umap-condition}
-
-
 #' Plot a specific condition on a Seurat UMAPPlot.
 #'
 #' @details
@@ -873,7 +869,26 @@ plot_umap_condition <- function(seurat_obj, tissue_type,
 
 From Roy:
 
-```{r}
+```{r func-plot-bool}
+#' Plot boolean selection on PCA or UMAP projections.
+#'
+#' @description
+#' Creates a scatter plot showing a subset of cells highlighted on either PCA or UMAP projections.
+#' The function overlays selected cells on top of all plotted cells with different visual properties.
+#'
+#' @details
+#' This function is useful for visualizing specific cell subsets or conditions on dimensionality
+#' reduction plots. Selected cells are highlighted with higher alpha values while maintaining
+#' the overall context of the full dataset.
+#'
+#' @param object A Seurat object containing the dimensionality reduction data.
+#' @param plot_cell Logical vector indicating which cells to plot. If NULL, all cells are plotted.
+#' @param select_cell Character vector of cell names to highlight.
+#' @param type Type of dimensionality reduction to plot, either "pca" or "umap".
+#' @param COLORS Color palette for cell subsets.
+#' @param ASSIGN_DICT Dictionary mapping identities to subset assignments.
+#'
+#' @returns A ggplot object showing the dimensionality reduction plot with highlighted cells.
 plotBool <- function(object, plot_cell, select_cell, type = "pca",
                      COLORS = SUBSET_COLORS, ASSIGN_DICT = SUBSET_DICT) {
   if (is.null(plot_cell)) {
@@ -921,8 +936,6 @@ You can provide a specific list of samples or sample types to make objects for i
 If you are using aggregated data, then the list of objs created by splitting the initial object made from the aggr output can be used as input instead.
 
 ```{r func-create-objects}
-
-
 #' Create or update Seurat objects.
 #'
 #' @description
@@ -1029,8 +1042,6 @@ You can provide a specific list of samples or data types to create summaries for
 ### Create the metrics summary
 
 ```{r func-create-metrics-summary}
-
-
 #' Create a metrics summary table with some info from 10x's metric summary file
 #'
 #' @param meta The metadata file.
@@ -1086,22 +1097,43 @@ create_metrics_summary <- function(meta, path_data_specific,
 ### Reformat VDJ barcodes
 
 ```{r func-reformat-vdj-barcodes}
-
-
 #' Adds the sample name to the beginning and removes the "-1" from the ends.
+#'
+#' @description
+#' Reformats individual VDJ barcodes by adding a sample name prefix and removing
+#' the standard 10X suffix.
+#'
+#' @details
+#' This function processes barcodes from a single sample, splitting on the "-" character
+#' and recombining with the sample name to create unique identifiers.
 #'
 #' @param data The input dataset which contains a barcode column.
 #' @param sample_name The sample to add to make the barcode unique.
 #' @param barcode_col The column in the data that contains the barcodes.
 #'
-#' @returns
-
+#' @returns A character vector of reformatted barcodes with sample prefix.
 reformat_vdj_barcode_sample <- function(data, sample_name, barcode_col = "barcode") {
   unlist(lapply(strsplit(as.character(data[[barcode_col]]), "-"),
                 function(x) paste0(sample_name, "_", x[1])))
 }
 
-
+#' Reformat VDJ barcodes to make them unique across samples.
+#'
+#' @description
+#' Reformats cell barcodes by adding sample name prefix and removing suffix numbers,
+#' creating unique cell identifiers across multiple samples.
+#'
+#' @details
+#' This function takes a dataset with sample names and cell IDs, separates the barcode
+#' portion from any suffix (typically "-1"), and combines it with the sample name
+#' to create unique cell identifiers.
+#'
+#' @param data A data frame containing sample names and cell barcodes.
+#' @param col_samples The column name containing sample names. Default is "SampleName".
+#' @param col_barcodes The column name containing cell barcodes. Default is "cell_id".
+#' @param col_output The name for the output column. Default is "Cell_ID_Unique".
+#'
+#' @returns A character vector of reformatted unique cell identifiers.
 reformat_vdj_barcode <- function(data, col_samples = "SampleName",
                                  col_barcodes = "cell_id",
                                  col_output = "Cell_ID_Unique") {
@@ -1119,8 +1151,6 @@ reformat_vdj_barcode <- function(data, col_samples = "SampleName",
 ### Count barcode overlaps
 
 ```{r func-count-barcode-overlaps}
-
-
 #' Counts the overlaps between barcodes.
 #'
 #' @details only counts unique barcodes
@@ -1150,8 +1180,6 @@ count_barcode_overlaps <- function(barcodes_list1, barcodes_list2,
 ### Plot counts
 
 ```{r func-plot-counts}
-
-
 #' Bar plot of read or cell counts for QC.
 #'
 #' @param summary_df output of create_metrics_summary()
@@ -1263,8 +1291,6 @@ plot_counts <- function(summary_df, data_types = "All",
 ### Plot heatmap
 
 ```{r func-plot-qc-heatmap}
-
-
 #' Returns a heatmap representing barcode overlaps.
 #'
 #' @details colors the sample names by the sample type and splits by dataset
@@ -1338,8 +1364,6 @@ plot_qc_heatmap <- function(input_matrix, data_types,
 ### Doublets
 
 ```{r func-layout-doublets}
-
-
 #' This function plots an overview of a doublet identification method
 #'
 #' It assumes that colors_doublet has been defined
@@ -1453,8 +1477,6 @@ layout_doublets <- function(seurat_obj, tissue_type, clrs_specific,
 This pipeline is loosely based on [Seurat's pipeline](https://satijalab.org/seurat/articles/pbmc3k_tutorial). Unlike previous analyses, `features = rownames(obj)` was removed from the `ScaleData` step since the data is too large and only the top variable features are needed to do `RunPCA.`
 
 ```{r func-seurat-pipeline}
-
-
 #' Runs Seurat's clustering pipeline with given parameters.
 #'
 #' @details
@@ -1543,8 +1565,6 @@ seurat_pipeline <- function(seurat_obj, subcluster = FALSE,
 You can also plot other things e.g. sample names.
 
 ```{r func-plot-counts-cluster}
-
-
 #' Visualize how many cells are in each Seurat cluster or cell type.
 #'
 #' @param clusters e.g. combined_blood$seurat_clusters or combined_skin_b$annotated_subclusters
@@ -1560,9 +1580,9 @@ plot_counts_cluster <- function(clusters, tissue_type = "", clrs_specific,
                                 x_axis = "Cluster", add_zeroes, details) {
   # if you want to use the default ggplot2 colors
   if (is_missing(clrs_specific)) clrs_specific <- hue_pal()(n_distinct(clusters))
-  
+
   data <- data.frame(table(clusters)) %>% rename(Count = Freq)
-  
+
   if (!is_missing(add_zeroes)) {
     data <- bind_rows(data, data.frame(clusters = add_zeroes,
                                        Count = rep(0, length(add_zeroes)))) %>%
@@ -1629,8 +1649,6 @@ plot_counts_cluster <- function(clusters, tissue_type = "", clrs_specific,
 ### Tile
 
 ```{r func-plot-tile}
-
-
 #' Visualize which samples contribute to which Seurat clusters.
 #'
 #' @details
@@ -1679,8 +1697,6 @@ plot_tile <- function(seurat_obj, tissue_type, clrs_specific,
 #### Find markers
 
 ```{r search-markers}
-
-
 #' This function will return a list of the full markers found within the provided Seurat object based on the provided partial matches.
 #'
 #'
@@ -1706,8 +1722,6 @@ search_markers <- function(seurat_obj, markers) {
 #### Get features of interest
 
 ```{r func-get-features-all}
-
-
 #' This function will return all specific markers in the marker genes dataframe.
 #'
 #' @details
@@ -1755,13 +1769,14 @@ get_features_from_all <- function(markers_df,
 #### Display markers from source
 
 ```{r func-source-markers}
-
-
 #' This function will return all specific markers as a table in the specified marker genes dataframe.
 #'
-#' @param filtered_markers_df
+#' @description
+#' Creates a summary table showing markers grouped by cell type from a filtered marker dataframe.
 #'
-#' @returns description
+#' @param filtered_markers_df A dataframe containing Cell_Type and Marker columns.
+#'
+#' @returns A tibble with Cell_Type and collapsed Markers columns.
 source_markers <- function(filtered_markers_df) {
   filtered_markers_df %>%
     select(Cell_Type, Marker) %>%
@@ -1791,6 +1806,10 @@ get_cell_types <- function(markers_df) {
 
 ```{r func-gen-dot-title}
 #' Generates a title for the DotPlot
+#'
+#' @description
+#' Creates a formatted title string for DotPlots by combining a data description
+#' with marker sources in parentheses.
 #'
 #' @param data_desc Dataset description
 #' @param marker_sources The list of marker sources
@@ -1891,7 +1910,7 @@ From Hailong:
 ```{r func-vln-cell-info}
 #' @description
 #' Modifies Seurat's VlnPlot with cell count and cell percentage with feature expression > 0
-#' 
+#'
 #' @details
 #' You could also just use scCustomize::Percent_Expressing() for calculations
 #'
@@ -1917,7 +1936,7 @@ vln_cell_info <- function(seurat_obj, feature, clrs_specific,
       stop(paste("Column", split_by, "not found in the provided Seurat object."))
     }
   }
-  
+
   # set up tracking info
   clusters <- sort(unique(Idents(seurat_obj)))
   cell_count <- c()
@@ -1925,7 +1944,7 @@ vln_cell_info <- function(seurat_obj, feature, clrs_specific,
 
   # just in case
   if (is_missing(clrs_specific)) clrs_specific <- hue_pal()(n_distinct(clusters))
-  
+
   # determine the sample groups if split_by is provided
   sample_groups <-
     if (!is.null(split_by)) sort(unique(seurat_obj[[split_by]][[split_by]]))
@@ -1986,7 +2005,7 @@ vln_cell_info <- function(seurat_obj, feature, clrs_specific,
   }
   y_cell_count <- y_exp_percent + 0.5 # 0.25
   y_max <- y_exp_percent + 1 # 0.5
-  
+
   # draw VlnPlot with annotations of cell count and percentage of cell with expression of the feature
   p <- VlnPlot(object = seurat_obj, features = feature, split.by = split_by,
                pt.size = pt_size, raster = FALSE) +
@@ -2194,11 +2213,23 @@ Based on **OverlapHeatmap_singlecell.R** from Hailong (and Susanna)
 
 # find cells having same seq and cell barcode
 
-#' This function modified previous overlap heatmap function and is used to show, between two samples.
+#' Create sharing matrix for single-cell data between samples.
 #'
-#' @param
+#' @description
+#' This function creates overlap matrices showing shared cells between samples based
+#' on matching barcodes and sequences in single-cell data.
 #'
-#' @returns
+#' @details
+#' The function compares cells between samples and identifies those with identical
+#' barcodes and sequences. It returns count, total, and percentage overlap matrices.
+#'
+#' @param clip_df A data frame containing single-cell sequence data.
+#' @param group Column name for grouping samples.
+#' @param cell Column name for cell barcodes. Default is "CELL".
+#' @param seq Column name for sequences. Default is "SEQUENCE_IMGT".
+#' @param order_by Optional vector to specify the order of groups in the output matrices.
+#'
+#' @returns A list containing overlap count, total, and percentage matrices.
 singlecell_sharing_matrix <- function(clip_df, group, cell = "CELL",
                                       seq = "SEQUENCE_IMGT", order_by = NULL) {
   # checking the validity of input parameters
@@ -2267,11 +2298,22 @@ singlecell_sharing_matrix <- function(clip_df, group, cell = "CELL",
 ```{r}
 
 
-#' Remove cells with same 1) barcode and 2) sequences between samples (group)
+#' Remove cells with same barcode and sequences between samples.
 #'
-#' @param
+#' @description
+#' Identifies and removes duplicate cells that have identical barcodes and sequences
+#' across different sample groups.
 #'
-#' @returns
+#' @details
+#' This function finds cells that appear in multiple samples with the same barcode
+#' and sequence, marking them for removal to eliminate cross-sample contamination.
+#'
+#' @param clip_df A data frame containing single-cell sequence data.
+#' @param group Column name for grouping samples.
+#' @param cell Column name for cell barcodes. Default is "CELL".
+#' @param seq Column name for sequences. Default is "SEQUENCE_IMGT".
+#'
+#' @returns A data frame with duplicate cells removed.
 removeSingleCellDuplicate <- function(clip_df, group,
                                       cell = "CELL", seq = "SEQUENCE_IMGT") {
   # checking the validity of input parameters
@@ -2334,11 +2376,22 @@ removeSingleCellDuplicate <- function(clip_df, group,
 ```{r}
 
 
-#' This is the main function to remove duplicates in single cell data, it calls function removeSingleCellDuplicate to remove duplicates until none is found.
+#' Remove all duplicates iteratively from single cell data.
 #'
-#' @param
+#' @description
+#' Main function to remove duplicates in single cell data by repeatedly calling
+#' removeSingleCellDuplicate until no more duplicates are found.
 #'
-#' @returns
+#' @details
+#' This function may need multiple cycles to remove all duplicates, as removing
+#' some duplicates may reveal additional ones.
+#'
+#' @param clip_df A data frame containing single-cell sequence data.
+#' @param group Column name for grouping samples.
+#' @param cell Column name for cell barcodes. Default is "CELL".
+#' @param seq Column name for sequences. Default is "SEQUENCE_IMGT".
+#'
+#' @returns A data frame with all duplicate cells removed.
 removeSingleCellDuplicates <- function(clip_df, group,
                                        cell = "CELL", seq = "SEQUENCE_IMGT") {
   # may need multiple cycles to remove duplicates
@@ -2371,11 +2424,17 @@ setClass("Overlap", slots = c(overlap_count = "matrix",
                               overlap_percent = "matrix"))
 
 
+#' Create an Overlap S4 object.
+#'
 #' @description
+#' Creates an S4 object of class "Overlap" containing matrices for overlap counts,
+#' totals, and percentages between samples.
 #'
-#' @param
+#' @param overlap_count Matrix containing overlap counts between samples.
+#' @param overlap_total Matrix containing total counts for each comparison.
+#' @param overlap_percent Matrix containing overlap percentages.
 #'
-#' @returns
+#' @returns An Overlap S4 object containing the three matrices.
 createOverlap <- function(overlap_count = overlap_count,
                           overlap_total = overlap_total,
                           overlap_percent = overlap_percent ) {
@@ -2395,11 +2454,26 @@ createOverlap <- function(overlap_count = overlap_count,
 
 # https://stackoverflow.com/questions/69666867/constant-warning-message-with-reshapemelt-in-r
 
+#' Plot overlap heatmap for single-cell data.
+#'
 #' @description
+#' Creates a heatmap visualization showing overlaps between samples in single-cell data,
+#' with customizable region of interest and text sizes.
 #'
-#' @param
+#' @details
+#' This function visualizes overlap matrices as heatmaps with counts on diagonals
+#' and percentages in off-diagonal elements.
 #'
-#' @returns
+#' @param list_objOverlap List of Overlap objects to plot.
+#' @param titleText Title for the plot.
+#' @param subtitleText Subtitle for the plot.
+#' @param ROI Region of interest to subset the data.
+#' @param order_by Vector specifying the order of samples.
+#' @param sizeDiag Size of diagonal text elements.
+#' @param sizeCount Size of count text elements.
+#' @param sizePercent Size of percentage text elements.
+#'
+#' @returns A ggplot heatmap showing sample overlaps.
 plotOverlapSingleCell <- function(list_objOverlap = "",
                                   titleText = "", subtitleText = "",
                                   ROI = NULL, order_by = NULL,
@@ -2735,9 +2809,17 @@ plot_mu_freq_isotype_overlay <- function(seurat_obj, isotype, tissue_type) {
 
 #' Add in family and gene information from `alakazam.`
 #'
+#' @description
+#' Extracts and adds V, D, and J gene family and gene information to an AIRR-formatted
+#' dataframe using the alakazam package functions.
+#'
+#' @details
+#' This function adds six new columns to the input dataframe: v_call_family, v_call_gene,
+#' d_call_family, d_call_gene, j_call_family, and j_call_gene.
+#'
 #' @param airr_db An AIRR-formatted data.frame.
 #'
-#' @returns A data.frame with six new columns.
+#' @returns A data.frame with six new columns containing gene family and gene information.
 add_family_info <- function(airr_db) {
   airr_db %>% mutate(v_call_family = alakazam::getFamily(airr_db$v_call),
                      v_call_gene = alakazam::getGene(airr_db$v_call),
@@ -2749,14 +2831,20 @@ add_family_info <- function(airr_db) {
 ```
 
 ```{r func-factor-family-info}
-#' Add in family and gene information from `alakazam.`
+#' Convert family and gene information to factors with proper ordering.
+#'
+#' @description
+#' Converts the gene family and gene columns added by add_family_info() to
+#' properly ordered factors using numeric sorting.
 #'
 #' @details
-#' For after add_family_info() has been run
+#' For after add_family_info() has been run. This function ensures that gene
+#' families and genes are ordered correctly (e.g., IGHV1, IGHV2, IGHV10 instead
+#' of IGHV1, IGHV10, IGHV2).
 #'
 #' @param airr_db An AIRR-formatted data.frame.
 #'
-#' @returns A data.frame with six new columns.
+#' @returns A data.frame with six columns converted to properly ordered factors.
 factor_family_info <- function(airr_db) {
   airr_db %>%
   mutate(v_call_family =
@@ -2785,8 +2873,16 @@ factor_family_info <- function(airr_db) {
 ```{r}
 #' Bin the mutation frequency
 #'
+#' @description
+#' Creates binned categories for mutation frequency values in a Seurat object
+#' to facilitate visualization and analysis.
+#'
+#' @details
+#' The function creates categorical bins from continuous mutation frequency values.
+#' When more_bins is TRUE, it uses a more granular binning scheme.
+#'
 #' @param seurat_obj The Seurat object.
-#' @param more_groups Use more bins.
+#' @param more_bins Use more bins.
 #' @param col The name of the new column.
 #'
 #' @returns The provided Seurat object with a new binned mu_freq column.
@@ -2796,25 +2892,25 @@ bin_mu_freq <- function(seurat_obj, more_bins = TRUE, col = "mu_freq_bins") {
   mutation_frequencies[is.na(mutation_frequencies)] <- -1
   # mutation_frequencies <- mutation_frequencies[!is.na(mutation_frequencies)]
   max_mu_freq <- max(mutation_frequencies)
-  
+
   # define the bins
   if (more_bins) {
     # bins <- seq(0, round(max_mu_freq, digits = 1), by = 0.05)
     bins <- c(-1, 0, 0.01, 0.04, 0.1, max_mu_freq + 0.001) # for rounding
     labels <- c("0%", "0% to 1%", "1% to 5%", "5% to 10%",
                 paste0("10% to ", round(100 * max_mu_freq), "%"))
-    
+
     seurat_obj[[col]] <-
       cut(mutation_frequencies, breaks = bins, labels = labels)
   }
   else { # keep it simple
     bins <- c(-1, 0, 0.01, max_mu_freq + 0.001) # for rounding
     labels <- c("0%", "0% to 1%", ">1%")
-    
+
     seurat_obj[[col]] <-
       cut(mutation_frequencies, breaks = bins, labels = labels)
   }
-  
+
   return(seurat_obj)
 }
 ```
@@ -2848,7 +2944,7 @@ gex_add_airr <- function(seurat_obj, airr_type = "BCR",
     data_heavy <- (dplyr::filter(combined_airr, locus == "IGH"))$Cell_ID_Unique
     data_light <- (dplyr::filter(combined_airr, locus != "IGH"))$Cell_ID_Unique
     data_paired <- data_heavy[which(data_heavy %in% data_light)]
-  
+
     # select columns of interest from the AIRR data
     combined_airr_select_heavy <-
       combined_airr %>%
@@ -2856,7 +2952,7 @@ gex_add_airr <- function(seurat_obj, airr_type = "BCR",
         select(all_of(airr_cols)) %>%
         mutate(Has_BCR = TRUE, paired_light = Cell_ID_Unique %in% data_paired,
                .before = Cell_ID_Unique)
-  
+
     # pick out some light chain info (this is inelegant, but roll with it)
     # you have to pivot and combine since there can be multiple light chains
     combined_airr_select_light <-
@@ -2866,7 +2962,7 @@ gex_add_airr <- function(seurat_obj, airr_type = "BCR",
       pivot_wider(names_from = locus,
                   values_from = c(v_call_family, j_call_family),
                   values_fn = function(x) paste(sort(x), collapse = ", "))
-  
+
     # add in the light chain info
     combined_airr_select <-
       left_join(combined_airr_select_heavy, combined_airr_select_light,
@@ -2878,7 +2974,7 @@ gex_add_airr <- function(seurat_obj, airr_type = "BCR",
     data_beta <- (dplyr::filter(combined_airr, locus == "TRB"))$Cell_ID_Unique
     data_alpha <- (dplyr::filter(combined_airr, locus != "TRB"))$Cell_ID_Unique
     data_paired <- data_beta[which(data_beta %in% data_alpha)]
-  
+
     # select columns of interest from the AIRR data
     combined_airr_select_beta <-
       combined_airr %>%
@@ -2886,7 +2982,7 @@ gex_add_airr <- function(seurat_obj, airr_type = "BCR",
         select(all_of(airr_cols)) %>%
         mutate(Has_TCR = TRUE, paired_alpha = Cell_ID_Unique %in% data_paired,
                .before = Cell_ID_Unique)
-  
+
     # pick out some alpha chain info (this is inelegant, but roll with it)
     combined_airr_select_alpha <-
       combined_airr %>%
@@ -2895,7 +2991,7 @@ gex_add_airr <- function(seurat_obj, airr_type = "BCR",
       pivot_wider(names_from = locus,
                   values_from = c(v_call_family, j_call_family),
                   values_fn = function(x) paste(sort(x), collapse = ", "))
-  
+
     # add in the alpha chain info
     combined_airr_select <-
       left_join(combined_airr_select_beta, combined_airr_select_alpha,
@@ -2933,7 +3029,7 @@ gex_add_airr <- function(seurat_obj, airr_type = "BCR",
     # paired chain info
     if (airr_type == "BCRs") {
       main_chain <- "heavy"
-      
+
       message <-
         paste("There are",
               nrow(dplyr::filter(combined_airr_select, get(airr_col))),
@@ -2942,7 +3038,7 @@ gex_add_airr <- function(seurat_obj, airr_type = "BCR",
               "of which have at least one paired light chain.")
     } else {
       main_chain <- "beta"
-      
+
       message <-
         paste("There are",
               nrow(dplyr::filter(combined_airr_select, get(airr_col))),
@@ -2962,7 +3058,7 @@ gex_add_airr <- function(seurat_obj, airr_type = "BCR",
                nrow(filter(combined_airr_select, get(airr_col))) -
                  nrow(filter(combined_airr_select_obj, get(airr_col))),
                " of these ", airr_type, " (",
-               label_percent(accuracy = 0.1)(1 - mean(combined_airr_select$Cell_ID_Unique %in% 
+               label_percent(accuracy = 0.1)(1 - mean(combined_airr_select$Cell_ID_Unique %in%
                                                         Cells(seurat_obj))),
                " of the total ", main_chain, " heavy chains) did not have a",
                " match with the GEX cell ids and were excluded."))
@@ -3073,7 +3169,7 @@ clusters_gex_airr <- function(seurat_obj, clusters_col, annotations_col,
   if (paired) {
     if (airr_type == "BCR") paired_col <- "paired_light"
     else paired_col <- "paired_alpha"
-    
+
     seurat_obj_paired <- calc_pcts(data = seurat_obj[[]],
                                    meta_group_by = clusters_col,
                                    focus_group = paired_col) %>%
@@ -3238,7 +3334,7 @@ recombine_subclusters <- function(seurat_obj,
   seurat_obj[[annotations_col_new]] <-
     factor(seurat_obj[[annotations_col_new]][[annotations_col_new]])
   Idents(seurat_obj) <- annotations_col_new
-  
+
   # just for style
   seurat_obj@meta.data <-
     relocate(seurat_obj[[]], !!annotations_col_new, .after = !!annotations_col)
@@ -3297,7 +3393,7 @@ plot_subsets <- function(seurat_obj, tissue_type, clrs_specific,
   # general set up
   plot_by <- rlang::sym(plot_by)
   y_axis <- rlang::sym("Fraction")
-  
+
   # unpaired
   # unpaired_subjects <- c("192563", "202939"), # known from the metadata
   unpaired_subjects <- seurat_obj[[]] %>%
@@ -3318,7 +3414,7 @@ plot_subsets <- function(seurat_obj, tissue_type, clrs_specific,
   if (!points_by %in% meta_group_by) {
     meta_group_by <- c(meta_group_by, points_by)
   }
-  
+
   # we'll have to fill in missing values
   complete_cols <- c("Subject", "SampleType")
   if (!facet_by %in% complete_cols) complete_cols <- c(complete_cols, facet_by)
@@ -3329,7 +3425,6 @@ plot_subsets <- function(seurat_obj, tissue_type, clrs_specific,
     if (ncol > 7) ncol <- min(ceiling(ncol / 2), 7) # but not too wide
   }
 
-  # TODO: Clean this up
   # needed calculations (these have to be done here and not in make_identity_df
   # because of the facet variable)
   identity_df <-
@@ -3395,17 +3490,16 @@ plot_subsets <- function(seurat_obj, tissue_type, clrs_specific,
 
     # include significance testing
     if (include_signif) {
-      # TODO: Deal with not every subject showing in every cell type
       # won't work with unpaired points
       data_df <- dplyr::filter(identity_df, !Subject %in% unpaired_subjects)
-      
+
       if (signif_stars) {
         p <- p + geom_signif(data = data_df,
                              comparisons = list(c("Control", "EM")),
                              test = signif_test,
                              test.args = list(paired = TRUE),
                              map_signif_level = TRUE)
-        
+
         if (signif_caption) {
           p <- p + labs(caption = "***P < 0.001; **P < 0.01; *P < 0.05")
         }
@@ -3608,7 +3702,7 @@ seurat_DE = function(sc, de_test, params = list()) {
 
 
 #' Run a DE analysis within each cell type using pseudobulk methods
-#' 
+#'
 #' @details
 #' The reference comparison should be first in the label
 #'
@@ -4145,6 +4239,10 @@ run_DE = function(sc, de_test, params = list(), ...) {
 
 #' Plot pathways for each cell type using Enrichr.
 #'
+#' @description
+#' Performs pathway enrichment analysis for differentially expressed genes
+#' and creates enrichment plots for each cell type.
+#'
 #' @details
 #' This will upload data to Enrichr.
 #' Note that the labels for the x and y axes are inverted. There are also some labelling options within `plotEnrich` itself.
@@ -4154,7 +4252,7 @@ run_DE = function(sc, de_test, params = list(), ...) {
 #' @param tissue_type The tissue type.
 #' @param label_genes Whether or not to label the genes on the plot.
 #'
-#' @returns
+#' @returns A list of enrichment plots for each cell type.
 plot_pathways <- function(de, dbs, tissue_type, label_genes = FALSE) {
   for (cell_type in names(de)) {
     temp <- de[[cell_type]][de[[cell_type]]$p_val_adj < 0.1, ]
@@ -4251,9 +4349,13 @@ plot_clones <- function(barcodes, groups = NULL, clone = "clone_id",
 
 #' Reads in the trees RDS file from airrflow if it exists in the sample subdirectory
 #'
+#' @description
+#' Attempts to read a trees object from an RDS file in the specified directory.
+#' Returns NULL if the file doesn't exist.
+#'
 #' @param dir The directory that contains the tree info.
 #'
-#' @returns A trees object
+#' @returns A trees object if the file exists, NULL otherwise.
 read_trees <- function(dir) {
   file_path <- file.path(dir, "trees_object.RDS")
 
@@ -4377,7 +4479,7 @@ heatmap_DESeq2 <- function(DESeq2_out, gene_list, FDR_cutoff = 0.05,
                      unnest(value) %>%
                      rename(cell_type = name)
   de_genes <- de_genes_full %>% dplyr::filter(gene %in% gene_list)
-  
+
   # contains foldchanges
   de_m <- de_genes %>%
             select(gene, cell_type, avg_logFC) %>%
@@ -4409,7 +4511,7 @@ heatmap_DESeq2 <- function(DESeq2_out, gene_list, FDR_cutoff = 0.05,
   # fix the order for plotting
   de_m <- de_m[unique(de_genes_full$cell_type)]
   de_p <- de_p[unique(de_genes_full$cell_type)]
-  
+
   # add stars to indicate significance
   de_p[de_p <= FDR_cutoff] <- "*"
   de_p[de_p > FDR_cutoff] <- ""
@@ -4424,17 +4526,17 @@ heatmap_DESeq2 <- function(DESeq2_out, gene_list, FDR_cutoff = 0.05,
   if (rlang::is_missing(clrs_anno_top)) {
     plot_colors <- FALSE
   }
-   
-  # add a color bar on top 
+
+  # add a color bar on top
   if (plot_annotations) {
     # anno_top should only have one column
     anno_top_types <- anno_top[[names(anno_top)]] # or as.character(unlist(anno_top))
-    
+
     # add colored bars on top
     if (plot_colors) {
       clrs_anno_top <- list(clrs_anno_top[unique(anno_top_types)])
       names(clrs_anno_top) <- names(anno_top)
-      
+
       annotation_top <-
         HeatmapAnnotation(df = anno_top, col = clrs_anno_top, na_col = clr_na,
                           annotation_legend_param =
@@ -4444,17 +4546,16 @@ heatmap_DESeq2 <- function(DESeq2_out, gene_list, FDR_cutoff = 0.05,
     } else {
       annotation_top <- NULL
     }
-    
+
     split_column <- anno_top_types
     gap_column <- unit(3, "mm") # adjust as desired
-    
+
   } else {
     annotation_top <- NULL
     split_column <- NULL
     gap_column <- unit(1, "mm") # default
   }
-  
-  # TODO: Change the order of the markers
+
   if (flip_rows) {
     annotation_right <-
       rowAnnotation(text = anno_text(rownames(de_m), rot = 180,
@@ -4465,7 +4566,7 @@ heatmap_DESeq2 <- function(DESeq2_out, gene_list, FDR_cutoff = 0.05,
   } else{
     annotation_right <- NULL
   }
-  
+
   # split up the rows
   # the names of the groups need to be in alphabetical order
   if (!rlang::is_missing(split_row)) {
@@ -4490,9 +4591,9 @@ heatmap_DESeq2 <- function(DESeq2_out, gene_list, FDR_cutoff = 0.05,
   if (nclrs %% 2 == 1) nclrs <- nclrs + 1
   breaks <- c(seq(min_break, 0, length.out = (nclrs/2) + 1),
               seq(0, max_break, length.out = nclrs/2)[-1])
-  
+
   hm <-
-    ComplexHeatmap::Heatmap(matrix = as.matrix(de_m), 
+    ComplexHeatmap::Heatmap(matrix = as.matrix(de_m),
                             # col = circlize::colorRamp2(c(min_break, 0, max_break),
                             #                  c("#2166AC", "white", "#B2182B")),
                             col = circlize::colorRamp2(breaks = breaks,
@@ -4535,7 +4636,7 @@ heatmap_DESeq2 <- function(DESeq2_out, gene_list, FDR_cutoff = 0.05,
                                    title_gp = gpar(fontsize = row_size - 1),
                                    labels_gp = gpar(fontsize = row_size - 2)
                                    ))
-  
+
   # the draw function is for stacking the legends vertically (to save space)
   if (draw) {
     hm %>% draw(merge_legend = TRUE)

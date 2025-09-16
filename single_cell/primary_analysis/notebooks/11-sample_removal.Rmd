@@ -1,0 +1,201 @@
+---
+title: "Sample Removal"
+output:
+  html_document:
+    code_download: yes
+    code_folding: hide
+    css: ../../"style.css"
+    dev: "png"
+    df_print: kable
+    fig_caption: yes
+    keep_md: no
+    self_contained: true
+    theme: yeti
+    toc: yes
+    toc_depth: 4
+    toc_float:
+        collapsed: false
+        smooth_scroll: false
+editor_options:
+  chunk_output_type: console
+---
+
+------------------------------------------------------------------------
+
+# Overview and setup
+
+```{r setup-options, include = FALSE}
+knitr::opts_chunk$set(comment = NA, dpi = 200, fig.align = "center",
+                      out.width = "100%", warning = FALSE, error = TRUE,
+                      message = FALSE,
+                      fig.path = here::here("primary_analysis", "figures",
+                                            "experimental", "label_swap",
+                                            "label-swap-"))
+
+# will mess with chunk labels, but needed for parameterized reports
+options(knitr.duplicate.label = "allow")
+```
+
+**Author(s):** Edel Aron<br>
+**Date Created:** 2023-10-20<br>
+**Last Updated:** `r Sys.Date()`
+
+**R version:** `r R.Version()$version.string`<br>
+**Platform:** `r R.Version()$platform`<br>
+**Running under:** `r sessionInfo()$running`
+
+```{r, include = FALSE}
+# load packages, colors and themes, functions, and metadata (R code only)
+source(knitr::purl(here::here("primary_analysis", "notebooks",
+                              "01-setup.Rmd"), documentation = 0))
+source(knitr::purl(here::here("primary_analysis", "notebooks",
+                              "02-functions.Rmd"), documentation = 0))
+source(knitr::purl(here::here("primary_analysis", "notebooks",
+                              "03-meta.Rmd"), documentation = 0))
+```
+
+------------------------------------------------------------------------
+
+# Read in the data
+
+## QC
+
+```{r setup-qc}
+metrics_summary <- create_metrics_summary(meta = meta,
+                                          path_data_specific = path_data_root,
+                                          data_types = c("GEX", "TCR"),
+                                          samples_list = samples_skin)
+```
+
+## GEX
+
+```{r setup-gex}
+combined_skin <-
+  readRDS(file.path(path_objs, "airr", "combined_skin_airr.rds"))
+combined_skin_recombined <-
+  readRDS(file.path(path_objs, "combined_skin_recombined.rds"))
+combined_skin_recombined_t <-
+  readRDS(file.path(path_objs, "combined_skin_recombined_t.rds"))
+
+combined_skin_t_full <- readRDS(file.path(path_objs, "combined_skin_t.rds"))
+combined_skin_t <- readRDS(file.path(path_objs, "combined_skin_t_ref.rds"))
+```
+
+------------------------------------------------------------------------
+
+# QC
+
+This (smaller version of the) *unaggregated* plot from the QC is part of what made us suspect that the control in 202943 was more like an EM (usually there are more TCRs in the EM and not the control):
+
+```{r qc-bar}
+#| fig.dim = c(14, 8)
+
+# group by subject
+plot_counts(summary_df = metrics_summary,
+            data_types = c("GEX", "TCR"), count_type = "Cell",
+            aggregation_state = "Unaggregated", samples = "Skin Samples",
+            x_axis = "SampleName", x_axis_label = "Sample",
+            clrs_datatype = colors_datatype, include_hlines = FALSE) +
+ geom_rect(data = dplyr::filter(metrics_summary, Subject == "202943"),
+           xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf, alpha = 0.05) +
+  labs(subtitle = "Fills indicate samples that we suspect might have inaccurate labels.") +
+  facet_grid(. ~ Dataset + Subject, scales = "free_x", space = "free")
+```
+
+------------------------------------------------------------------------
+
+```{r subsets-labels-pre-swap}
+#| fig.dim = c(20, 18)
+
+plot_subsets(seurat_obj = combined_skin_paired,
+             tissue_type = "Skin",
+             clrs_specific = colors_roy_skin,
+             plot_by = "SampleType",
+             facet_by = "annotated_clusters",
+             ncol = 5, label_points = TRUE, details = "Pre Swap")
+```
+
+### Both
+
+```{r subsets-labels-both}
+#| fig.dim = c(20, 18)
+
+plot_subsets(seurat_obj = combined_skin_paired_swap,
+             tissue_type = "Skin",
+             clrs_specific = colors_roy_skin,
+             plot_by = "SampleType",
+             facet_by = "annotated_clusters",
+             ncol = 5, label_points = TRUE, details = "Post Swap (Both)")
+```
+
+### 202941
+
+```{r subsets-labels-202941}
+#| fig.dim = c(20, 18)
+
+plot_subsets(seurat_obj = combined_skin_paired_swap_202941,
+             tissue_type = "Skin",
+             clrs_specific = colors_roy_skin,
+             plot_by = "SampleType",
+             facet_by = "annotated_clusters",
+             ncol = 5, label_points = TRUE, details = "Post Swap (202941)")
+```
+
+### 202943
+
+```{r subsets-labels-202943}
+#| fig.dim = c(20, 18)
+
+plot_subsets(seurat_obj = combined_skin_paired_swap_202943,
+             tissue_type = "Skin",
+             clrs_specific = colors_roy_skin,
+             plot_by = "SampleType",
+             facet_by = "annotated_clusters",
+             ncol = 5, label_points = TRUE, details = "Post Swap (202943)")
+```
+
+### 202943 with SC as EM
+
+```{r subsets-labels-202943-em}
+#| fig.dim = c(20, 18)
+
+plot_subsets(seurat_obj = combined_skin_paired_swap_202943_EM,
+             tissue_type = "Skin",
+             clrs_specific = colors_roy_skin,
+             plot_by = "SampleType",
+             facet_by = "annotated_clusters",
+             ncol = 5, label_points = TRUE,
+             details = "Post Swap (202943 with both as EM)")
+```
+
+# Subset the data
+
+After much discussion, we decided to exclude the 202943 control. The lesion for that patient was large and the control sample conceivably could have been taken too close to the EM.
+
+```{r}
+# remove the funky sample
+combined_skin <-
+  subset(combined_skin, subset = SampleName != "202943_SC")
+combined_skin_recombined <-
+  subset(combined_skin_recombined, subset = SampleName != "202943_SC")
+combined_skin_recombined_t <-
+  subset(combined_skin_recombined_t, subset = SampleName != "202943_SC")
+
+combined_skin_t_full <-
+  subset(combined_skin_t_full, subset = SampleName != "202943_SC")
+combined_skin_t <-
+  subset(combined_skin_t, subset = SampleName != "202943_SC")
+
+# save the objects elsewhere so we don't overwrite anything
+saveRDS(combined_skin,
+        file.path(path_objs, "final", "combined_skin_airr.rds"))
+saveRDS(combined_skin_recombined,
+        file.path(path_objs, "final", "combined_skin_recombined.rds"))
+saveRDS(combined_skin_recombined_t,
+        file.path(path_objs, "final", "combined_skin_recombined_t.rds"))
+
+saveRDS(combined_skin_t_full,
+        file.path(path_objs, "final", "combined_skin_t.rds"))
+saveRDS(combined_skin_t,
+        file.path(path_objs, "final", "combined_skin_t_ref.rds"))
+```

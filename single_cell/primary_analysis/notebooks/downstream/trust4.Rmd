@@ -1,0 +1,1553 @@
+---
+title: "TRUST4"
+output:
+  html_document:
+    code_download: yes
+    code_folding: hide
+    css: ../../"style.css"
+    dev: "png"
+    df_print: kable
+    fig_caption: yes
+    keep_md: no
+    self_contained: true
+    theme: yeti
+    toc: yes
+    toc_depth: 4
+    toc_float:
+        collapsed: false
+        smooth_scroll: false
+editor_options:
+  chunk_output_type: console
+---
+
+------------------------------------------------------------------------
+
+# Overview and setup
+
+```{r setup-options, include = FALSE}
+knitr::opts_chunk$set(comment = NA, dpi = 200, fig.align = "center",
+                      out.width = "100%", warning = FALSE, error = TRUE,
+                      message = FALSE,
+                      fig.path = here::here("primary_analysis", "figures",
+                                            "downstream",
+                                            "trust4", "trust4-"))
+
+# will mess with chunk labels, but needed for parameterized reports
+options(knitr.duplicate.label = "allow")
+```
+
+**Author(s):** Edel Aron<br>
+**Date Created:** 2023-10-04<br>
+**Last Updated:** `r Sys.Date()`
+
+**R version:** `r R.Version()$version.string`<br>
+**Platform:** `r R.Version()$platform`<br>
+**Running under:** `r sessionInfo()$running`
+
+```{r, include = FALSE}
+# load packages, colors and themes, functions, and metadata (R code only)
+source(knitr::purl(here::here("primary_analysis", "notebooks",
+                              "01-setup.Rmd"), documentation = 0))
+source(knitr::purl(here::here("primary_analysis", "notebooks",
+                              "02-functions.Rmd"), documentation = 0))
+source(knitr::purl(here::here("primary_analysis", "notebooks",
+                              "03-meta.Rmd"), documentation = 0))
+```
+
+To reconstruct gamma-delta TCRs
+
+> "TRUST4 outputs several files. trust_raw.out, trust_final.out are the contigs and corresponding nucleotide weight. trust_annot.fa is in fasta format for the annotation of the consensus assembly. trust_cdr3.out reports the CDR1,2,3 and gene information for each consensus assemblies. And trust_report.tsv is a report file focusing on CDR3 and is compatible with other repertoire analysis tool such as VDJTools."
+- [GitHub](https://github.com/liulab-dfci/TRUST4)
+
+Ed says to filter out everything with `consensus_count > 1`. The files ending with "_airr.tsv" should be used. Each samples gets their own directory.
+
+* "Yes. If I remember correctly, the _barcode file has the constructed bcr/tcr sequences for each possible barcode but it hasn't been filtered by whatever score that trust4 uses. So the airr.tsv should be a subset of the barcodeairr file"
+* "But like what if I want to match up the gamma/deltas I found to a cluster in the UMAP? That airr.tsv doesn't have barcodes. Unless I use sequence_id?"
+* "The sequence_id column should contain the 10x barcode... You'll have to remove the extra numbers that trust4 puts at the end of them"
+
+Ed "also included two scripts from the trust4 repo that tries to eliminate some falsely called TCRs/BCRs." He "tried to quickly make a bash script to automate running it on everything" but "couldn’t get it to work. But the usage is basically:"
+
+```{bash, eval = FALSE}
+# use the *_barcode_report.tsv file for each sample
+python3 barcoderep-filter.py -b TRUST_F09_7_GEX_HHT_S8_L001_R1_001_barcode_report.tsv > TRUST_F09_7_filtered.tsv
+
+# use the output of the previous step and the *_annot.fa file, and use the perl script to convert to AIRR format
+perl trust-airr.pl TRUST_F09_7_filtered.tsv \
+        TRUST_F09_7_GEX_HHT_S8_L001_R1_001_annot.fa \
+        --format barcoderep > \
+        TRUST_F09_7_airr_filtered.tsv
+```
+
+The TRUST4 points (in red) are set to be larger than the TCR overlays (in green) so that they are easier to see.
+
+------------------------------------------------------------------------
+
+# Read in the data
+
+## GEX
+
+```{r setup-gex}
+# objects
+combined_blood <-
+  readRDS(file.path(path_objs, "airr", "combined_blood_airr.rds"))
+combined_skin <-
+  readRDS(file.path(path_objs, "airr", "combined_skin_airr.rds"))
+```
+
+Rename the current subclustered objects:
+
+```{r setup-gex-round-1}
+# objects
+combined_blood_t_full <- readRDS(file.path(path_objs, "combined_blood_t.rds"))
+combined_skin_t_full <- readRDS(file.path(path_objs, "combined_skin_t.rds"))
+```
+
+```{r setup-gex-round-2}
+# objects
+combined_blood_t <- readRDS(file.path(path_objs, "combined_blood_t_ref.rds"))
+combined_skin_t <- readRDS(file.path(path_objs, "combined_skin_t_ref.rds"))
+```
+
+## TRUST4
+
+```{r setup-trust4}
+trust4_all <- read_tsv(file.path(path_objs, "downstream", "trust4_all.tsv"),
+                       show_col_types = FALSE) %>%
+                mutate(Dataset = as.character(Dataset))
+```
+
+------------------------------------------------------------------------
+
+# Setup
+
+## TRUST4
+
+Filter by consensus count, separate blood and skin, add in the Subject column:
+
+```{r setup-filter-files}
+#| eval = FALSE
+
+trust4_all <- c()
+
+# parent_dir <- file.path(path_data_root, "trust4")
+# dir_list <- list.dirs(parent_dir, recursive = FALSE)
+
+# GEX only
+for (dir in meta %>% dplyr::filter(DataType == "GEX") %>% pull(SampleDir)) {
+  # get a list of all files in the directory that end with "_airr.tsv"
+  file_list <- list.files(file.path(path_data_root, "trust4", paste0(dir, "_fqs")),
+                          pattern = "_airr.tsv$", full.names = TRUE)
+  file <- file_list[!grepl("_barcode_airr.tsv$", file_list)]
+
+  # read in each file and bind the rows together
+  df <- read_tsv(file, show_col_types = FALSE)
+
+  # add metadata cols
+  df$SampleName <- meta %>% dplyr::filter(SampleDir == dir) %>% pull(SampleName)
+  df$TissueType <- meta %>% dplyr::filter(SampleDir == dir) %>% pull(TissueType)
+  df$Dataset <- meta %>% dplyr::filter(SampleDir == dir) %>% pull(Dataset)
+
+  trust4_all <- bind_rows(trust4_all, df)
+}
+
+write_tsv(trust4_all, file.path(path_objs, "downstream", "trust4_all.tsv"))
+```
+
+## Plots
+
+```{r template-umap}
+#| eval = FALSE
+
+# needs: trust4_obj, trust4_tissue_type,
+#        trust4_clusters, trust4_cell_types
+
+# assumes that trust4_obj contains a "Has_TCR" column
+
+# by cluster
+Idents(trust4_obj) <- trust4_clusters
+p1 <- UMAPPlot(trust4_obj, label = TRUE, label.size = 3,
+               cells.highlight = trust4_barcodes, sizes.highlight = 0.8,
+               raster = FALSE) +
+        scale_color_manual(name = "TRUST4",
+                           labels = c("All", "γδ T Cells"),
+                           values = c("lightgray", "red")) +
+        labs(title = trust4_tissue_type, subtitle = "By Cluster") +
+        labels_standard + clean_umap
+
+# by annotation
+Idents(trust4_obj) <- trust4_cell_types
+p2 <- UMAPPlot(trust4_obj, label = TRUE, label.size = 3,
+               cells.highlight = trust4_barcodes, sizes.highlight = 0.8,
+               raster = FALSE) +
+        scale_color_manual(name = "TRUST4",
+                           labels = c("All", "γδ T Cells"),
+                           values = c("lightgray", "red")) +
+        labs(title = trust4_tissue_type, subtitle = "By Cell Type") +
+        labels_standard + clean_umap
+
+# TCR overlay
+p3 <- plot_immune_overlay(seurat_obj = trust4_obj,
+                          tissue_type = trust4_tissue_type,
+                          airr_type = "TCR", clrs_specific = colors_datatype,
+                          plot_by = "all")
+
+# combine plots
+p1 | p2 | p3
+```
+
+```{r template-umap-alt}
+#| eval = FALSE
+
+# needs: trust4_obj, trust4_tissue_type,
+#        trust4_clusters, trust4_cell_types
+
+# assumes that trust4_obj contains a "Has_TCR" column
+
+# by cluster
+Idents(trust4_obj) <- trust4_clusters
+p1 <- UMAPPlot(trust4_obj, label = TRUE, label.size = 3,
+               cells.highlight = trust4_barcodes, sizes.highlight = 0.8,
+               raster = FALSE) +
+        scale_color_manual(name = "TRUST4",
+                           labels = c("All", "γδ T Cells"),
+                           values = c("lightgray", "red")) +
+        labs(title = trust4_tissue_type, subtitle = "By Cluster") +
+        labels_standard + clean_umap
+
+# by annotation
+Idents(trust4_obj) <- trust4_cell_types
+p2 <- UMAPPlot(trust4_obj, label = TRUE, label.size = 3,
+               cells.highlight = trust4_barcodes, sizes.highlight = 0.8,
+               raster = FALSE) +
+        scale_color_manual(name = "TRUST4",
+                           labels = c("All", "γδ T Cells"),
+                           values = c("lightgray", "red")) +
+        labs(title = trust4_tissue_type, subtitle = "By Cell Type") +
+        labels_standard + clean_umap
+
+# assumes that trust4_obj contains a "Has_TCR" column
+p3 <- UMAPPlot(trust4_obj,
+               cells.highlight = Cells(subset(trust4_obj,
+                                              subset = Has_TCR == FALSE)),
+               sizes.highlight = 0.2, raster = FALSE) +
+        scale_color_manual(name = "αβ TCR Presence",
+                           labels = c("TCRs", "No TCRs"),
+                           values = c(colors_datatype[["TCR"]], "black")) +
+        labs(title = trust4_tissue_type) +
+        labels_standard + clean_umap
+
+# combine plots
+p1 | p2 | p3
+```
+
+```{r template-bar}
+#| eval = FALSE
+
+# needs: trust4_obj, trust4_tissue_type, trust4_clusters, trust4_cell_types
+
+# ggplot(trust4_obj[[]] %>%
+#          dplyr::filter(Cell_ID_Unique %in% trust4_barcodes) %>%
+#          select(trust4_clusters),
+#        aes(x = !!sym(trust4_clusters), fill = !!sym(trust4_clusters))) +
+#     geom_bar(color = "black", linewidth = 0.2, width = 1) +
+#     labs(title = paste0("TRUST4 γδ T Cells by Cluster (",
+#                         trust4_tissue_type, ")"),
+#          x = "Cluster", y = "Count") +
+#     scale_y_continuous(breaks = breaks_pretty()) +
+#     theme_bw + labels_standard
+
+# clusters
+p4 <- ggplot(trust4_obj[[]] %>%
+               dplyr::filter(Cell_ID_Unique %in% trust4_barcodes) %>%
+               select(trust4_clusters, "Has_TCR") %>%
+               mutate(Has_TCR = as.character(Has_TCR)),
+             aes(x = !!sym(trust4_clusters), fill = Has_TCR)) +
+        geom_bar(position = position_dodge2(preserve = "single"),
+                 color = "black", linewidth = 0.2, width = 1) +
+        labs(title = paste0("TRUST4 γδ T Cells by Cluster (",
+                            trust4_tissue_type, ")"),
+             x = "Cluster", y = "Count") +
+        scale_y_continuous(breaks = breaks_pretty()) +
+        scale_fill_manual(values = colors_binary) +
+        theme_bw + labels_standard
+
+# cell types
+p5 <- ggplot(trust4_obj[[]] %>%
+               dplyr::filter(Cell_ID_Unique %in% trust4_barcodes) %>%
+               select(trust4_cell_types, "Has_TCR") %>%
+               mutate(Has_TCR = as.character(Has_TCR)),
+             aes(x = !!sym(trust4_cell_types), fill = Has_TCR)) +
+        geom_bar(position = position_dodge2(preserve = "single"),
+                 color = "black", linewidth = 0.2, width = 1) +
+        labs(title = paste0("TRUST4 γδ T Cells by Cell Type (",
+                            trust4_tissue_type, ")"),
+             x = "Cell Type", y = "Count") +
+        scale_y_continuous(breaks = breaks_pretty()) +
+        scale_fill_manual(values = colors_binary) +
+        theme_bw + labels_standard # + labels_rotate_x
+
+# combine plots
+p4 / p5 + plot_layout(guides = "collect")
+```
+
+```{r template-expanded-bar-clusters}
+#| eval = FALSE
+
+# needs: trust4_obj, trust4_tissue_type, trust4_clusters
+
+trust4_tcrs_full <- trust4_obj[[]] %>%
+                      dplyr::filter(Cell_ID_Unique %in% trust4_barcodes) %>%
+                      select(trust4_clusters, Has_TCR) %>%
+                      mutate(Has_TCR = as.character(Has_TCR)) %>%
+                      mutate(Has_TCR = str_replace(Has_TCR,
+                                                   "TRUE", "TRUE_γδ")) %>%
+                      mutate(Has_TCR = str_replace(Has_TCR,
+                                                   "FALSE", "FALSE_γδ")) %>%
+                      group_by(Has_TCR, !!sym(trust4_clusters)) %>%
+                      summarize(n = n(), .groups = "drop")
+
+trust4_tcrs <- trust4_obj[[]] %>%
+                 select(trust4_clusters, Has_TCR) %>%
+                 mutate(Has_TCR = as.character(Has_TCR)) %>%
+                 group_by(Has_TCR, !!sym(trust4_clusters)) %>%
+                 summarize(n = n(), .groups = "drop")
+
+trust4_tcrs_full <- bind_rows(trust4_tcrs_full, trust4_tcrs)
+
+# stacked bar plot
+p6 <- ggplot(trust4_tcrs_full,
+             aes(x = !!sym(trust4_clusters), fill = Has_TCR, weight = n)) +
+        geom_bar(position = "fill", color = "black", linewidth = 0.2) +
+        labs(title = paste0("TCRs by Cluster (", trust4_tissue_type, ")"),
+             subtitle = "TRUST4 γδ T Cells Included",
+             x = "Cluster", y = "Fraction") +
+        scale_y_continuous(labels = percent, expand = expansion(mult = .02)) +
+        scale_fill_manual(values = c("FALSE" = colors_binary[["FALSE"]],
+                                     "FALSE_γδ" = "#61553b",
+                                     "TRUE" = colors_binary[["TRUE"]],
+                                     "TRUE_γδ" = "#107a63")) +
+        theme_bw + labels_standard
+
+# counts
+p7 <- ggplot(trust4_tcrs_full,
+             aes(x = !!sym(trust4_clusters), fill = Has_TCR, weight = n)) +
+        geom_bar(position = "dodge", color = "black", linewidth = 0.2) +
+        labs(title = paste0("TCRs by Cluster (", trust4_tissue_type, ")"),
+             subtitle = "TRUST4 γδ T Cells Included",
+             x = "Cluster", y = "Count") +
+        scale_fill_manual(values = c("FALSE" = colors_binary[["FALSE"]],
+                                     "FALSE_γδ" = "#61553b",
+                                     "TRUE" = colors_binary[["TRUE"]],
+                                     "TRUE_γδ" = "#107a63")) +
+        theme_bw + labels_standard
+
+# combine plots
+p6 / p7 + plot_layout(guides = "collect")
+```
+
+```{r template-expanded-bar-cell-types}
+#| eval = FALSE
+
+# needs: trust4_obj, trust4_tissue_type, trust4_cell_types
+
+trust4_tcrs_full <- trust4_obj[[]] %>%
+                      dplyr::filter(Cell_ID_Unique %in% trust4_barcodes) %>%
+                      select(trust4_cell_types, Has_TCR) %>%
+                      mutate(Has_TCR = as.character(Has_TCR)) %>%
+                      mutate(Has_TCR = str_replace(Has_TCR,
+                                                   "TRUE", "TRUE_γδ")) %>%
+                      mutate(Has_TCR = str_replace(Has_TCR,
+                                                   "FALSE", "FALSE_γδ")) %>%
+                      group_by(Has_TCR, !!sym(trust4_cell_types)) %>%
+                      summarize(n = n(), .groups = "drop")
+
+trust4_tcrs <- trust4_obj[[]] %>%
+                 select(trust4_cell_types, Has_TCR) %>%
+                 mutate(Has_TCR = as.character(Has_TCR)) %>%
+                 group_by(Has_TCR, !!sym(trust4_cell_types)) %>%
+                 summarize(n = n(), .groups = "drop")
+
+trust4_tcrs_full <- bind_rows(trust4_tcrs_full, trust4_tcrs)
+
+# stacked bar plot
+p6 <- ggplot(trust4_tcrs_full,
+             aes(x = !!sym(trust4_cell_types), fill = Has_TCR, weight = n)) +
+        geom_bar(position = "fill", color = "black", linewidth = 0.2) +
+        labs(title = paste0("TCRs by Cluster (", trust4_tissue_type, ")"),
+             subtitle = "TRUST4 γδ T Cells Included",
+             x = "Cluster", y = "Fraction") +
+        scale_y_continuous(labels = percent, expand = expansion(mult = .02)) +
+        scale_fill_manual(values = c("FALSE" = colors_binary[["FALSE"]],
+                                     "FALSE_γδ" = "#61553b",
+                                     "TRUE" = colors_binary[["TRUE"]],
+                                     "TRUE_γδ" = "#107a63")) +
+        theme_bw + labels_standard
+
+# counts
+p7 <- ggplot(trust4_tcrs_full,
+             aes(x = !!sym(trust4_cell_types), fill = Has_TCR, weight = n)) +
+        geom_bar(position = "dodge", color = "black", linewidth = 0.2) +
+        labs(title = paste0("TCRs by Cluster (", trust4_tissue_type, ")"),
+             subtitle = "TRUST4 γδ T Cells Included",
+             x = "Cluster", y = "Count") +
+        scale_fill_manual(values = c("FALSE" = colors_binary[["FALSE"]],
+                                     "FALSE_γδ" = "#61553b",
+                                     "TRUE" = colors_binary[["TRUE"]],
+                                     "TRUE_γδ" = "#107a63")) +
+        theme_bw + labels_standard
+
+# combine plots
+p6 / p7 + plot_layout(guides = "collect")
+```
+
+------------------------------------------------------------------------
+
+# Approach 1: Filter
+
+By `consensus_count > 1`
+
+## Filter the data
+
+```{r filter-filters}
+trust4 <- trust4_all
+paste("Original TRUST4 results:", nrow(trust4))
+
+# suggested by Ed
+trust4 <- dplyr::filter(trust4, consensus_count > 1)
+paste("Post consensus_count filtration:", nrow(trust4))
+
+# just the gamma-delta T cells
+trust4 <- dplyr::filter(trust4, grepl("TRD|TRG", v_call))
+paste("Just γδ T Cells:", nrow(trust4))
+
+# for the UMAPs
+trust4_barcodes <- trust4 %>%
+                     select(SampleName, sequence_id) %>%
+                     mutate(sequence_id = sapply(strsplit(sequence_id, "_"),
+                                                 function(x) x[[1]])) %>%
+                     mutate(Cell_ID_Unique = paste0(SampleName, "_",
+                                                    sequence_id)) %>%
+                     pull(Cell_ID_Unique)
+```
+
+Examine the results:
+
+```{r filter-filters-table}
+# all hits
+print_kable(trust4)
+```
+
+## Counts
+
+Look at the total TRUST4 hits by tissue type:
+
+```{r filter-bar}
+#| fig.dim = c(12, 8)
+
+# all tissues
+p1 <- ggplot(trust4,
+             aes(x = SampleName, fill = SampleName)) +
+        geom_bar(color = "black", linewidth = 0.2) +
+        labs(title = "TRUST4 γδ T Cells (All Tissues)",
+             x = "Sample", y = "Count") +
+        scale_y_continuous(breaks = breaks_pretty()) +
+        scale_fill_manual(values = colors_samples) +
+        facet_grid(~Dataset, scales = "free_x", space = "free",
+                   labeller = purrr::partial(label_both, sep = " "))
+
+# just blood
+p2 <- ggplot(dplyr::filter(trust4, TissueType == "Blood"),
+             aes(x = SampleName, fill = SampleName)) +
+        geom_bar(color = "black", linewidth = 0.2) +
+        labs(title = "TRUST4 γδ T Cells (Blood)",
+             x = "Sample", y = "Count") +
+        scale_y_continuous(breaks = breaks_pretty()) +
+        scale_fill_manual(values = colors_sample_blood) +
+        facet_grid(~Dataset, scales = "free_x", space = "free",
+                   labeller = purrr::partial(label_both, sep = " "))
+
+# just skin
+p3 <- ggplot(dplyr::filter(trust4, TissueType == "Skin"),
+             aes(x = SampleName, fill = SampleName)) +
+        geom_bar(color = "black", linewidth = 0.2) +
+        labs(title = "TRUST4 γδ T Cells (Skin)",
+             x = "Sample", y = "Count") +
+        scale_y_continuous(breaks = breaks_pretty()) +
+        scale_fill_manual(values = colors_sample_skin)
+
+# all plots
+(p1 | (p2 / p3)) &
+  theme_bw & labels_standard & labels_rotate_x &
+  theme(legend.position = "none") &
+  facet_grid(~Dataset, scales = "free_x", space = "free",
+             labeller = purrr::partial(label_both, sep = " "))
+```
+
+## Exploration {.tabset}
+
+### Blood {.tabset}
+
+```{r filter-blood-setup}
+trust4_obj <- combined_blood
+trust4_tissue_type <- "Blood"
+trust4_clusters <- "seurat_clusters"
+trust4_cell_types <- "annotated_clusters"
+```
+
+```{r filter-blood-hits}
+num_hits <- nrow(dplyr::filter(trust4_obj[[]],
+                               Cell_ID_Unique %in% trust4_barcodes))
+cat("There are", num_hits, "TRUST4 hits out of", ncol(trust4_obj),
+    "total cells",
+    paste0("(", label_percent(accuracy = 0.01)(num_hits/ncol(trust4_obj)), ")"))
+```
+
+#### UMAPs
+
+```{r filter-blood-umap}
+#| ref.label = "template-umap",
+#| fig.dim = c(18, 6)
+```
+
+#### TRUST4 Hits Only
+
+```{r filter-blood-bar}
+#| ref.label = "template-bar",
+#| fig.dim = c(12, 6)
+```
+
+#### Full TRUST Hits
+
+```{r filter-blood-expanded-clusters-bar}
+#| ref.label = "template-expanded-bar-clusters",
+#| fig.dim = c(12, 10)
+```
+
+```{r filter-blood-expanded-cell-types-bar}
+#| ref.label = "template-expanded-bar-cell-types",
+#| fig.dim = c(12, 10)
+```
+
+### Blood T Cells {.tabset}
+
+```{r filter-blood-t-full-setup}
+trust4_obj <- combined_blood_t_full
+trust4_tissue_type <- "Blood T Cells"
+trust4_clusters <- "seurat_subclusters"
+trust4_cell_types <- "annotated_subclusters"
+```
+
+```{r filter-blood-t-full-hits}
+num_hits <- nrow(dplyr::filter(trust4_obj[[]],
+                               Cell_ID_Unique %in% trust4_barcodes))
+cat("There are", num_hits, "TRUST4 hits out of", ncol(trust4_obj),
+    "total cells",
+    paste0("(", label_percent(accuracy = 0.01)(num_hits/ncol(trust4_obj)), ")"))
+```
+
+#### UMAPs
+
+```{r filter-blood-t-full-umap}
+#| ref.label = "template-umap",
+#| fig.dim = c(18, 6)
+```
+
+#### TRUST4 Hits Only
+
+```{r filter-blood-t-full-bar}
+#| ref.label = "template-bar",
+#| fig.dim = c(12, 6)
+```
+
+#### Full TRUST Hits
+
+```{r filter-blood-t-full-expanded-clusters-bar}
+#| ref.label = "template-expanded-bar-clusters",
+#| fig.dim = c(12, 10)
+```
+
+```{r filter-blood-t-full-expanded-cell-types-bar}
+#| ref.label = "template-expanded-bar-cell-types",
+#| fig.dim = c(12, 10)
+```
+
+### Blood T Cells (Refined) {.tabset}
+
+```{r filter-blood-t-setup}
+trust4_obj <- combined_blood_t
+trust4_tissue_type <- "Blood T Cells (Refined)"
+trust4_clusters <- "seurat_subclusters"
+trust4_cell_types <- "annotated_subclusters"
+```
+
+```{r filter-blood-t-hits}
+num_hits <- nrow(dplyr::filter(trust4_obj[[]],
+                               Cell_ID_Unique %in% trust4_barcodes))
+cat("There are", num_hits, "TRUST4 hits out of", ncol(trust4_obj),
+    "total cells",
+    paste0("(", label_percent(accuracy = 0.01)(num_hits/ncol(trust4_obj)), ")"))
+```
+
+#### UMAPs
+
+```{r filter-blood-t-umap}
+#| ref.label = "template-umap",
+#| fig.dim = c(18, 6)
+```
+
+#### TRUST4 Hits Only
+
+```{r filter-blood-t-bar}
+#| ref.label = "template-bar",
+#| fig.dim = c(12, 6)
+```
+
+#### Full TRUST Hits
+
+```{r filter-blood-t-expanded-clusters-bar}
+#| ref.label = "template-expanded-bar-clusters",
+#| fig.dim = c(12, 10)
+```
+
+```{r filter-blood-t-expanded-cell-types-bar}
+#| ref.label = "template-expanded-bar-cell-types",
+#| fig.dim = c(12, 10)
+```
+
+### Skin {.tabset}
+
+```{r filter-skin-setup}
+trust4_obj <- combined_skin
+trust4_tissue_type <- "Skin"
+trust4_clusters <- "seurat_clusters"
+trust4_cell_types <- "annotated_clusters"
+```
+
+```{r filter-skin-hits}
+num_hits <- nrow(dplyr::filter(trust4_obj[[]],
+                               Cell_ID_Unique %in% trust4_barcodes))
+cat("There are", num_hits, "TRUST4 hits out of", ncol(trust4_obj),
+    "total cells",
+    paste0("(", label_percent(accuracy = 0.01)(num_hits/ncol(trust4_obj)), ")"))
+```
+
+#### UMAPs
+
+```{r filter-skin-umap}
+#| ref.label = "template-umap",
+#| fig.dim = c(18, 6)
+```
+
+#### TRUST4 Hits Only
+
+```{r filter-skin-bar}
+#| ref.label = "template-bar",
+#| fig.dim = c(12, 6)
+```
+
+#### Full TRUST Hits
+
+```{r filter-skin-expanded-clusters-bar}
+#| ref.label = "template-expanded-bar-clusters",
+#| fig.dim = c(12, 10)
+```
+
+```{r filter-skin-expanded-cell-types-bar}
+#| ref.label = "template-expanded-bar-cell-types",
+#| fig.dim = c(12, 10)
+```
+
+### Skin T Cells {.tabset}
+
+```{r filter-skin-t-full-setup}
+trust4_obj <- combined_skin_t_full
+trust4_tissue_type <- "Skin T Cells"
+trust4_clusters <- "seurat_subclusters"
+trust4_cell_types <- "annotated_subclusters"
+```
+
+```{r filter-skin-t-full-hits}
+num_hits <- nrow(dplyr::filter(trust4_obj[[]],
+                               Cell_ID_Unique %in% trust4_barcodes))
+cat("There are", num_hits, "TRUST4 hits out of", ncol(trust4_obj),
+    "total cells",
+    paste0("(", label_percent(accuracy = 0.01)(num_hits/ncol(trust4_obj)), ")"))
+```
+
+#### UMAPs
+
+```{r filter-skin-t-full-umap}
+#| ref.label = "template-umap",
+#| fig.dim = c(18, 6)
+```
+
+#### TRUST4 Hits Only
+
+```{r filter-skin-t-full-bar}
+#| ref.label = "template-bar",
+#| fig.dim = c(12, 6)
+```
+
+#### Full TRUST Hits
+
+```{r filter-skin-t-full-expanded-clusters-bar}
+#| ref.label = "template-expanded-bar-clusters",
+#| fig.dim = c(12, 10)
+```
+
+```{r filter-skin-t-full-expanded-cell-types-bar}
+#| ref.label = "template-expanded-bar-cell-types",
+#| fig.dim = c(12, 10)
+```
+
+### Skin T Cells (Refined) {.tabset}
+
+```{r filter-skin-t-setup}
+trust4_obj <- combined_skin_t
+trust4_tissue_type <- "Skin T Cells (Refined)"
+trust4_clusters <- "seurat_subclusters"
+trust4_cell_types <- "annotated_clusters"
+```
+
+```{r filter-skin-t-hits}
+num_hits <- nrow(dplyr::filter(trust4_obj[[]],
+                               Cell_ID_Unique %in% trust4_barcodes))
+cat("There are", num_hits, "TRUST4 hits out of", ncol(trust4_obj),
+    "total cells",
+    paste0("(", label_percent(accuracy = 0.01)(num_hits/ncol(trust4_obj)), ")"))
+```
+
+#### UMAPs
+
+```{r filter-skin-t-umap}
+#| ref.label = "template-umap",
+#| fig.dim = c(18, 6)
+```
+
+#### TRUST4 Hits Only
+
+```{r filter-skin-t-bar}
+#| ref.label = "template-bar",
+#| fig.dim = c(12, 6)
+```
+
+#### Full TRUST Hits
+
+```{r filter-skin-t-expanded-clusters-bar}
+#| ref.label = "template-expanded-bar-clusters",
+#| fig.dim = c(12, 10)
+```
+
+```{r filter-skin-t-expanded-cell-types-bar}
+#| ref.label = "template-expanded-bar-cell-types",
+#| fig.dim = c(12, 10)
+```
+
+------------------------------------------------------------------------
+
+# Approach 2: Don't filter
+
+If we don't filter for `consensus_count > 1`:
+
+## Filter the data
+
+```{r no-filter-filters}
+trust4 <- trust4_all
+paste("Original TRUST4 results:", nrow(trust4))
+
+# just the gamma-delta T cells
+trust4 <- trust4 %>% dplyr::filter(grepl("TRD|TRG", v_call))
+paste("Just γδ T Cells:", nrow(trust4))
+
+# for the objects
+trust4_barcodes_full <- trust4 %>%
+                          select(SampleName, sequence_id) %>%
+                          mutate(sequence_id = sapply(strsplit(sequence_id, "_"),
+                                                      function(x) x[[1]])) %>%
+                          mutate(Cell_ID_Unique = paste0(SampleName, "_",
+                                                         sequence_id),
+                                TRUST4 = TRUE) %>%
+                          select(-SampleName, -sequence_id)
+
+# for the UMAPs
+trust4_barcodes <- trust4_barcodes_full %>% pull(Cell_ID_Unique)
+```
+
+Examine the results:
+
+```{r no-filter-filters-table}
+# all hits
+print_kable(trust4)
+```
+
+## Counts
+
+Look at the total TRUST4 hits by tissue type:
+
+```{r no-filter-bar}
+#| fig.dim = c(12, 8)
+
+# all tissues
+p1 <- ggplot(trust4,
+             aes(x = SampleName, fill = SampleName)) +
+        geom_bar(color = "black", linewidth = 0.2) +
+        labs(title = "TRUST4 γδ T Cells (All Tissues)",
+             subtitle = "No consensus_count filtration",
+             x = "Sample", y = "Count") +
+        scale_y_continuous(breaks = breaks_pretty()) +
+        scale_fill_manual(values = colors_samples) +
+        facet_grid(~Dataset, scales = "free_x", space = "free",
+                   labeller = purrr::partial(label_both, sep = " "))
+
+# just blood
+p2 <- ggplot(dplyr::filter(trust4, TissueType == "Blood"),
+             aes(x = SampleName, fill = SampleName)) +
+        geom_bar(color = "black", linewidth = 0.2) +
+        labs(title = "TRUST4 γδ T Cells (Blood)",
+             subtitle = "No consensus_count filtration",
+             x = "Sample", y = "Count") +
+        scale_y_continuous(breaks = breaks_pretty()) +
+        scale_fill_manual(values = colors_sample_blood) +
+        facet_grid(~Dataset, scales = "free_x", space = "free",
+                   labeller = purrr::partial(label_both, sep = " "))
+
+# just skin
+p3 <- ggplot(dplyr::filter(trust4, TissueType == "Skin"),
+             aes(x = SampleName, fill = SampleName)) +
+        geom_bar(color = "black", linewidth = 0.2) +
+        labs(title = "TRUST4 γδ T Cells (Skin)",
+             subtitle = "No consensus_count filtration",
+             x = "Sample", y = "Count") +
+        scale_y_continuous(breaks = breaks_pretty()) +
+        scale_fill_manual(values = colors_sample_skin)
+
+# all plots
+(p1 | (p2 / p3)) &
+  theme_bw & labels_standard & labels_rotate_x &
+  theme(legend.position = "none") &
+  facet_grid(~Dataset, scales = "free_x", space = "free",
+             labeller = purrr::partial(label_both, sep = " "))
+```
+
+## Exploration
+
+### All cells {.tabset}
+
+#### Blood {.tabset}
+
+```{r no-filter-blood-setup}
+trust4_obj <- combined_blood
+trust4_tissue_type <- "Blood"
+trust4_clusters <- "seurat_clusters"
+trust4_cell_types <- "annotated_clusters"
+```
+
+```{r no-filter-blood-hits}
+num_hits <- nrow(dplyr::filter(trust4_obj[[]],
+                               Cell_ID_Unique %in% trust4_barcodes))
+cat("There are", num_hits, "TRUST4 hits out of", ncol(trust4_obj),
+    "total cells",
+    paste0("(", label_percent(accuracy = 0.01)(num_hits/ncol(trust4_obj)), ")"))
+```
+
+##### UMAPs
+
+```{r no-filter-blood-umap}
+#| ref.label = "template-umap",
+#| fig.dim = c(18, 6)
+```
+
+##### TRUST4 Hits Only
+
+```{r no-filter-blood-bar}
+#| ref.label = "template-bar",
+#| fig.dim = c(12, 6)
+```
+
+##### Full TRUST Hits
+
+```{r no-filter-blood-expanded-clusters-bar}
+#| ref.label = "template-expanded-bar-clusters",
+#| fig.dim = c(12, 10)
+```
+
+```{r no-filter-blood-expanded-cell-types-bar}
+#| ref.label = "template-expanded-bar-cell-types",
+#| fig.dim = c(12, 10)
+```
+
+#### Blood T Cells {.tabset}
+
+```{r no-filter-blood-t-full-setup}
+trust4_obj <- combined_blood_t_full
+trust4_tissue_type <- "Blood T Cells"
+trust4_clusters <- "seurat_subclusters"
+trust4_cell_types <- "annotated_subclusters"
+```
+
+```{r no-filter-blood-t-full-hits}
+num_hits <- nrow(dplyr::filter(trust4_obj[[]],
+                               Cell_ID_Unique %in% trust4_barcodes))
+cat("There are", num_hits, "TRUST4 hits out of", ncol(trust4_obj),
+    "total cells",
+    paste0("(", label_percent(accuracy = 0.01)(num_hits/ncol(trust4_obj)), ")"))
+```
+
+##### UMAPs
+
+```{r no-filter-blood-t-full-umap}
+#| ref.label = "template-umap",
+#| fig.dim = c(18, 6)
+```
+
+##### TRUST4 Hits Only
+
+```{r no-filter-blood-t-full-bar}
+#| ref.label = "template-bar",
+#| fig.dim = c(12, 6)
+```
+
+##### Full TRUST Hits
+
+```{r no-filter-blood-t-full-expanded-clusters-bar}
+#| ref.label = "template-expanded-bar-clusters",
+#| fig.dim = c(12, 10)
+```
+
+```{r no-filter-blood-t-full-expanded-cell-types-bar}
+#| ref.label = "template-expanded-bar-cell-types",
+#| fig.dim = c(12, 10)
+```
+
+#### Blood T Cells (Refined) {.tabset}
+
+```{r no-filter-blood-t-setup}
+trust4_obj <- combined_blood_t
+trust4_tissue_type <- "Blood T Cells (Refined)"
+trust4_clusters <- "seurat_subclusters"
+trust4_cell_types <- "annotated_subclusters"
+```
+
+```{r no-filter-blood-t-hits}
+num_hits <- nrow(dplyr::filter(trust4_obj[[]],
+                               Cell_ID_Unique %in% trust4_barcodes))
+cat("There are", num_hits, "TRUST4 hits out of", ncol(trust4_obj),
+    "total cells",
+    paste0("(", label_percent(accuracy = 0.01)(num_hits/ncol(trust4_obj)), ")"))
+```
+
+##### UMAPs
+
+```{r no-filter-blood-t-umap}
+#| ref.label = "template-umap",
+#| fig.dim = c(18, 6)
+```
+
+##### TRUST4 Hits Only
+
+```{r no-filter-blood-t-bar}
+#| ref.label = "template-bar",
+#| fig.dim = c(12, 6)
+```
+
+##### Full TRUST Hits
+
+```{r no-filter-blood-t-expanded-clusters-bar}
+#| ref.label = "template-expanded-bar-clusters",
+#| fig.dim = c(12, 10)
+```
+
+```{r no-filter-blood-t-expanded-cell-types-bar}
+#| ref.label = "template-expanded-bar-cell-types",
+#| fig.dim = c(12, 10)
+```
+
+#### Skin {.tabset}
+
+```{r no-filter-skin-setup}
+trust4_obj <- combined_skin
+trust4_tissue_type <- "Skin"
+trust4_clusters <- "seurat_clusters"
+trust4_cell_types <- "annotated_clusters"
+```
+
+```{r no-filter-skin-hits}
+num_hits <- nrow(dplyr::filter(trust4_obj[[]],
+                               Cell_ID_Unique %in% trust4_barcodes))
+cat("There are", num_hits, "TRUST4 hits out of", ncol(trust4_obj),
+    "total cells",
+    paste0("(", label_percent(accuracy = 0.01)(num_hits/ncol(trust4_obj)), ")"))
+```
+
+##### UMAPs
+
+```{r no-filter-skin-umap}
+#| ref.label = "template-umap",
+#| fig.dim = c(18, 6)
+```
+
+##### TRUST4 Hits Only
+
+```{r no-filter-skin-bar}
+#| ref.label = "template-bar",
+#| fig.dim = c(12, 6)
+```
+
+##### Full TRUST Hits
+
+```{r no-filter-skin-expanded-clusters-bar}
+#| ref.label = "template-expanded-bar-clusters",
+#| fig.dim = c(12, 10)
+```
+
+```{r no-filter-skin-expanded-cell-types-bar}
+#| ref.label = "template-expanded-bar-cell-types",
+#| fig.dim = c(12, 10)
+```
+
+#### Skin T Cells {.tabset}
+
+```{r no-filter-skin-t-full-setup}
+trust4_obj <- combined_skin_t_full
+trust4_tissue_type <- "Skin T Cells"
+trust4_clusters <- "seurat_subclusters"
+trust4_cell_types <- "annotated_subclusters"
+```
+
+```{r no-filter-skin-t-full-hits}
+num_hits <- nrow(dplyr::filter(trust4_obj[[]],
+                               Cell_ID_Unique %in% trust4_barcodes))
+cat("There are", num_hits, "TRUST4 hits out of", ncol(trust4_obj),
+    "total cells",
+    paste0("(", label_percent(accuracy = 0.01)(num_hits/ncol(trust4_obj)), ")"))
+```
+
+##### UMAPs
+
+```{r no-filter-skin-t-full-umap}
+#| ref.label = "template-umap",
+#| fig.dim = c(18, 6)
+```
+
+##### TRUST4 Hits Only
+
+```{r no-filter-skin-t-full-bar}
+#| ref.label = "template-bar",
+#| fig.dim = c(12, 6)
+```
+
+##### Full TRUST Hits
+
+```{r no-filter-skin-t-full-expanded-clusters-bar}
+#| ref.label = "template-expanded-bar-clusters",
+#| fig.dim = c(12, 10)
+```
+
+```{r no-filter-skin-t-full-expanded-cell-types-bar}
+#| ref.label = "template-expanded-bar-cell-types",
+#| fig.dim = c(12, 10)
+```
+
+#### Skin T Cells (Refined) {.tabset}
+
+```{r no-filter-skin-t-setup}
+trust4_obj <- combined_skin_t
+trust4_tissue_type <- "Skin T Cells (Refined)"
+trust4_clusters <- "seurat_subclusters"
+trust4_cell_types <- "annotated_clusters"
+```
+
+```{r no-filter-skin-t-hits}
+num_hits <- nrow(dplyr::filter(trust4_obj[[]],
+                               Cell_ID_Unique %in% trust4_barcodes))
+cat("There are", num_hits, "TRUST4 hits out of", ncol(trust4_obj),
+    "total cells",
+    paste0("(", label_percent(accuracy = 0.01)(num_hits/ncol(trust4_obj)), ")"))
+```
+
+##### UMAPs
+
+```{r no-filter-skin-t-umap}
+#| ref.label = "template-umap",
+#| fig.dim = c(18, 6)
+```
+
+##### TRUST4 Hits Only
+
+```{r no-filter-skin-t-bar}
+#| ref.label = "template-bar",
+#| fig.dim = c(12, 6)
+```
+
+##### Full TRUST Hits
+
+```{r no-filter-skin-t-expanded-clusters-bar}
+#| ref.label = "template-expanded-bar-clusters",
+#| fig.dim = c(12, 10)
+```
+
+```{r no-filter-skin-t-expanded-cell-types-bar}
+#| ref.label = "template-expanded-bar-cell-types",
+#| fig.dim = c(12, 10)
+```
+
+### Control only {.tabset}
+
+#### Skin {.tabset}
+
+```{r no-filter-skin-control-setup}
+trust4_obj <- subset(combined_skin, subset = SampleType == "Control")
+trust4_tissue_type <- "Skin (Control Only)"
+trust4_clusters <- "seurat_clusters"
+trust4_cell_types <- "annotated_clusters"
+```
+
+```{r no-filter-skin-control-hits}
+num_hits <- nrow(dplyr::filter(trust4_obj[[]],
+                               Cell_ID_Unique %in% trust4_barcodes))
+cat("There are", num_hits, "TRUST4 hits out of", ncol(trust4_obj),
+    "total cells",
+    paste0("(", label_percent(accuracy = 0.01)(num_hits/ncol(trust4_obj)), ")"))
+```
+
+##### UMAPs
+
+```{r no-filter-skin-control-umap}
+#| ref.label = "template-umap",
+#| fig.dim = c(18, 6)
+```
+
+##### TRUST4 Hits Only
+
+```{r no-filter-skin-control-bar}
+#| ref.label = "template-bar",
+#| fig.dim = c(12, 6)
+```
+
+##### Full TRUST Hits
+
+```{r no-filter-skin-control-expanded-clusters-bar}
+#| ref.label = "template-expanded-bar-clusters",
+#| fig.dim = c(12, 10)
+```
+
+```{r no-filter-skin-control-expanded-cell-types-bar}
+#| ref.label = "template-expanded-bar-cell-types",
+#| fig.dim = c(12, 10)
+```
+
+#### Skin T Cells {.tabset}
+
+```{r no-filter-skin-t-control-full-setup}
+trust4_obj <- subset(combined_skin_t_full, subset = SampleType == "Control")
+trust4_tissue_type <- "Skin T Cells"
+trust4_clusters <- "seurat_subclusters"
+trust4_cell_types <- "annotated_subclusters"
+```
+
+```{r no-filter-skin-t-control-full-hits}
+num_hits <- nrow(dplyr::filter(trust4_obj[[]],
+                               Cell_ID_Unique %in% trust4_barcodes))
+cat("There are", num_hits, "TRUST4 hits out of", ncol(trust4_obj),
+    "total cells",
+    paste0("(", label_percent(accuracy = 0.01)(num_hits/ncol(trust4_obj)), ")"))
+```
+
+##### UMAPs
+
+```{r no-filter-skin-t-control-full-umap}
+#| ref.label = "template-umap",
+#| fig.dim = c(18, 6)
+```
+
+##### TRUST4 Hits Only
+
+```{r no-filter-skin-t-control-full-bar}
+#| ref.label = "template-bar",
+#| fig.dim = c(12, 6)
+```
+
+##### Full TRUST Hits
+
+```{r no-filter-skin-t-full-control-expanded-clusters-bar}
+#| ref.label = "template-expanded-bar-clusters",
+#| fig.dim = c(12, 10)
+```
+
+```{r no-filter-skin-t-full-control-expanded-cell-types-bar}
+#| ref.label = "template-expanded-bar-cell-types",
+#| fig.dim = c(12, 10)
+```
+
+#### Skin T Cells (Refined) {.tabset}
+
+```{r no-filter-skin-t-control-setup}
+trust4_obj <- subset(combined_skin_t, subset = SampleType == "Control")
+trust4_tissue_type <- "Skin T Cells (Refined)"
+trust4_clusters <- "seurat_subclusters"
+trust4_cell_types <- "annotated_clusters"
+```
+
+```{r no-filter-skin-t-control-hits}
+num_hits <- nrow(dplyr::filter(trust4_obj[[]],
+                               Cell_ID_Unique %in% trust4_barcodes))
+cat("There are", num_hits, "TRUST4 hits out of", ncol(trust4_obj),
+    "total cells",
+    paste0("(", label_percent(accuracy = 0.01)(num_hits/ncol(trust4_obj)), ")"))
+```
+
+##### UMAPs
+
+```{r no-filter-skin-t-control-umap}
+#| ref.label = "template-umap",
+#| fig.dim = c(18, 6)
+```
+
+##### TRUST4 Hits Only
+
+```{r no-filter-skin-t-control-bar}
+#| ref.label = "template-bar",
+#| fig.dim = c(12, 6)
+```
+
+##### Full TRUST Hits
+
+```{r no-filter-skin-t-control-expanded-clusters-bar}
+#| ref.label = "template-expanded-bar-clusters",
+#| fig.dim = c(12, 10)
+```
+
+```{r no-filter-skin-t-control-expanded-cell-types-bar}
+#| ref.label = "template-expanded-bar-cell-types",
+#| fig.dim = c(12, 10)
+```
+
+### Without TCRs {.tabset}
+
+#### Blood {.tabset}
+
+```{r no-filter-blood-no-tcrs-setup}
+trust4_obj <- subset(combined_blood, subset = Has_TCR == FALSE)
+trust4_tissue_type <- "Blood (Without TCRs)"
+trust4_clusters <- "seurat_clusters"
+trust4_cell_types <- "annotated_clusters"
+```
+
+```{r no-filter-blood-no-tcrs-hits}
+num_hits <- nrow(dplyr::filter(trust4_obj[[]],
+                               Cell_ID_Unique %in% trust4_barcodes))
+cat("There are", num_hits, "TRUST4 hits out of", ncol(trust4_obj),
+    "total cells",
+    paste0("(", label_percent(accuracy = 0.01)(num_hits/ncol(trust4_obj)), ")"))
+```
+
+##### UMAPs
+
+```{r no-filter-blood-no-tcrs-umap}
+#| ref.label = "template-umap",
+#| fig.dim = c(18, 6)
+```
+
+##### TRUST4 Hits Only
+
+```{r no-filter-blood-no-tcrs-bar}
+#| ref.label = "template-bar",
+#| fig.dim = c(12, 6)
+```
+
+##### Full TRUST Hits
+
+```{r no-filter-blood-no-tcrs-expanded-clusters-bar}
+#| ref.label = "template-expanded-bar-clusters",
+#| fig.dim = c(12, 10)
+```
+
+```{r no-filter-blood-no-tcrs-expanded-cell-types-bar}
+#| ref.label = "template-expanded-bar-cell-types",
+#| fig.dim = c(12, 10)
+```
+
+#### Blood T Cells {.tabset}
+
+```{r no-filter-blood-t-full-no-tcrs-setup}
+trust4_obj <- subset(combined_blood_t_full, subset = Has_TCR == FALSE)
+trust4_tissue_type <- "Blood T Cells (Without TCRs)"
+trust4_clusters <- "seurat_subclusters"
+trust4_cell_types <- "annotated_subclusters"
+```
+
+```{r no-filter-blood-t-full-no-tcrs-hits}
+num_hits <- nrow(dplyr::filter(trust4_obj[[]],
+                               Cell_ID_Unique %in% trust4_barcodes))
+cat("There are", num_hits, "TRUST4 hits out of", ncol(trust4_obj),
+    "total cells",
+    paste0("(", label_percent(accuracy = 0.01)(num_hits/ncol(trust4_obj)), ")"))
+```
+
+##### UMAPs
+
+```{r no-filter-blood-t-full-no-tcrs-umap}
+#| ref.label = "template-umap",
+#| fig.dim = c(18, 6)
+```
+
+##### TRUST4 Hits Only
+
+```{r no-filter-blood-t-full-no-tcrs-bar}
+#| ref.label = "template-bar",
+#| fig.dim = c(12, 6)
+```
+
+##### Full TRUST Hits
+
+```{r no-filter-blood-t-full-no-tcrs-expanded-clusters-bar}
+#| ref.label = "template-expanded-bar-clusters",
+#| fig.dim = c(12, 10)
+```
+
+```{r no-filter-blood-t-full-no-tcrs-expandecell-typesd-bar}
+#| ref.label = "template-expanded-bar-cell-types",
+#| fig.dim = c(12, 10)
+```
+
+#### Blood T Cells (Refined) {.tabset}
+
+```{r no-filter-blood-t-no-tcrs-setup}
+trust4_obj <- subset(combined_blood_t, subset = Has_TCR == FALSE)
+trust4_tissue_type <- "Blood T Cells (Refined) (Without TCRs)"
+trust4_clusters <- "seurat_subclusters"
+trust4_cell_types <- "annotated_subclusters"
+```
+
+```{r no-filter-blood-t-no-tcrs-hits}
+num_hits <- nrow(dplyr::filter(trust4_obj[[]],
+                               Cell_ID_Unique %in% trust4_barcodes))
+cat("There are", num_hits, "TRUST4 hits out of", ncol(trust4_obj),
+    "total cells",
+    paste0("(", label_percent(accuracy = 0.01)(num_hits/ncol(trust4_obj)), ")"))
+```
+
+##### UMAPs
+
+```{r no-filter-blood-t-no-tcrs-umap}
+#| ref.label = "template-umap",
+#| fig.dim = c(18, 6)
+```
+
+##### TRUST4 Hits Only
+
+```{r no-filter-blood-t-no-tcrs-bar}
+#| ref.label = "template-bar",
+#| fig.dim = c(12, 6)
+```
+
+##### Full TRUST Hits
+
+```{r no-filter-blood-t-no-tcrs-expanded-clusters-bar}
+#| ref.label = "template-expanded-bar-clusters",
+#| fig.dim = c(12, 10)
+```
+
+```{r no-filter-blood-t-no-tcrs-expanded-cell-types-bar}
+#| ref.label = "template-expanded-bar-cell-types",
+#| fig.dim = c(12, 10)
+```
+
+#### Skin {.tabset}
+
+```{r no-filter-skin-no-tcrs-setup}
+trust4_obj <- subset(combined_skin, subset = Has_TCR == FALSE)
+trust4_tissue_type <- "Skin (Without TCRs)"
+trust4_clusters <- "seurat_clusters"
+trust4_cell_types <- "annotated_clusters"
+```
+
+```{r no-filter-skin-no-tcrs-hits}
+num_hits <- nrow(dplyr::filter(trust4_obj[[]],
+                               Cell_ID_Unique %in% trust4_barcodes))
+cat("There are", num_hits, "TRUST4 hits out of", ncol(trust4_obj),
+    "total cells",
+    paste0("(", label_percent(accuracy = 0.01)(num_hits/ncol(trust4_obj)), ")"))
+```
+
+##### UMAPs
+
+```{r no-filter-skin-no-tcrs-umap}
+#| ref.label = "template-umap",
+#| fig.dim = c(18, 6)
+```
+
+##### TRUST4 Hits Only
+
+```{r no-filter-skin-no-tcrs-bar}
+#| ref.label = "template-bar",
+#| fig.dim = c(12, 6)
+```
+
+##### Full TRUST Hits
+
+```{r no-filter-skin-no-tcrs-expanded-clusters-bar}
+#| ref.label = "template-expanded-bar-clusters",
+#| fig.dim = c(12, 10)
+```
+
+```{r no-filter-skin-no-tcrs-expanded-cell-types-bar}
+#| ref.label = "template-expanded-bar-cell-types",
+#| fig.dim = c(12, 10)
+```
+
+#### Skin T Cells {.tabset}
+
+```{r no-filter-skin-t-full-no-tcrs-setup}
+trust4_obj <- subset(combined_skin_t_full, subset = Has_TCR == FALSE)
+trust4_tissue_type <- "Skin T Cells (Without TCRs)"
+trust4_clusters <- "seurat_subclusters"
+trust4_cell_types <- "annotated_subclusters"
+```
+
+```{r no-filter-skin-t-full-no-tcrs-hits}
+num_hits <- nrow(dplyr::filter(trust4_obj[[]],
+                               Cell_ID_Unique %in% trust4_barcodes))
+cat("There are", num_hits, "TRUST4 hits out of", ncol(trust4_obj),
+    "total cells",
+    paste0("(", label_percent(accuracy = 0.01)(num_hits/ncol(trust4_obj)), ")"))
+```
+
+##### UMAPs
+
+```{r no-filter-skin-t-full-no-tcrs-umap}
+#| ref.label = "template-umap",
+#| fig.dim = c(18, 6)
+```
+
+##### TRUST4 Hits Only
+
+```{r no-filter-skin-t-full-no-tcrs-bar}
+#| ref.label = "template-bar",
+#| fig.dim = c(12, 6)
+```
+
+##### Full TRUST Hits
+
+```{r no-filter-skin-t-full-no-tcrs-expanded-clusters-bar}
+#| ref.label = "template-expanded-bar-clusters",
+#| fig.dim = c(12, 10)
+```
+
+```{r no-filter-skin-t-full-no-tcrs-expanded-cell-types-bar}
+#| ref.label = "template-expanded-bar-cell-types",
+#| fig.dim = c(12, 10)
+```
+
+#### Skin T Cells (Refined) {.tabset}
+
+```{r no-filter-skin-t-no-tcrs-setup}
+trust4_obj <- subset(combined_skin_t, subset = Has_TCR == FALSE)
+trust4_tissue_type <- "Skin T Cells (Refined) (Without TCRs)"
+trust4_clusters <- "seurat_subclusters"
+trust4_cell_types <- "annotated_clusters"
+```
+
+```{r no-filter-skin-t-no-tcrs-hits}
+num_hits <- nrow(dplyr::filter(trust4_obj[[]],
+                               Cell_ID_Unique %in% trust4_barcodes))
+cat("There are", num_hits, "TRUST4 hits out of", ncol(trust4_obj),
+    "total cells",
+    paste0("(", label_percent(accuracy = 0.01)(num_hits/ncol(trust4_obj)), ")"))
+```
+
+##### UMAPs
+
+```{r no-filter-skin-t-no-tcrs-umap}
+#| ref.label = "template-umap",
+#| fig.dim = c(18, 6)
+```
+
+##### TRUST4 Hits Only
+
+```{r no-filter-skin-t-no-tcrs-bar}
+#| ref.label = "template-bar",
+#| fig.dim = c(12, 6)
+```
+
+##### Full TRUST Hits
+
+```{r no-filter-skin-t-no-tcrs-expanded-clusters-bar}
+#| ref.label = "template-expanded-bar-clusters",
+#| fig.dim = c(12, 10)
+```
+
+```{r no-filter-skin-t-no-tcrs-expanded-cell-types-bar}
+#| ref.label = "template-expanded-bar-cell-types",
+#| fig.dim = c(12, 10)
+```
+
+------------------------------------------------------------------------
+
+# Further exploration
+
+## Blood
+
+### Blood T Cells
+
+It seems like the unrefined blood T cells might have a γδ T cell cluster.
+
+```{r exploration-blood-t-full-setup}
+trust4_obj <- combined_blood_t_full
+trust4_tissue_type <- "Blood T Cells"
+trust4_clusters <- "seurat_subclusters"
+trust4_cell_types <- "annotated_subclusters"
+```
+
+```{r exploration-blood-t-full-umap}
+#| ref.label = "template-umap-alt",
+#| fig.dim = c(18, 6)
+```
+
+Let's check some good G and D genes (they are plotted on top for visibility):
+
+```{r exploration-blood-t-full-feature}
+#| fig.dim = c(12, 6)
+
+FeaturePlot(object = trust4_obj, features = c("TRGV9", "TRDV2"),
+            pt.size = 0.8, order = TRUE) &
+  labels_standard & clean_umap
+```
+
+### Blood T Cells (Refined)
+
+That cluster shows up in the refined cells as well.
+
+```{r exploration-blood-t-setup}
+trust4_obj <- combined_blood_t
+trust4_tissue_type <- "Blood T Cells (Refined)"
+trust4_clusters <- "seurat_subclusters"
+trust4_cell_types <- "annotated_subclusters"
+```
+
+```{r exploration-blood-t-umap}
+#| ref.label = "template-umap-alt",
+#| fig.dim = c(18, 6)
+```
+
+Let's check some good G and D genes (they are plotted on top for visibility):
+
+```{r exploration-blood-t-feature}
+#| fig.dim = c(18, 6)
+
+FeaturePlot(object = trust4_obj, features = c("TRGV9", "TRGV10", "TRDV2"),
+            pt.size = 0.8, ncol = 3, order = TRUE) &
+  labels_standard & clean_umap
+```
+
+## Skin
+
+There's nothing quite as clear for the refined skin T cells:
+
+```{r exploration-skin-t-feature}
+#| fig.dim = c(12, 6)
+
+FeaturePlot(object = combined_skin_t, features = c("TRGV9", "TRDV2"),
+            pt.size = 0.8, order = TRUE) &
+  labels_standard & clean_umap
+```

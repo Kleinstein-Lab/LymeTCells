@@ -1,0 +1,470 @@
+---
+title: "Clustering Resolution Choices"
+output:
+  html_document:
+    code_download: yes
+    code_folding: hide
+    css: ../../"style.css"
+    dev: "png"
+    df_print: kable
+    fig_caption: yes
+    keep_md: no
+    self_contained: true
+    theme: yeti
+    toc: yes
+    toc_depth: 4
+    toc_float:
+        collapsed: false
+        smooth_scroll: false
+editor_options:
+  chunk_output_type: console
+---
+
+------------------------------------------------------------------------
+
+# Overview and setup
+
+```{r setup-options, include = FALSE}
+knitr::opts_chunk$set(comment = NA, dpi = 200, fig.align = "center",
+                      out.width = "100%", warning = FALSE, error = TRUE,
+                      message = FALSE,
+                      fig.path = here::here("primary_analysis", "figures",
+                                            "experimental",
+                                            "clustering_resolution_choices",
+                                            "cluster-res-"))
+
+# will mess with chunk labels, but needed for parameterized reports
+options(knitr.duplicate.label = "allow")
+```
+
+**Author(s):** Edel Aron<br>
+**Date Created:** 2024-05-17<br>
+**Last Updated:** `r Sys.Date()`
+
+**R version:** `r R.Version()$version.string`<br>
+**Platform:** `r R.Version()$platform`<br>
+**Running under:** `r sessionInfo()$running`
+
+```{r, include = FALSE}
+# load packages, colors and themes, functions, and metadata (R code only)
+source(knitr::purl(here::here("primary_analysis", "notebooks",
+                              "01-setup.Rmd"), documentation = 0))
+source(knitr::purl(here::here("primary_analysis", "notebooks",
+                              "02-functions.Rmd"), documentation = 0))
+source(knitr::purl(here::here("primary_analysis", "notebooks",
+                              "03-meta.Rmd"), documentation = 0))
+```
+
+This shows how changing the resolution affects the clustering.
+
+------------------------------------------------------------------------
+
+# Read in the data
+
+## Objects
+
+```{r setup-objects}
+# full
+combined_blood_mult_res <-
+  readRDS(file.path(path_objs, "other", "mult_res",
+                    "combined_blood_mult_res.rds"))
+combined_skin_mult_res <-
+  readRDS(file.path(path_objs, "other", "mult_res",
+                    "combined_skin_mult_res.rds"))
+
+# subclustered
+combined_blood_t_mult_res <-
+  readRDS(file.path(path_objs, "other", "mult_res",
+                    "combined_blood_t_mult_res.rds"))
+combined_skin_t_mult_res <-
+  readRDS(file.path(path_objs, "other", "mult_res",
+                    "combined_skin_t_mult_res.rds"))
+
+# subclustered (refined)
+combined_blood_t_ref_mult_res <-
+  readRDS(file.path(path_objs, "other", "mult_res",
+                    "combined_blood_t_ref_mult_res.rds"))
+combined_skin_t_ref_mult_res <-
+  readRDS(file.path(path_objs, "other", "mult_res",
+                    "combined_skin_t_ref_mult_res.rds"))
+```
+
+## Resolutions
+
+The chosen resolutions from other notebooks (watch for reproducibility):
+
+```{r setup-resolutions}
+# full
+blood_res <- "0.4"
+skin_res <- "1"
+
+# subclustered
+blood_t_res <- "0.6"
+skin_t_res <- "0.9"
+
+# subclustered (refined)
+blood_t_ref_res <- "1.5"
+skin_t_ref_res <- "1.5"
+```
+
+------------------------------------------------------------------------
+
+# Standard Seurat pipline
+
+Create the objects with multiple resolutions (run this on the unprocessed objects):
+
+## Full tissue
+
+```{r seurat-pipeline-blood}
+#| eval = FALSE
+
+combined_blood_mult_res <- seurat_pipeline(seurat_obj = combined_blood,
+                                           nfeatures_RNA = 200, perc_mt = 15,
+                                           num_features = 2000, num_dims = 20,
+                                           cluster_res = seq(0.1, 1.6, 0.1))
+
+# save the object
+saveRDS(combined_blood_mult_res,
+        file.path(path_objs, "other", "mult_res",
+                  "combined_blood_mult_res.rds"))
+```
+
+```{r seurat-pipeline-skin}
+#| eval = FALSE
+
+combined_skin_mult_res <- seurat_pipeline(seurat_obj = combined_skin,
+                                          nfeatures_RNA = 200, perc_mt = 15,
+                                          num_features = 2000, num_dims = 20,
+                                          cluster_res = seq(0.1, 1.6, 0.1))
+
+# save the object
+saveRDS(combined_skin_mult_res,
+        file.path(path_objs, "other", "mult_res",
+                  "combined_skin_mult_res.rds"))
+```
+
+## Subclustered
+
+```{r seurat-pipeline-subcluster-blood-t}
+#| eval = FALSE
+
+# set up the object
+combined_blood_t_mult_res <- combined_blood_t
+
+# remove clusterings from the blood
+res_cols <- grep("RNA_snn_sub_res",
+                 names(combined_blood_t_mult_res[[]]), value = TRUE)
+for (col in res_cols) {
+  combined_blood_t_mult_res[[col]] <- c()
+}
+
+combined_blood_t_mult_res <-
+  seurat_pipeline(seurat_obj = combined_blood_t_mult_res, subcluster = TRUE,
+                  num_features = 2000, num_dims = 20, num_pcs = 30,
+                  cluster_res = seq(0.1, 1.6, 0.1))
+
+# save the object
+saveRDS(combined_blood_t_mult_res,
+        file.path(path_objs, "other", "mult_res",
+                  "combined_blood_t_mult_res.rds"))
+```
+
+```{r seurat-pipeline-subcluster-skin-t}
+#| eval = FALSE
+
+# set up the object
+combined_skin_t_mult_res <- combined_skin_t
+
+# remove clusterings from the skin
+res_cols <- grep("RNA_snn_sub_res", names(combined_skin_t_mult_res[[]]),
+                 value = TRUE)
+for (col in res_cols) {
+  combined_skin_t_mult_res[[col]] <- c()
+}
+
+combined_skin_t_mult_res <-
+  seurat_pipeline(seurat_obj = combined_skin_t_mult_res, subcluster = TRUE,
+                  num_features = 2000, num_dims = 20, num_pcs = 30,
+                  cluster_res = seq(0.1, 1.6, 0.1))
+
+# save the object
+saveRDS(combined_skin_t_mult_res,
+        file.path(path_objs, "other", "mult_res",
+                  "combined_skin_t_mult_res.rds"))
+```
+
+## Subclustered (Refined)
+
+```{r seurat-pipeline-subcluster-refine-blood-t}
+#| eval = FALSE
+
+# set up the object
+combined_blood_t_mult_res <- combined_blood_t_ref
+
+combined_blood_t_mult_res <-
+  seurat_pipeline(seurat_obj = combined_blood_t_mult_res, subcluster = TRUE,
+                  num_features = 2000, num_dims = 20, num_pcs = 30,
+                  cluster_res = seq(0.1, 1.6, 0.1))
+
+# save the object
+saveRDS(combined_blood_t_mult_res,
+        file.path(path_objs, "other", "mult_res",
+                  "combined_blood_t_ref_mult_res.rds"))
+```
+
+```{r seurat-pipeline-subcluster-refine-skin-t}
+#| eval = FALSE
+
+# set up the object
+combined_skin_t_mult_res <- combined_skin_t_ref
+
+combined_skin_t_mult_res <-
+  seurat_pipeline(seurat_obj = combined_skin_t_mult_res, subcluster = TRUE,
+                  num_features = 2000, num_dims = 20, num_pcs = 30,
+                  cluster_res = seq(0.1, 1.6, 0.1))
+
+# save the object
+saveRDS(combined_skin_t_mult_res,
+        file.path(path_objs, "other", "mult_res",
+                  "combined_skin_t_ref_mult_res.rds"))
+```
+
+------------------------------------------------------------------------
+
+# Full tissue
+
+## Blood
+
+Chosen resolution of `r blood_res`:
+
+```{r blood-clustree}
+#| fig.dim = c(20, 14)
+
+# generate the clustering tree for the GEX data
+clustree(x = combined_blood_mult_res, prefix = "RNA_snn_res.",
+         node_text_size = 3) +
+  labs(title = "Blood Clustering Tree", color = "Cluster Res") +
+  scale_color_manual(values = colors_clustree) +
+  labels_standard + labels_clustree
+```
+
+```{r blood-umaps}
+#| fig.dim = c(24, 24)
+
+umaps_res <- list()
+
+for (res in seq(0.1, 1.6, 0.1)) {
+  full_res <- paste0("RNA_snn_res.", res)
+
+  umaps_res[[as.character(res)]] <-
+      plot_umap(seurat_obj = combined_blood_mult_res,
+                tissue_type = full_res,
+                plot_by = "cluster_all",
+                clusters_col = full_res, include_legend = FALSE, detail = NULL)
+}
+
+# highlight my current chosen resolution
+umaps_res[[blood_res]] <-
+  umaps_res[[blood_res]] + theme(plot.title = element_text(color = "red"))
+
+wrap_plots(umaps_res, ncol = 4) +
+  plot_annotation(title = "Blood", theme = labels_standard)
+```
+
+## Skin
+
+Chosen resolution of `r skin_res`:
+
+```{r skin-clustree}
+#| fig.dim = c(20, 14)
+
+# generate the clustering tree for the GEX data
+clustree(x = combined_skin_mult_res, prefix = "RNA_snn_res.",
+         node_text_size = 3) +
+  labs(title = "Skin Clustering Tree", color = "Cluster Res") +
+  scale_color_manual(values = colors_clustree) +
+  labels_standard + labels_clustree
+```
+
+```{r skin-umaps}
+#| fig.dim = c(24, 24)
+
+umaps_res <- list()
+
+for (res in seq(0.1, 1.6, 0.1)) {
+  full_res <- paste0("RNA_snn_res.", res)
+
+  umaps_res[[as.character(res)]] <-
+      plot_umap(seurat_obj = combined_skin_mult_res,
+                tissue_type = full_res,
+                plot_by = "cluster_all",
+                clusters_col = full_res, include_legend = FALSE, detail = NULL)
+}
+
+# highlight my current chosen resolution
+umaps_res[[skin_res]] <-
+  umaps_res[[skin_res]] + theme(plot.title = element_text(color = "red"))
+
+wrap_plots(umaps_res, ncol = 4) +
+  plot_annotation(title = "Skin", theme = labels_standard)
+```
+
+------------------------------------------------------------------------
+
+# Subclustered
+
+## Blood T Cells
+
+Chosen resolution of `r blood_t_res`:
+
+```{r subcluster-blood-t-clustree}
+#| fig.dim = c(16, 12)
+
+# generate the clustering tree for the GEX data
+clustree(x = combined_blood_t_mult_res, prefix = "RNA_snn_sub_res.",
+         node_text_size = 3) +
+  labs(title = "Blood T Cells Clustering Tree", color = "Cluster Res") +
+  scale_color_manual(values = colors_clustree) +
+  labels_standard + labels_clustree
+```
+
+```{r subcluster-blood-t-umaps}
+#| fig.dim = c(16, 16)
+
+umaps_res <- list()
+
+for (res in seq(0.1, 1.6, 0.1)) {
+  full_res <- paste0("RNA_snn_sub_res.", res)
+
+  umaps_res[[as.character(res)]] <-
+      plot_umap(seurat_obj = combined_blood_t_mult_res,
+                tissue_type = full_res,
+                plot_by = "cluster_all",
+                clusters_col = full_res, detail = NULL)
+}
+
+# highlight my current chosen resolution
+umaps_res[[blood_t_res]] <-
+  umaps_res[[blood_t_res]] + theme(plot.title = element_text(color = "red"))
+
+wrap_plots(umaps_res, ncol = 4) +
+  plot_annotation(title = "Blood T Cells", theme = labels_standard)
+```
+
+## Skin T Cells
+
+Chosen resolution of `r skin_t_res`:
+
+```{r subcluster-skin-t-clustree}
+#| fig.dim = c(16, 12)
+
+# generate the clustering tree for the GEX data
+clustree(x = combined_skin_t_mult_res, prefix = "RNA_snn_sub_res.",
+         node_text_size = 3) +
+  labs(title = "Skin T Cells Clustering Tree", color = "Cluster Res") +
+  scale_color_manual(values = colors_clustree) +
+  labels_standard + labels_clustree
+```
+
+```{r subcluster-skin-t-umaps}
+#| fig.dim = c(16, 16)
+
+umaps_res <- list()
+
+for (res in seq(0.1, 1.6, 0.1)) {
+  full_res <- paste0("RNA_snn_sub_res.", res)
+
+  umaps_res[[as.character(res)]] <-
+      plot_umap(seurat_obj = combined_skin_t_mult_res,
+                tissue_type = full_res,
+                plot_by = "cluster_all",
+                clusters_col = full_res, detail = NULL)
+}
+
+# highlight my current chosen resolution
+umaps_res[[skin_t_res]] <-
+  umaps_res[[skin_t_res]] + theme(plot.title = element_text(color = "red"))
+
+wrap_plots(umaps_res, ncol = 4) +
+  plot_annotation(title = "Skin T Cells", theme = labels_standard)
+```
+
+------------------------------------------------------------------------
+
+# Subclustered (Refined)
+
+## Blood T Cells
+
+Chosen resolution of `r blood_t_ref_res`:
+
+```{r subcluster-refine-blood-t-clustree}
+#| fig.dim = c(16, 12)
+
+# generate the clustering tree for the GEX data
+clustree(x = combined_blood_t_ref_mult_res, prefix = "RNA_snn_sub_res.",
+         node_text_size = 3) +
+  labs(title = "Refined Blood T Cells Clustering Tree", color = "Cluster Res") +
+  scale_color_manual(values = colors_clustree) +
+  labels_standard + labels_clustree
+```
+
+```{r subcluster-refine-blood-t-umaps}
+#| fig.dim = c(16, 16)
+
+umaps_res <- list()
+
+for (res in seq(0.1, 1.6, 0.1)) {
+  full_res <- paste0("RNA_snn_sub_res.", res)
+
+  umaps_res[[as.character(res)]] <-
+      plot_umap(seurat_obj = combined_blood_t_ref_mult_res,
+                tissue_type = full_res,
+                plot_by = "cluster_all",
+                clusters_col = full_res, detail = NULL)
+}
+
+# highlight my current chosen resolution
+umaps_res[[blood_t_ref_res]] <-
+  umaps_res[[blood_t_ref_res]] + theme(plot.title = element_text(color = "red"))
+
+wrap_plots(umaps_res, ncol = 4) +
+  plot_annotation(title = "Refined Blood T Cells", theme = labels_standard)
+```
+
+## Skin T Cells
+
+Chosen resolution of `r skin_t_ref_res`:
+
+```{r subcluster-refine-skin-t-clustree}
+#| fig.dim = c(16, 12)
+
+# generate the clustering tree for the GEX data
+clustree(x = combined_skin_t_ref_mult_res, prefix = "RNA_snn_sub_res.",
+         node_text_size = 3) +
+  labs(title = "Refined Skin T Cells Clustering Tree", color = "Cluster Res") +
+  scale_color_manual(values = colors_clustree) +
+  labels_standard + labels_clustree
+```
+
+```{r subcluster-refine-skin-t-umaps}
+#| fig.dim = c(16, 16)
+
+umaps_res <- list()
+
+for (res in seq(0.1, 1.6, 0.1)) {
+  full_res <- paste0("RNA_snn_sub_res.", res)
+
+  umaps_res[[as.character(res)]] <-
+      plot_umap(seurat_obj = combined_skin_t_ref_mult_res,
+                tissue_type = full_res,
+                plot_by = "cluster_all",
+                clusters_col = full_res, detail = NULL)
+}
+
+# highlight my current chosen resolution
+umaps_res[[skin_t_ref_res]] <-
+  umaps_res[[skin_t_ref_res]] + theme(plot.title = element_text(color = "red"))
+
+wrap_plots(umaps_res, ncol = 4) +
+  plot_annotation(title = "Refined Skin T Cells", theme = labels_standard)
+```
