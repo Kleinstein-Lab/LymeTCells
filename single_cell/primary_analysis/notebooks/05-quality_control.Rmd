@@ -1,0 +1,1271 @@
+---
+title: "Quality Control"
+output:
+  html_document:
+    code_download: yes
+    code_folding: hide
+    css: ../"style.css"
+    dev: "png"
+    df_print: kable
+    fig_caption: yes
+    keep_md: no
+    self_contained: true
+    theme: yeti
+    toc: yes
+    toc_depth: 3
+    toc_float:
+        collapsed: false
+        smooth_scroll: false
+editor_options: 
+  chunk_output_type: console
+---
+
+------------------------------------------------------------------------
+
+# Overview and setup
+
+```{r setup-options, include = FALSE}
+knitr::opts_chunk$set(comment = NA, dpi = 200, fig.align = "center",
+                      out.width = "100%", warning = FALSE, error = TRUE,
+                      message = FALSE,
+                      fig.path = here::here("primary_analysis", "figures",
+                                            "initial", "qc", "qc-"))
+
+# will mess with chunk labels
+options(knitr.duplicate.label = "allow")
+```
+
+**Author(s):** Edel Aron<br>
+**Date Created:** 2023-04-28<br>
+**Last Updated:** `r Sys.Date()`
+
+**R version:** `r R.Version()$version.string`<br>
+**Platform:** `r R.Version()$platform`<br>
+**Running under:** `r sessionInfo()$running`
+
+```{r, include = FALSE}
+# load packages, colors and themes, functions, and metadata (R code only)
+source(knitr::purl(here::here("primary_analysis", "notebooks",
+                              "01-setup.Rmd"), documentation = 0))
+source(knitr::purl(here::here("primary_analysis", "notebooks",
+                              "02-functions.Rmd"), documentation = 0))
+source(knitr::purl(here::here("primary_analysis", "notebooks",
+                              "03-meta.Rmd"), documentation = 0))
+```
+
+```{r}
+include_graphics(path = here::here("primary_analysis", "images",
+                                   "single_cell_qc_pipeline.png"))
+```
+
+------------------------------------------------------------------------
+
+# Read in the data
+
+The IGs and TRs have *not* been filtered out of the GEX data.
+
+```{r setup}
+combined_blood <- 
+  readRDS(file.path(path_objs, "raw", "combined_blood_unprocessed.rds"))
+combined_skin <-
+  readRDS(file.path(path_objs, "raw", "combined_skin_unprocessed.rds"))
+
+combined <- merge(combined_blood, combined_skin)
+
+# fix the sample order
+combined$SampleName <- factor(combined$SampleName,
+                              levels = unique(meta$SampleName)) # already in the right order
+Idents(combined) <- "SampleName"
+```
+
+------------------------------------------------------------------------
+
+# Metrics overview (unaggregated)
+
+This section gives a general sense for read and cell counts. Keep in mind that there are overlaps between the GEX and the TCR data.
+
+Here are [some details on VDJ metrics for troubleshooting](https://kb.10xgenomics.com/hc/en-us/articles/4863509310093-Web-summary-metrics-for-V-D-J-Troubleshooting).
+
+## 10x Genomics info
+
+Directly from [10x Genomics (v6.1) [Gene Expression]](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/6.1/output/gex-metrics):
+
+The `cellranger count` and `multi` pipelines output _metrics_summary.csv_ which contains a number of key metrics about the barcoding and sequencing process.
+
+```{r unaggr-10x-count-info}
+print_kable(read_csv(file.path(path_base, "primary_analysis",
+                               "cellranger", "10x_Genomics_count.csv"),
+                     show_col_types = FALSE))
+```
+
+<br>
+Directly from [10x Genomics (v6.1) [Immune Profiling]](https://support.10xgenomics.com/single-cell-vdj/software/pipelines/latest/output/metrics):
+
+The `cellranger vdj` pipeline outputs _metrics_summary.csv_ which contains a number of key metrics about the barcoding and sequencing process. Conventions for these metrics:
+
+- In some cases there is a metric for each chain type. We only show one.
+- "Cells" refers to T or B cells.
+- References to quality scores exclude very low quality/no-call (Q ≤ 2) bases.
+
+```{r unaggr-10x-vdj-info}
+print_kable(read_csv(file.path(path_base, "primary_analysis",
+                               "cellranger", "10x_Genomics_vdj.csv"),
+                     show_col_types = FALSE))
+```
+
+## Metrics summary {.tabset}
+
+```{r unaggr-metrics-summary}
+metrics_summary <- create_metrics_summary(meta = meta,
+                                          path_data_specific = path_data_root,
+                                          data_types =  c("GEX", "TCR"),
+                                          samples_list = samples)
+```
+
+## Metrics information
+
+For both data types (GEX and TCR) and GEX and AIRR (TCR) data alone. Note that the AIRR plots have different scales than the plots containing GEX information.
+
+### Read counts {.tabset}
+
+Read counts can vary due to the technology used in the run and what settings were used.
+
+#### Both {.tabset}
+
+##### By Dataset
+
+```{r unaggr-metrics-summary-read-counts-all-dataset-bar}
+#| fig.dim = c(12, 6)
+
+plot_counts(summary_df = metrics_summary, count_type = "Read",
+            data_types = "All", clrs_datatype = colors_datatype,
+            x_axis = "SampleName", x_axis_label = "Sample",
+            aggregation_state = "Unaggregated") %>%
+  add_info_bar(info_type = "Dataset")
+```
+
+##### By Sample Type
+
+```{r unaggr-metrics-summary-read-counts-all-sample-type-bar}
+#| fig.dim = c(12, 6)
+
+plot_counts(summary_df = metrics_summary, count_type = "Read",
+            data_types = "All", clrs_datatype = colors_datatype,
+            x_axis = "SampleName", x_axis_label = "Sample",
+            aggregation_state = "Unaggregated") %>%
+  add_info_bar(info_type = "SampleType", label = FALSE)
+```
+
+#### GEX {.tabset}
+
+##### By Dataset
+
+```{r unaggr-metrics-summary-read-counts-gex-dataset-bar}
+#| fig.dim = c(12, 6)
+
+plot_counts(summary_df = metrics_summary, count_type = "Read",
+            data_types = "GEX", clrs_datatype = colors_datatype,
+            x_axis = "SampleName", x_axis_label = "Sample",
+            aggregation_state = "Unaggregated") %>%
+  add_info_bar(info_type = "Dataset") +
+  labs(caption = "Solid line: YCGA's recommended amount | dashed line: current minimum") +
+  geom_hline(yintercept = min((dplyr::filter(metrics_summary,
+                                             DataType == "GEX"))$NumberofReads),
+             linetype = "dotted", linewidth = 0.5) +
+  geom_hline(yintercept = 2*10^8, linetype = "solid", linewidth = 0.5)
+```
+
+##### By Sample Type
+
+```{r unaggr-metrics-summary-read-counts-gex-sample-type-bar}
+#| fig.dim = c(12, 6)
+
+plot_counts(summary_df = metrics_summary, count_type = "Read",
+            data_types = "GEX", clrs_datatype = colors_datatype,
+            x_axis = "SampleName", x_axis_label = "Sample",
+            aggregation_state = "Unaggregated") %>%
+  add_info_bar(info_type = "SampleType", label = FALSE) +
+  labs(caption = "Solid line: YCGA's recommended amount | dashed line: current minimum") +
+  geom_hline(yintercept = min((dplyr::filter(metrics_summary,
+                                             DataType == "GEX"))$NumberofReads),
+             linetype = "dotted", linewidth = 0.5) +
+  geom_hline(yintercept = 2*10^8, linetype = "solid", linewidth = 0.5)
+```
+
+#### AIRR {.tabset}
+
+##### By Dataset
+
+```{r unaggr-metrics-summary-read-counts-airr-dataset-bar}
+#| fig.dim = c(12, 6)
+
+plot_counts(summary_df = metrics_summary, count_type = "Read",
+            data_types = "TCR", clrs_datatype = colors_datatype,
+            x_axis = "SampleName", x_axis_label = "Sample",
+            aggregation_state = "Unaggregated") %>%
+  add_info_bar(info_type = "Dataset")
+```
+
+##### By Sample Type
+
+```{r unaggr-metrics-summary-read-counts-airr-sample-type-bar}
+#| fig.dim = c(12, 6)
+
+plot_counts(summary_df = metrics_summary, count_type = "Read",
+            data_types = "TCR", clrs_datatype = colors_datatype,
+            x_axis = "SampleName", x_axis_label = "Sample",
+            aggregation_state = "Unaggregated") %>%
+  add_info_bar(info_type = "SampleType", label = FALSE)
+```
+
+### Cell counts {.tabset}
+
+Cell counts can vary due to the technology used in the run and what settings were used.
+
+#### Both {.tabset}
+
+##### By Dataset
+
+```{r unaggr-metrics-summary-cell-counts-all-dataset-bar}
+#| fig.dim = c(12, 6)
+
+plot_counts(summary_df = metrics_summary, count_type = "Cell",
+            data_types = "All", clrs_datatype = colors_datatype,
+            x_axis = "SampleName", x_axis_label = "Sample",
+            aggregation_state = "Unaggregated") %>%
+  add_info_bar(info_type = "Dataset")
+```
+
+##### By Sample Type
+
+```{r unaggr-metrics-summary-cell-counts-all-sample-type-bar}
+#| fig.dim = c(12, 6)
+
+plot_counts(summary_df = metrics_summary, count_type = "Cell",
+            data_types = "All", clrs_datatype = colors_datatype,
+            x_axis = "SampleName", x_axis_label = "Sample",
+            aggregation_state = "Unaggregated") %>%
+  add_info_bar(info_type = "SampleType", label = FALSE)
+```
+
+#### GEX {.tabset}
+
+##### By Dataset
+
+```{r unaggr-metrics-summary-cell-counts-gex-dataset-bar}
+#| fig.dim = c(12, 6)
+
+plot_counts(summary_df = metrics_summary, count_type = "Cell",
+            data_types = "GEX", clrs_datatype = colors_datatype,
+            x_axis = "SampleName", x_axis_label = "Sample",
+            aggregation_state = "Unaggregated") %>%
+  add_info_bar(info_type = "Dataset")
+```
+
+##### By Sample Type
+
+```{r unaggr-metrics-summary-cell-counts-gex-sample-type-bar}
+#| fig.dim = c(12, 6)
+
+plot_counts(summary_df = metrics_summary, count_type = "Cell",
+            data_types = "GEX", clrs_datatype = colors_datatype,
+            x_axis = "SampleName", x_axis_label = "Sample",
+            aggregation_state = "Unaggregated") %>%
+  add_info_bar(info_type = "SampleType", label = FALSE)
+```
+
+#### AIRR {.tabset}
+
+##### By Dataset
+
+```{r unaggr-metrics-summary-cell-counts-airr-dataset-bar}
+#| fig.dim = c(12, 6)
+
+plot_counts(summary_df = metrics_summary, count_type = "Cell",
+            data_types = "TCR", clrs_datatype = colors_datatype,
+            x_axis = "SampleName", x_axis_label = "Sample",
+            aggregation_state = "Unaggregated") %>%
+  add_info_bar(info_type = "Dataset")
+```
+
+##### By Sample Type
+
+```{r unaggr-metrics-summary-cell-counts-airr-sample-type-bar}
+#| fig.dim = c(12, 6)
+
+plot_counts(summary_df = metrics_summary, count_type = "Cell",
+            data_types = c("TCR"), clrs_datatype = colors_datatype,
+            x_axis = "SampleName", x_axis_label = "Sample",
+            aggregation_state = "Unaggregated") %>%
+  add_info_bar(info_type = "SampleType", label = FALSE)
+```
+
+### Median genes per cell {.tabset}
+
+#### By Dataset
+
+```{r unaggr-metrics-summary-median-genes-dataset-bar}
+#| fig.dim = c(12, 6)
+
+p <- ggplot(dplyr::filter(metrics_summary, DataType %in% "GEX"),
+            aes(x = SampleName, y = MedianGenesperCell, fill = SampleType)) +
+       geom_bar(stat = "identity", color = "black", linewidth = 0.2) +
+       labs(title = "Median Genes per Cell for All Samples and GEX Data",
+              x = "Sample", y = "Median Genes per Cell") +
+       scale_fill_manual(values = colors_sample_types) +
+       theme_bw + labels_standard + labels_rotate_x
+
+add_info_bar(p, info_type = "Dataset") 
+```
+
+#### By Sample Type
+
+```{r unaggr-metrics-summary-median-genes-sampletype-bar}
+#| fig.dim = c(12, 6)
+
+p <- ggplot(dplyr::filter(metrics_summary, DataType %in% "GEX"),
+            aes(x = SampleName, y = MedianGenesperCell, fill = Dataset)) +
+       geom_bar(stat = "identity", color = "black", linewidth = 0.2) +
+       labs(title = "Median Genes per Cell for All Samples and GEX Data",
+              x = "Sample", y = "Median Genes per Cell") +
+       scale_fill_manual(values = colors_dataset) +
+       theme_bw + labels_standard + labels_rotate_x
+
+add_info_bar(p, info_type = "SampleType", label = FALSE) 
+```
+
+------------------------------------------------------------------------
+
+# Metrics overview (aggregated)
+
+The output of `cellranger aggr` does not include a _metrics_summary.csv_ like `cellranger count` and `cellranger vdj` do.
+
+## 10x Genomics info
+
+Directly from [10x Genomics (v6.1)](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/6.1/output/gex-metrics#aggr-metrics):
+
+**cellranger aggr metrics definitions**
+
+The `cellranger aggr` pipeline outputs _summary.json_ which contains metrics relating to the aggregated datasets. Note: square brackets denote a variable that depends on the pipeline input, e.g. _[library_id]_frac_reads_kept_ means that if your aggregation contains two libraries with IDs _sample123_ and _sample456_, there will be two output metrics _sample123_frac_reads_kept_ and _sample456_frac_reads_kept._
+
+```{r aggr-10x-info}
+print_kable(read_csv(file.path(path_base, "primary_analysis",
+                               "cellranger", "10x_Genomics_aggr.csv"),
+                     show_col_types = FALSE),
+            kable_height = NULL)
+```
+
+## Metrics summary {.tabset}
+
+Full list of JSON information:
+
+```{r aggr-metrics-summary-setup}
+#| attr.output = 'style="max-height: 300px;"'
+
+# read in the summary file
+aggr_results <- fromJSON(file.path(path_data_root, "aggr",
+                                   "outs", "count", "summary.json"))
+# aggr_results <- rjson::fromJSON(file.path(path_data_root, "aggr", "outs", "count", "summary.json"))
+
+str(aggr_results)
+# as.data.frame(aggr_results)
+```
+
+Table of relevant information:
+
+```{r aggr-metrics-summary-analysis}
+# setup the summary table with feature reads
+aggr_results_feature_reads <-
+  aggr_results[grepl("*_pre_normalization_feature_reads\\>",
+                     names(aggr_results))]
+names(aggr_results_feature_reads) <- aggr_results[["batches"]] # samples
+
+aggr_results_summary <- as_tibble(aggr_results_feature_reads)
+aggr_results_summary$Type <- "pre_normalization_feature_reads"
+aggr_results_summary <-
+  relocate(aggr_results_summary, Type, .before = "192561SKL")
+
+# add fraction of reads kept
+aggr_results_frac_kept <- aggr_results[["frac_reads_kept"]]
+names(aggr_results_frac_kept) <- aggr_results[["batches"]]
+aggr_results_frac_kept$Type <- "frac_reads_kept"
+
+# add number of cells by library
+aggr_results_num_cells <- aggr_results[["num_cells_by_library"]]
+names(aggr_results_num_cells) <- aggr_results[["batches"]]
+aggr_results_num_cells$Type <- "num_cells_by_library"
+
+aggr_results_summary <- bind_rows(aggr_results_summary, aggr_results_frac_kept,
+                                  aggr_results_num_cells)
+
+# transpose the table and add metadata
+aggr_results_summary <- tibble(aggr_results_summary) %>%
+                          pivot_longer(cols = c(-Type),
+                                       names_to = "SampleName") %>%
+                          pivot_wider(names_from = c(Type)) %>%
+                          left_join(meta %>% select(SampleName, Dataset),
+                                    by = "SampleName") %>% 
+                          distinct()
+
+print_kable(aggr_results_summary)
+
+# switch rows and columns
+# aggr_results
+
+# ggplot(aggr_results_summary)
+```
+
+### Read counts
+
+```{r aggr-metrics-summary-read-counts-bar}
+#| fig.dim = c(12, 6)
+
+# preaggregation
+add_info_bar(ggplot(dplyr::filter(metrics_summary, DataType == "GEX"),
+                    aes(x = SampleName, y = NumberofReads,
+                        fill = Dataset)) +
+               geom_col(color = "black", linewidth = 0.2) +
+               labs(title = "Read Counts for All Samples and GEX Unaggregated Data",
+                    x = "Sample", y = "Number of Reads") +
+               scale_fill_manual(values = colors_dataset) +
+               theme_bw + labels_standard + labels_rotate_x +
+               theme(legend.position = "none"),
+             info_type = "Dataset")
+
+# post aggregation
+add_info_bar(ggplot(aggr_results_summary,
+                    aes(x = SampleName, y = pre_normalization_feature_reads,
+                        fill = Dataset)) +
+               geom_col(color = "black", linewidth = 0.2) +
+               labs(title = "Read Counts for All Samples and GEX Aggregated Data",
+                    x = "Sample", y = "Pre Normalization Feature Reads") +
+               scale_fill_manual(values = colors_dataset) +
+               theme_bw + labels_standard + labels_rotate_x +
+               theme(legend.position = "none"),
+             info_type = "Dataset")
+```
+
+### Fraction of reads kept
+
+```{r aggr-metrics-summary-frac-read-bar}
+#| fig.dim = c(12, 6)
+
+add_info_bar(ggplot(aggr_results_summary,
+                    aes(x = SampleName, y = frac_reads_kept, fill = Dataset)) +
+               geom_col(color = "black", linewidth = 0.2) +
+               labs(title = "Fraction of Reads Kept for All Samples and GEX Aggregated Data",
+                    x = "Sample", y = "Percentage of Reads Kept") +
+               scale_y_continuous(labels = percent) +
+               scale_fill_manual(values = colors_dataset) +
+               theme_bw + labels_standard + labels_rotate_x +
+               theme(legend.position = "none"),
+             info_type = "Dataset")
+```
+
+### Cell counts
+
+```{r aggr-metrics-summary-cell-counts-bar}
+#| fig.dim = c(12, 6)
+
+add_info_bar(ggplot(aggr_results_summary,
+                    aes(x = SampleName, y = num_cells_by_library,
+                        fill = Dataset)) +
+               geom_col(color = "black", linewidth = 0.2) +
+               labs(title = "Cell Counts by Library for All Samples and GEX Aggregated Data",
+                    x = "Sample", y = "Cell Counts by Library") +
+               scale_fill_manual(values = colors_dataset) +
+               theme_bw + labels_standard + labels_rotate_x +
+               theme(legend.position = "none"),
+             info_type = "Dataset")
+```
+
+------------------------------------------------------------------------
+
+# Barcodes
+
+## Create barcode lists
+
+This is needed for the following two sections of QC (barcode overlaps and heavy/light chain matches).
+
+```{r store-barcodes}
+barcodes_GEX <- list()
+barcodes_TCR <- list()
+barcodes_TCR_alpha <- list()
+barcodes_TCR_beta <- list()
+
+for (sample in samples) {
+  # setup
+  meta_sample <- dplyr::filter(meta, SampleName == sample)
+  path_data <- file.path(path_data_root,
+                         paste0("dataset", unique(meta_sample$Dataset)), "default")
+
+  # read in the data
+  data_TCR <- read_csv(file.path(path_data,
+                                 dplyr::filter(meta_sample, DataType == "TCR")$SampleDir,
+                                 "outs", "filtered_contig_annotations.csv"),
+                       show_col_types = FALSE)
+
+  # save in the appropriate locations
+  # the sample names are added and -1s are removed for the TCR barcodes
+  barcodes_GEX[[sample]] <- unique(Cells(subset(combined,
+                                                SampleName == sample))) # already has reformatted barcodes
+  barcodes_TCR[[sample]] <- reformat_vdj_barcode_sample(data_TCR,
+                                                        sample_name = sample)
+
+  # splitting into beta/alpha means the data doesn't have to be read in again
+  # later for the chain matching
+  barcodes_TCR_beta[[sample]] <-
+    reformat_vdj_barcode_sample(dplyr::filter(data_TCR, chain == "TRB"),
+                                sample_name = sample)
+  barcodes_TCR_alpha[[sample]] <-
+    reformat_vdj_barcode_sample(dplyr::filter(data_TCR, chain == "TRA"),
+                                sample_name = sample)
+}
+```
+
+```{r barcodes-stats}
+barcodes_stats <- meta %>%
+                    select(Dataset, SampleName, TissueType, SampleType) %>%
+                    distinct() %>% remove_rownames() %>%
+                    mutate("BarcodesGEX" = lengths(barcodes_GEX),
+                           "BarcodesTCR" = lengths(barcodes_TCR),
+                           "BarcodesTCRBeta" = lengths(barcodes_TCR_beta),
+                           "BarcodesTCRAlpha" = lengths(barcodes_TCR_alpha))
+
+print_kable(barcodes_stats)
+```
+
+Example barcodes for the first sample and each data type:
+
+```{r check-barcodes}
+cat("GEX:", head(barcodes_GEX[[1]]), "\n\nTCR:", head(barcodes_TCR[[1]]))
+```
+
+```{r barcodes-venn}
+#| fig.dim = c(9, 8)
+
+ggVennDiagram(x = list(GEX = unlist(barcodes_GEX),
+                       TCR = unlist(barcodes_TCR)),
+              set_color = colors_datatype[c("GEX", "TCR")]) +
+  labs(title = "Combined Cell ID Overlaps across Assays", fill = "Cell Count") +
+  scale_fill_distiller(palette = "Greys", direction = 1) +
+  labels_standard_venn
+```
+
+## Barcode overlaps
+
+This section helps with checking for contamination (since barcodes should be unique).
+
+* Keep in mind that:
+  * Heatmaps might not work for visualization due to the range of counts distorting the scale
+  * You can’t necessarily compare against the numbers on the diagonal
+  * You should check if nucleotides are overlapping as well
+
+### Setup
+
+Count all of the cell barcode overlaps:
+
+```{r barcode-heatmap-setup}
+# set up the empty matrices
+L <- replicate(6, matrix(0, ncol = length(samples), nrow = length(samples),
+                         dimnames = list(samples, samples)), simplify = FALSE)
+names(L) <- c("GEX_GEX_matrix", "TCR_TCR_matrix",
+              "GEX_GEX_matrix_p", "TCR_TCR_matrix_p",
+              "GEX_TCR_matrix", "GEX_TCR_matrix_p")
+invisible(list2env(L, envir = .GlobalEnv)) # convert them to variables
+
+# remove the sample names
+for (i in seq_along(samples)) {
+  for (j in seq_along(samples)) {
+    GEX_GEX_matrix[i, j] <- count_barcode_overlaps(barcodes_list1 = barcodes_GEX,
+                                                   barcodes_list2 = barcodes_GEX,
+                                                   sample_i = samples[[i]],
+                                                   sample_j = samples[[j]],
+                                                   remove_sample_names = TRUE)
+    TCR_TCR_matrix[i, j] <- count_barcode_overlaps(barcodes_list1 = barcodes_TCR,
+                                                   barcodes_list2 = barcodes_TCR,
+                                                   sample_i = samples[[i]],
+                                                   sample_j = samples[[j]],
+                                                   remove_sample_names = TRUE)
+    GEX_TCR_matrix[i, j] <- count_barcode_overlaps(barcodes_list1 = barcodes_GEX,
+                                                   barcodes_list2 = barcodes_TCR,
+                                                   sample_i = samples[[i]],
+                                                   sample_j = samples[[j]],
+                                                   remove_sample_names = TRUE)
+
+    # Calculate the overlap percentage
+    # check all of this!!
+    if (i > j) {
+      GEX_GEX_matrix_p[i, j] <-
+        GEX_GEX_matrix[i, j] / length(barcodes_GEX[[samples[i]]])*100
+      TCR_TCR_matrix_p[i, j] <-
+        TCR_TCR_matrix[i, j] / length(barcodes_TCR[[samples[i]]])*100
+      GEX_TCR_matrix_p[i, j] <-
+        GEX_TCR_matrix[i, j] / length(barcodes_TCR[[samples[i]]])*100
+    } else if (i < j) {
+      GEX_GEX_matrix_p[i, j] <-
+        GEX_GEX_matrix[i, j] / length(barcodes_GEX[[samples[j]]])*100
+      TCR_TCR_matrix_p[i, j] <-
+        TCR_TCR_matrix[i, j] / length(barcodes_TCR[[samples[j]]])*100
+      GEX_TCR_matrix_p[i, j] <-
+        GEX_TCR_matrix_p[i, j] / length(barcodes_TCR[[samples[j]]])*100
+    } else if (i == j) {
+      GEX_GEX_matrix_p[i, j] <-
+        GEX_GEX_matrix[i, j] / length(unique(c(barcodes_GEX[[samples[i]]],
+                                             barcodes_GEX[[samples[j]]])))*100
+      TCR_TCR_matrix_p[i, j] <-
+        TCR_TCR_matrix[i, j] / length(unique(c(barcodes_TCR[[samples[i]]],
+                                             barcodes_TCR[[samples[j]]])))*100
+
+      GEX_TCR_matrix_p[i, j] <-
+        GEX_TCR_matrix_p[i, j] / length(unique(c(barcodes_TCR[[samples[i]]],
+                                               barcodes_GEX[[samples[j]]])))*100
+    }
+  }
+}
+
+# numeric?
+mode(GEX_GEX_matrix_p) <- "integer"
+mode(TCR_TCR_matrix_p) <- "integer"
+mode(GEX_TCR_matrix_p) <- "integer"
+
+# for plotting in the heatmaps
+barcode_mat_annos <- data.frame(SampleName = samples,
+                                Dataset = distinct(meta, SampleName, Dataset)$Dataset,
+                                SampleType = distinct(meta, SampleName, SampleType)$SampleType)
+barcode_mat_annos <- barcode_mat_annos %>%
+                       rowwise() %>%
+                       mutate(SampleTypeCol =
+                                colors_sample_types[[cur_data()[["SampleType"]]]])
+barcode_mat_annos <- column_to_rownames(barcode_mat_annos, var = "SampleName")
+```
+
+### Heatmaps {.tabset}
+
+Column split doesn't work for some reason for percentages
+
+#### GEX vs. GEX {.tabset}
+
+##### Counts
+
+```{r barcode-heatmap-heatmap-gex-counts}
+#| fig.dim = c(14, 12)
+
+plot_qc_heatmap(input_matrix = GEX_GEX_matrix, data_types = c("GEX", "GEX"),
+                row_cluster = FALSE, col_cluster = FALSE,
+                matrix_annos = barcode_mat_annos, by_percent = FALSE)
+```
+
+##### Percents
+
+```{r barcode-heatmap-heatmap-gex-percent}
+#| fig.dim = c(14, 12)
+
+plot_qc_heatmap(input_matrix = GEX_GEX_matrix_p, data_types = c("GEX", "GEX"),
+                row_cluster = FALSE, col_cluster = FALSE,
+                matrix_annos = barcode_mat_annos, by_percent = TRUE)
+```
+
+#### TCR vs. TCR {.tabset}
+
+##### Counts
+
+```{r barcode-heatmap-heatmap-tcr-counts}
+#| fig.dim = c(14, 12)
+
+plot_qc_heatmap(input_matrix = TCR_TCR_matrix, data_types = c("TCR", "TCR"),
+                row_cluster = FALSE, col_cluster = FALSE,
+                matrix_annos = barcode_mat_annos, by_percent = FALSE)
+```
+
+##### Percents
+
+```{r barcode-heatmap-heatmap-tcr-percent}
+#| fig.dim = c(14, 12)
+
+plot_qc_heatmap(input_matrix = TCR_TCR_matrix_p, data_types = c("TCR", "TCR"),
+                row_cluster = FALSE, col_cluster = FALSE,
+                matrix_annos = barcode_mat_annos, by_percent = TRUE)
+```
+
+#### GEX and TCR {.tabset}
+
+##### Counts
+
+```{r barcode-heatmap-heatmap-gex-tcr-counts}
+#| fig.dim = c(14, 12)
+
+plot_qc_heatmap(input_matrix = GEX_TCR_matrix, data_types = c("GEX", "TCR"),
+                row_cluster = FALSE, col_cluster = FALSE,
+                matrix_annos = barcode_mat_annos, by_percent = FALSE)
+```
+
+##### Percents
+
+```{r barcode-heatmap-heatmap-gex-tcr-percent}
+#| fig.dim = c(14, 12)
+
+plot_qc_heatmap(input_matrix = GEX_TCR_matrix_p, data_types = c("GEX", "TCR"),
+                row_cluster = FALSE, col_cluster = FALSE,
+                matrix_annos = barcode_mat_annos, by_percent = TRUE)
+```
+
+### Bar plots {.tabset}
+
+With duplicate barcodes for the singular AIRR data types:
+
+```{r barcode-heatmap-setup-bar}
+datatype_overlaps <- meta %>% select(SampleName, Dataset) %>% distinct()
+datatype_overlaps <- bind_cols(datatype_overlaps,
+                               "GEX" = diag(GEX_GEX_matrix), # or lengths(barcodes_GEX)
+                               "TCR_Non_Unique" = lengths(barcodes_TCR),
+                               "TCR" = diag(TCR_TCR_matrix), # unique
+                               "GEX_TCR" = diag(GEX_TCR_matrix))
+
+print_kable(datatype_overlaps)
+```
+
+<br>
+
+#### GEX and TCR
+
+Using the unique TCR barcodes
+
+```{r barcode-heatmap-gex-tcr-bar}
+#| fig.dim = c(16, 8)
+
+# set up the summary
+data_types_GEX_TCR <- c("GEX", "GEX_TCR", "TCR")
+GEX_TCR_summary_df <- select(datatype_overlaps,
+                             SampleName, Dataset, all_of(data_types_GEX_TCR))
+
+# gather all of the different barcode counts
+GEX_TCR_summary_df <- GEX_TCR_summary_df %>%
+                       pivot_longer(cols = all_of(data_types_GEX_TCR),
+                                    names_to = "DataType", values_to = "Count") %>%
+                       mutate(DataType = factor(DataType, levels = data_types_GEX_TCR))
+
+# stacked bar plot
+plot_counts(summary_df = GEX_TCR_summary_df,
+            data_types = data_types_GEX_TCR[-2],
+            count_type = "Barcode", fill_type_label = "Data Type",
+            x_axis = "SampleName", x_axis_label = "Sample",
+            clrs_datatype = colors_gex_tcr) %>%
+  add_info_bar(info_type = "Dataset")
+```
+
+## Beta and alpha chain matches
+
+The chains should mostly be overlapping. These plots help with immediately showing outliers.
+
+### TCR barcode summary
+
+```{r calc-tcr-summary}
+TCR_summary <- c()
+
+for (sample in samples) {
+  barcode_TRA <- barcodes_TCR_alpha[[sample]]
+  barcode_TRB <- barcodes_TCR_beta[[sample]]
+  barcodes_shared <- unique(intersect(barcode_TRA, barcode_TRB))
+
+  barcode_TRA_only <- unique(barcode_TRA[which(!barcode_TRA %in% barcodes_shared)])
+  barcode_TRB_only <- unique(barcode_TRB[which(!barcode_TRB %in% barcodes_shared)])
+
+  TCR_summary <- bind_rows(TCR_summary, c("TRAOnly" = length(barcode_TRA_only),
+                                          "TRBOnly" = length(barcode_TRB_only),
+                                          "Paired" = length(barcodes_shared)))
+}
+
+TCR_summary <- meta %>%
+                select(SampleName, SampleType, Dataset) %>% distinct() %>%
+                bind_cols(TCR_summary) %>%
+                mutate(Total = rowSums(across(where(is.numeric)))) # make sure Dataset is a character
+print_kable(TCR_summary)
+```
+
+### TCR barcode overlaps {.tabset}
+
+```{r chains-tcr}
+chain_types_tcr <- c("TRBOnly", "Paired", "TRAOnly")
+TCR_summary_df <- TCR_summary %>%
+                   pivot_longer(cols = all_of(chain_types_tcr),
+                                names_to = "ChainType", values_to = "Count") %>%
+                   mutate(ChainType = factor(ChainType, levels = chain_types_tcr))
+
+# base plot
+p <- plot_counts(summary_df = TCR_summary_df, data_types = "TCR",
+                 count_type = "Barcode", fill_type_label = "Chain Type",
+                 x_axis = "SampleName", x_axis_label = "Sample",
+                 clrs_datatype = colors_chain_tcr)
+```
+
+#### By Dataset
+
+```{r chains-tcr-dataset-bar}
+#| fig.dim = c(16, 8)
+
+add_info_bar(plot = p, info_type = "Dataset")
+```
+
+#### By Sample Type
+
+```{r chains-tcr-sampletype-bar}
+#| fig.dim = c(16, 8)
+
+add_info_bar(plot = p, info_type = "SampleType", label = FALSE)
+```
+
+------------------------------------------------------------------------
+
+# GEX QC Metrics
+
+The number of features, number of counts and the percent mitochondrial DNA are features that we like to look at for QC (e.g. for checking for contamination). Facets were included to help distinguish between groups of interest (e.g. datasets if you have multiple) and two versions of each plot were generated (with and without the black points that represent cells). The blood and skin objects were recombined to show all of the data together.
+
+## Setup
+
+```{r gex-setup}
+# define colors for violin plots (here by dataset)
+colors_vln_dataset <-
+  unname(colors_dataset[dplyr::filter(meta, DataType == "GEX")$Dataset])
+colors_vln_sampletype <-
+  unname(colors_sample_types[dplyr::filter(meta, DataType == "GEX")$SampleType])
+```
+
+## Before filtering {.tabset}
+
+You can also plot multiple features of interest together e.g.
+`VlnPlot(combined, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), cols = colors_vln, pt.size = 0.01, ncol = 3)`.
+
+### Number of Features {.tabset}
+
+We're not currently doing an upper limit on nFeature_RNA due to potentially relevant doublets.
+
+#### With points
+
+```{r gex-pre-filtering-num-features-dataset-vln-points}
+#| fig.dim = c(12, 8)
+
+VlnPlot(combined, features = "nFeature_RNA",
+        cols = colors_vln_sampletype, pt.size = 0.01, raster = FALSE) %>%
+  add_info_bar(method = "add", info_type = "Dataset", info = combined) +
+  labs(title = "Number of Features (All Samples) - Pre-Filtering",
+       x = "SampleName") +
+  NoLegend() + labels_standard
+```
+
+```{r gex-pre-filtering-num-features-sampletype-vln-points}
+#| fig.dim = c(12, 8)
+
+VlnPlot(combined, features = "nFeature_RNA",
+        cols = colors_vln_dataset, pt.size = 0.01, raster = FALSE) %>%
+  add_info_bar(method = "add", info_type = "SampleType", info = combined,
+               label = FALSE) +
+  labs(title = "Number of Features (All Samples) - Pre-Filtering",
+       x = "SampleName") +
+  NoLegend() + labels_standard
+```
+
+#### Without points
+
+```{r gex-pre-filtering-num-features-dataset-vln-no-points}
+#| fig.dim = c(12, 8)
+
+VlnPlot(combined, features = "nFeature_RNA",
+        cols = colors_vln_sampletype, pt.size = 0, raster = FALSE) %>%
+  add_info_bar(method = "add", info_type = "Dataset", info = combined) +
+  labs(title = "Number of Features (All Samples) - Pre-Filtering",
+       x = "SampleName") +
+  NoLegend() + labels_standard
+```
+
+```{r gex-pre-filtering-num-features-sampletype-vln-no-points}
+#| fig.dim = c(12, 8)
+
+VlnPlot(combined, features = "nFeature_RNA",
+        cols = colors_vln_dataset, pt.size = 0, raster = FALSE) %>%
+  add_info_bar(method = "add", info_type = "SampleType", info = combined,
+               label = FALSE) +
+  labs(title = "Number of Features (All Samples) - Pre-Filtering",
+       x = "SampleName") +
+  NoLegend() + labels_standard
+```
+
+### Number of Counts {.tabset}
+
+We don't usually remove anything based on this information.
+
+#### With points
+
+```{r gex-pre-filtering-num-counts-dataset-vln-points}
+#| fig.dim = c(12, 8)
+
+VlnPlot(combined, features = "nCount_RNA",
+        cols = colors_vln_sampletype, pt.size = 0.01, raster = FALSE) %>%
+  add_info_bar(method = "add", info_type = "Dataset", info = combined) +
+  labs(title = "Number of Counts (All Samples) - Pre-Filtering",
+       x = "SampleName") +
+  NoLegend() + labels_standard
+```
+
+```{r gex-pre-filtering-num-counts-sampletype-vln-points}
+#| fig.dim = c(12, 8)
+
+VlnPlot(combined, features = "nCount_RNA",
+        cols = colors_vln_dataset, pt.size = 0.01, raster = FALSE) %>%
+  add_info_bar(method = "add", info_type = "SampleType", info = combined,
+               label = FALSE) +
+  labs(title = "Number of Counts (All Samples) - Pre-Filtering",
+       x = "SampleName") +
+  NoLegend() + labels_standard
+```
+
+#### Without points
+
+```{r gex-pre-filtering-num-counts-dataset-vln-no-points}
+#| fig.dim = c(12, 8)
+
+VlnPlot(combined, features = "nCount_RNA",
+        cols = colors_vln_sampletype, pt.size = 0, raster = FALSE) %>%
+  add_info_bar(method = "add", info_type = "Dataset", info = combined) +
+  labs(title = "Number of Counts (All Samples) - Pre-Filtering",
+       x = "SampleName") +
+  NoLegend() + labels_standard
+```
+
+```{r gex-pre-filtering-num-counts-sampletype-vln-no-points}
+#| fig.dim = c(12, 8)
+
+VlnPlot(combined, features = "nCount_RNA",
+        cols = colors_vln_dataset, pt.size = 0, raster = FALSE) %>%
+  add_info_bar(method = "add", info_type = "SampleType", info = combined,
+               label = FALSE) +
+  labs(title = "Number of Counts (All Samples) - Pre-Filtering",
+       x = "SampleName") +
+  NoLegend() + labels_standard
+```
+
+### Percent Mitochondrial  {.tabset}
+
+#### With points
+
+```{r gex-pre-filtering-pct-mt-dataset-vln-points}
+#| fig.dim = c(12, 8)
+
+VlnPlot(combined, features = "percent.mt",
+        cols = colors_vln_sampletype, pt.size = 0.01, raster = FALSE) %>%
+  add_info_bar(method = "add", info_type = "Dataset", info = combined) +
+  labs(title = "Percent Mitochondrial (All Samples) - Pre-Filtering",
+       x = "SampleName") +
+  scale_y_continuous(labels = label_percent(scale = 1)) +
+  NoLegend() + labels_standard
+```
+
+```{r gex-pre-filtering-pct-mt-sampletype-vln-points}
+#| fig.dim = c(12, 8)
+
+VlnPlot(combined, features = "percent.mt",
+        cols = colors_vln_dataset, pt.size = 0.01, raster = FALSE) %>%
+  add_info_bar(method = "add", info_type = "SampleType", info = combined,
+               label = FALSE) +
+  labs(title = "Percent Mitochondrial (All Samples) - Pre-Filtering",
+       x = "SampleName") +
+  scale_y_continuous(labels = label_percent(scale = 1)) +
+  NoLegend() + labels_standard
+```
+
+#### Without points
+
+```{r gex-pre-filtering-pct-mt-dataset-vln-no-points}
+#| fig.dim = c(12, 8)
+
+VlnPlot(combined, features = "percent.mt",
+        cols = colors_vln_sampletype, pt.size = 0, raster = FALSE) %>%
+  add_info_bar(method = "add", info_type = "Dataset", info = combined) +
+  labs(title = "Percent Mitochondrial (All Samples) - Pre-Filtering",
+       x = "SampleName") +
+  scale_y_continuous(labels = label_percent(scale = 1)) +
+  NoLegend() + labels_standard
+```
+
+```{r gex-pre-filtering-pct-mt-sampletype-vln-no-points}
+#| fig.dim = c(12, 8)
+
+VlnPlot(combined, features = "percent.mt",
+        cols = colors_vln_dataset, pt.size = 0, raster = FALSE) %>%
+  add_info_bar(method = "add", info_type = "SampleType", info = combined,
+               label = FALSE) +
+  labs(title = "Percent Mitochondrial (All Samples) - Pre-Filtering",
+       x = "SampleName") +
+  scale_y_continuous(labels = label_percent(scale = 1)) +
+  NoLegend() + labels_standard
+```
+
+### Other metrics
+
+Percent ribosomal:
+
+```{r gex-pre-filtering-pct-rb-dataset-vln-no-points}
+#| fig.dim = c(12, 8)
+
+combined <- PercentageFeatureSet(combined, pattern = "^RP[SL]",
+                                 col.name = "percent.ribo")
+
+VlnPlot(combined, features = "percent.ribo",
+        cols = colors_vln_sampletype, pt.size = 0, raster = FALSE) %>%
+  add_info_bar(method = "add", info_type = "Dataset", info = combined) +
+  labs(title = "Percent Ribosomal (All Samples) - Pre-Filtering",
+       x = "SampleName") +
+  scale_y_continuous(labels = label_percent(scale = 1)) +
+  NoLegend() + labels_standard
+```
+
+Potential mitochondrial contamination (low-quality / dying cells often exhibit extensive mitochondrial contamination):
+
+```{r gex-pre-filtering-mito-contam-dataset-scatter}
+#| fig.dim = c(12, 8)
+
+Idents(combined) <- "Dataset"
+
+FeatureScatter(combined, feature1 = "nCount_RNA", feature2 = "percent.mt",
+               shuffle = TRUE, pt.size = 1, cols = colors_dataset,
+               raster = FALSE) +
+  labs(title = "Mitochondrial Contamination (All)", color = "Dataset") +
+  labels_standard
+
+Idents(combined) <- "SampleName"
+```
+
+```{r gex-pre-filtering-mito-contam-sampletype-scatter}
+#| fig.dim = c(12, 8)
+
+Idents(combined) <- "SampleType"
+
+FeatureScatter(combined, feature1 = "nCount_RNA", feature2 = "percent.mt",
+               shuffle = TRUE, pt.size = 1, cols = colors_sample_types,
+               raster = FALSE) +
+  labs(title = "Mitochondrial Contamination (All)", color = "Sample Type") +
+  labels_standard
+
+Idents(combined) <- "SampleName"
+```
+
+Low-quality cells or empty droplets will often have very few genes and cell doublets or multiplets may exhibit an aberrantly high gene count, so these plots represent possible multiplets:
+
+```{r gex-pre-filtering-multiplets-dataset-scatter}
+#| fig.dim = c(12, 8)
+
+Idents(combined) <- "Dataset"
+
+FeatureScatter(combined, feature1 = "nCount_RNA", feature2 = "nFeature_RNA",
+               shuffle = TRUE, pt.size = 1, cols = colors_vln_dataset,
+               raster = FALSE) +
+  labs(title = "Multiplets (All by Counts and Features)",
+       color = "Dataset") +
+  labels_standard
+
+FeatureScatter(combined, feature1 = "nFeature_RNA", feature2 = "percent.mt",
+               shuffle = TRUE, pt.size = 1, cols = colors_vln_dataset,
+               raster = FALSE) +
+  labs(title = "Multiplets (All by Features and Percent MT)",
+       color = "Dataset") +
+  labels_standard
+
+Idents(combined) <- "SampleName"
+```
+
+```{r gex-pre-filtering-multiplets-sampletype-scatter}
+#| fig.dim = c(12, 8)
+
+Idents(combined) <- "SampleType"
+
+FeatureScatter(combined, feature1 = "nCount_RNA", feature2 = "nFeature_RNA",
+               shuffle = TRUE, pt.size = 1, cols = colors_vln_sampletype,
+               raster = FALSE) +
+  labs(title = "Multiplets (All by Counts and Features)",
+       color = "Sample Type") +
+  labels_standard
+
+FeatureScatter(combined, feature1 = "nFeature_RNA", feature2 = "percent.mt",
+               shuffle = TRUE, pt.size = 1, cols = colors_vln_sampletype,
+               raster = FALSE) +
+  labs(title = "Multiplets (All by Features and Percent MT)",
+       color = "Sample Type") +
+  labels_standard
+
+Idents(combined) <- "SampleName"
+```
+
+## Filtration
+
+Chosen cut-offs:
+
+```{r gex-filter-combined}
+#| class.source = "fold-show"
+
+# change the values as needed depending the previous QC
+combined <- subset(combined, subset = nFeature_RNA > 200 & percent.mt < 15)
+```
+
+## After filtering {.tabset}
+
+### Number of Features {.tabset}
+
+#### With points
+
+```{r gex-post-filtering-num-features-dataset-vln-points}
+#| fig.dim = c(12, 8)
+
+VlnPlot(combined, features = "nFeature_RNA",
+        cols = colors_vln_sampletype, pt.size = 0.01, raster = FALSE) %>%
+  add_info_bar(method = "add", info_type = "Dataset", info = combined) +
+  labs(title = "Number of Features (All Samples) - Post-Filtering",
+       x = "SampleName") +
+  NoLegend() + labels_standard
+```
+
+```{r gex-post-filtering-num-features-sampletype-vln-points}
+#| fig.dim = c(12, 8)
+
+VlnPlot(combined, features = "nFeature_RNA",
+        cols = colors_vln_dataset, pt.size = 0.01, raster = FALSE) %>%
+  add_info_bar(method = "add", info_type = "SampleType", info = combined,
+               label = FALSE) +
+  labs(title = "Number of Features (All Samples) - Post-Filtering",
+       x = "SampleName") +
+  NoLegend() + labels_standard
+```
+
+#### Without points
+
+```{r gex-post-filtering-num-features-dataset-vln-no-points}
+#| fig.dim = c(12, 8)
+
+VlnPlot(combined, features = "nFeature_RNA",
+        cols = colors_vln_sampletype, pt.size = 0, raster = FALSE) %>%
+  add_info_bar(method = "add", info_type = "Dataset", info = combined) +
+  labs(title = "Number of Features (All Samples) - Post-Filtering",
+       x = "SampleName") +
+  NoLegend() + labels_standard
+```
+
+```{r gex-post-filtering-num-features-sampletype-vln-no-points}
+#| fig.dim = c(12, 8)
+
+VlnPlot(combined, features = "nFeature_RNA",
+        cols = colors_vln_dataset, pt.size = 0, raster = FALSE) %>%
+  add_info_bar(method = "add", info_type = "SampleType", info = combined,
+               label = FALSE) +
+  labs(title = "Number of Features (All Samples) - Post-Filtering",
+       x = "SampleName") +
+  NoLegend() + labels_standard
+```
+
+### Number of Counts {.tabset}
+
+We don't usually remove anything based on this information.
+
+#### With points
+
+```{r gex-post-filtering-num-counts-dataset-vln-points}
+#| fig.dim = c(12, 8)
+
+VlnPlot(combined, features = "nCount_RNA",
+        cols = colors_vln_sampletype, pt.size = 0.01, raster = FALSE) %>%
+  add_info_bar(method = "add", info_type = "Dataset", info = combined) +
+  labs(title = "Number of Counts (All Samples) - Post-Filtering",
+       x = "SampleName") +
+  NoLegend() + labels_standard
+```
+
+```{r gex-post-filtering-num-counts-sampletype-vln-points}
+#| fig.dim = c(12, 8)
+
+VlnPlot(combined, features = "nCount_RNA",
+        cols = colors_vln_dataset, pt.size = 0.01, raster = FALSE) %>%
+  add_info_bar(method = "add", info_type = "SampleType", info = combined,
+               label = FALSE) +
+  labs(title = "Number of Counts (All Samples) - Post-Filtering",
+       x = "SampleName") +
+  NoLegend() + labels_standard
+```
+
+#### Without points
+
+```{r gex-post-filtering-num-counts-dataset-vln-no-points}
+#| fig.dim = c(12, 8)
+
+VlnPlot(combined, features = "nCount_RNA",
+        cols = colors_vln_sampletype, pt.size = 0, raster = FALSE) %>%
+  add_info_bar(method = "add", info_type = "Dataset", info = combined) +
+  labs(title = "Number of Counts (All Samples) - Post-Filtering",
+       x = "SampleName") +
+  NoLegend() + labels_standard
+```
+
+```{r gex-post-filtering-num-counts-sampletype-vln-no-points}
+#| fig.dim = c(12, 8)
+
+VlnPlot(combined, features = "nCount_RNA",
+        cols = colors_vln_dataset, pt.size = 0, raster = FALSE) %>%
+  add_info_bar(method = "add", info_type = "SampleType", info = combined,
+               label = FALSE) +
+  labs(title = "Number of Counts (All Samples) - Post-Filtering",
+       x = "SampleName") +
+  NoLegend() + labels_standard
+```
+
+### Percent Mitochondrial  {.tabset}
+
+#### With points
+
+```{r gex-post-filtering-pct-mt-dataset-vln-points}
+#| fig.dim = c(12, 8)
+
+VlnPlot(combined, features = "percent.mt",
+        cols = colors_vln_sampletype, pt.size = 0.01, raster = FALSE) %>%
+  add_info_bar(method = "add", info_type = "Dataset", info = combined) +
+  labs(title = "Percent Mitochondrial (All Samples) - Post-Filtering",
+       x = "SampleName") +
+  scale_y_continuous(labels = label_percent(scale = 1)) +
+  NoLegend() + labels_standard
+```
+
+```{r gex-post-filtering-pct-mt-sampletype-vln-points}
+#| fig.dim = c(12, 8)
+
+VlnPlot(combined, features = "percent.mt",
+        cols = colors_vln_dataset, pt.size = 0.01, raster = FALSE) %>%
+  add_info_bar(method = "add", info_type = "SampleType", info = combined,
+               label = FALSE) +
+  labs(title = "Percent Mitochondrial (All Samples) - Post-Filtering",
+       x = "SampleName") +
+  scale_y_continuous(labels = label_percent(scale = 1)) +
+  NoLegend() + labels_standard
+```
+
+#### Without points
+
+```{r gex-post-filtering-pct-mt-dataset-vln-no-points}
+#| fig.dim = c(12, 8)
+
+VlnPlot(combined, features = "percent.mt",
+        cols = colors_vln_sampletype, pt.size = 0, raster = FALSE) %>%
+  add_info_bar(method = "add", info_type = "Dataset", info = combined) +
+  labs(title = "Percent Mitochondrial (All Samples) - Post-Filtering",
+       x = "SampleName") +
+  scale_y_continuous(labels = label_percent(scale = 1)) +
+  NoLegend() + labels_standard
+```
+
+```{r gex-post-filtering-pct-mt-sampletype-vln-no-points}
+#| fig.dim = c(12, 8)
+
+VlnPlot(combined, features = "percent.mt",
+        cols = colors_vln_dataset, pt.size = 0, raster = FALSE) %>%
+  add_info_bar(method = "add", info_type = "SampleType", info = combined,
+               label = FALSE) +
+  labs(title = "Percent Mitochondrial (All Samples) - Post-Filtering",
+       x = "SampleName") +
+  scale_y_continuous(labels = label_percent(scale = 1)) +
+  NoLegend() + labels_standard
+```

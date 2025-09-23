@@ -1,0 +1,200 @@
+---
+title: "Unprocessed Data"
+output:
+  html_document:
+    code_download: yes
+    code_folding: hide
+    css: ../"style.css"
+    dev: "png"
+    df_print: kable
+    fig_caption: yes
+    keep_md: no
+    self_contained: true
+    theme: yeti
+    toc: yes
+    toc_depth: 3
+    toc_float:
+        collapsed: false
+        smooth_scroll: false
+editor_options: 
+  chunk_output_type: console
+---
+
+------------------------------------------------------------------------
+
+# Overview and setup
+
+```{r setup-options, include = FALSE}
+knitr::opts_chunk$set(comment = NA, dpi = 200, fig.align = "center",
+                      out.width = "100%", warning = FALSE, error = TRUE,
+                      message = FALSE,
+                      fig.path = here::here("primary_analysis", "figures",
+                                            "initial", "unprocessed",
+                                            "unprocessed-"))
+
+# will mess with chunk labels
+options(knitr.duplicate.label = "allow")
+```
+
+**Author(s):** Edel Aron<br>
+**Date Created:** 2022-11-03<br>
+**Last Updated:** `r Sys.Date()`
+
+**R version:** `r R.Version()$version.string`<br>
+**Platform:** `r R.Version()$platform`<br>
+**Running under:** `r sessionInfo()$running`
+
+```{r, include = FALSE}
+# load packages, colors and themes, functions, and metadata (R code only)
+source(knitr::purl(here::here("primary_analysis", "notebooks",
+                              "01-setup.Rmd"), documentation = 0))
+source(knitr::purl(here::here("primary_analysis", "notebooks",
+                              "02-functions.Rmd"), documentation = 0))
+source(knitr::purl(here::here("primary_analysis", "notebooks",
+                              "03-meta.Rmd"), documentation = 0))
+```
+
+------------------------------------------------------------------------
+
+# Read in the data
+
+Rather than running the following steps, you can read in the unprocessed objects here (although they aren't needed for this notebook).
+
+```{r setup}
+#| eval = FALSE
+
+combined_blood <- 
+  readRDS(file.path(path_objs, "raw", "combined_blood_unprocessed.rds"))
+combined_skin <-
+  readRDS(file.path(path_objs, "raw", "combined_skin_unprocessed.rds"))
+```
+
+------------------------------------------------------------------------
+
+# Create the objects
+
+If you don't have access to the Seurat objects, are creating them for the first time or would like to run the analysis for yourself, run all of the code within this section.
+
+## Read in aggregated data
+
+Aggregation was done to help deal with the significant differences in read depth identified in the QC.
+
+The full run details can be found in the "generate_aggr_csv.R" and "cellranger_aggr.sh" files within the cellranger subdirectory in the lyme repository. This is the actual script that was run:
+
+```{bash cellranger-command}
+#| class.source = "fold-show",
+#| eval = FALSE
+
+echo "Cell Ranger version: $(cellranger -V)"
+echo "Data Type: Single Cell Gene Expression"
+echo
+
+# user-specific
+id="aggr"
+csv_dir="/home/edelaron/git/Research/lyme/single_cell/primary_analysis/cellranger"
+out_dir="/media/edelaron/Midas/lyme"
+
+cd $out_dir
+cellranger aggr --id=$id --csv=$csv_dir/aggr.csv --localcores=12
+```
+
+Load in the data and create the aggregated Seurat object:
+
+```{r aggr-load-data}
+#| eval = FALSE
+
+# read in the data
+data_aggr <- Read10X(file.path(path_data_root, "aggr",
+                               "outs", "count", "filtered_feature_bc_matrix"))
+# strip.suffix = TRUE only removes -1s, but aggregated data can have other endings
+# plus you need the suffixes to distinguish the samples in the next chunk
+
+# create the Seurat object for the GEX data
+obj_aggr <- CreateSeuratObject(counts = data_aggr, project = "aggregated")
+```
+
+## Add back the SampleName information
+
+```{r aggr-add-samplenames}
+#| eval = FALSE
+
+# set up the barcodes
+barcodes_aggr <- Cells(obj_aggr)
+barcodes_aggr <- as.data.frame(barcodes_aggr)
+barcodes_aggr <- barcodes_aggr %>%
+                 separate("barcodes_aggr", c("barcode", "suffix"))
+# the suffix represents the different samples
+
+# read in sample information
+csv_aggr <- read_csv(file.path(path_data_root, "aggr", "outs", "aggregation.csv"),
+                     col_types = cols(.default = "c"))
+csv_aggr <- select(csv_aggr, "sample_id") %>%
+              rowid_to_column("suffix") %>%
+              mutate(across(suffix, as.character)) # to be consistent with barcodes_aggr
+
+# add the sample names to the barcodes
+barcodes_aggr <- left_join(barcodes_aggr, csv_aggr, by = "suffix")
+barcodes_aggr <- rename(barcodes_aggr, "SampleName" = "sample_id")
+
+# where each SampleName starts in the list
+print_kable(barcodes_aggr %>% 
+              rownames_to_column("StartPoint") %>%
+              select(-barcode) %>% 
+              distinct(SampleName, .keep_all = TRUE) %>%
+              select(-suffix) %>% 
+              relocate("SampleName", "StartPoint"))
+
+# example of aggregated object metadata
+obj_aggr <- AddMetaData(obj_aggr, metadata = barcodes_aggr$SampleName,
+                        col.name = "SampleName")
+print_kable(obj_aggr[[]] %>% slice_sample(n = 5), kable_height = NULL)
+```
+
+## Separate, update and save objects
+
+Into blood and skin (control and EM) data
+
+```{r aggr-create-seurat-objects}
+#| eval = FALSE
+
+# set up objects
+obj_aggr_list <- SplitObject(obj_aggr, split.by = "SampleName")
+objs_blood <- create_seurat_objs(objs_list = obj_aggr_list,
+                                 meta_file = meta, sample_names = samples_blood,
+                                 tissue_types = "Blood")
+objs_skin <- create_seurat_objs(objs_list = obj_aggr_list,
+                                meta_file = meta, sample_names = samples_skin,
+                                tissue_types = "Skin")
+
+# combine GEX data for the samples
+combined_blood <- merge(objs_blood[[1]], y = tail(objs_blood, -1))
+combined_skin <- merge(objs_skin[[1]], y = tail(objs_skin, -1))
+
+# change idents from "aggregated" to the corresponding sample names
+Idents(combined_blood) <- combined_blood$SampleName
+Idents(combined_skin) <- combined_skin$SampleName
+
+# save the unprocessed objects so you don't have to read in the data every time
+saveRDS(combined_blood,
+        file.path(path_objs, "raw", "combined_blood_unprocessed.rds"))
+saveRDS(combined_skin,
+        file.path(path_objs, "raw", "combined_skin_unprocessed.rds"))
+```
+
+## Test that the barcodes are correct
+
+Just the first few rows right now for simplicity
+
+```{r aggr-test-barcodes}
+#| eval = FALSE
+
+# blood
+all(rownames(head(objs_blood[[2]][[]], 5)) ==
+    rownames(head(combined_blood[[]] %>% dplyr::filter(SampleName == "202936_B"), 5)))
+
+# skin
+all(rownames(head(objs_skin[[1]][[]], 5)) ==
+    rownames(head(combined_skin[[]] %>% dplyr::filter(SampleName == "192561SKL"), 5)))
+all(rownames(head(objs_skin[[15]][[]], 5)) ==
+    rownames(head(combined_skin[[]] %>% dplyr::filter(SampleName == "202937_SC"), 5)))
+```
