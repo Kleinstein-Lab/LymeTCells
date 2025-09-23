@@ -45,13 +45,25 @@ options(knitr.duplicate.label = "allow")
 **Running under:** `r sessionInfo()$running`
 
 ```{r, include = FALSE}
-# load packages, colors and themes, functions, and metadata (R code only)
-source(knitr::purl(here::here("primary_analysis", "notebooks",
-                              "01-setup.Rmd"), documentation = 0))
-source(knitr::purl(here::here("primary_analysis", "notebooks",
-                              "02-functions.Rmd"), documentation = 0))
-source(knitr::purl(here::here("primary_analysis", "notebooks",
-                              "03-meta.Rmd"), documentation = 0))
+# load packages, colors and themes and functions (R code only)
+code_setup <-
+  knitr::purl(here::here("single_cell", "primary_analysis", "notebooks",
+                         "01-setup.Rmd"),
+              output = tempfile(), documentation = 0)
+code_functions <-
+  knitr::purl(here::here("single_cell", "primary_analysis", "notebooks",
+                         "02-functions.Rmd"),
+              output = tempfile(), documentation = 0)
+code_meta <- 
+  knitr::purl(here::here("single_cell", "primary_analysis", "notebooks",
+                         "03-meta.Rmd"),
+              output = tempfile(), documentation = 0)
+
+# read in the code, then remove the temp files
+source(code_setup)
+source(code_functions)
+source(code_meta)
+unlink(c(code_setup, code_functions, code_meta))
 ```
 
 Also needed:

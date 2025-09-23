@@ -26,9 +26,14 @@ path_airrflow_objs <-
   file.path(path_objs, "airr", paste0("airrflow_", airrflow_version))
 
 # list (and install if needed) CRAN packages
-packages <- c("alakazam", "scoper", # Immcantation packages
-              "clustree", "DESeq2", "DoubletFinder", "DT", "enrichR", "ggpubr",
-              "ggrepel", "ggsignif", "ggtext", "ggVennDiagram", "here", "hues",
+packages <- c(# Immcantation packages
+              "alakazam", "scoper", 
+              # needed for manuscript figures
+              "APackOfTheClones", "clusterProfiler", "ggpubr", "msigdbr",
+              "SeuratExtend", "xlsx",
+              # other
+              "clustree", "DESeq2", "DoubletFinder", "DT", "enrichR", "ggrepel",
+              "ggsignif", "ggtext", "ggVennDiagram", "here", "hues",
               "kableExtra", "knitr", "magrittr", "Matrix", "pals", "patchwork",
               "peakRAM", "plyr", "reshape", "rjson", "rlang", "scales",
               "Seurat", "tidyverse")

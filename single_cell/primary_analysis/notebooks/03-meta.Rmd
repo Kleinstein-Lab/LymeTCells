@@ -37,8 +37,8 @@ I included the disease in the metadata (although it is all "lyme") in case the r
 
 **Graphical overview of current HIPC Lyme data:**
 
-```{r}
-include_graphics(path = here::here("primary_analysis", "images",
+```{r, eval = FALSE}
+include_graphics(path = here::here("single_cell", "primary_analysis", "images",
                                    "hipc_lyme_data.png"))
 ```
 
