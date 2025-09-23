@@ -78,14 +78,6 @@ subjects
 ### Choose more colors
 
 ```{r color-schemes}
-# clinical
-colors_age <- setNames(iwanthue(n_distinct(meta_clinical$Age)),
-                       sort(unique(meta_clinical$Age)))
-colors_age_simpler <- c("Younger" = "#ff9100", "Older" = "#8a4e00")
-colors_gender <- c("F" = "pink", "M" = "skyblue") # so stereotypical, my bad
-colors_size <- setNames(iwanthue(n_distinct(meta_clinical$`Size (diameter in cm)`)),
-                        sort(unique(meta_clinical$`Size (diameter in cm)`)))
-
 # define the colors
 colors_sample_blood <- stepped3(length(samples_blood)) # up to 20 colors
 

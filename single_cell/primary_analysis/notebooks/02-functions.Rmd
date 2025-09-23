@@ -2049,79 +2049,6 @@ vln_cell_info <- function(seurat_obj, feature, clrs_specific,
 
 ## AIRR
 
-### Read in the data
-
-This only adds isotypes for the heavy chains of the BCR data
-
-```{r func-read-immune-data}
-
-
-#' Read in and combine the BCR/TCR combined data from the changeo-10x pipeline.
-#'
-#' @param data_type BCR, TCR
-#' @param meta_file description
-#' @param data_dir description
-#' @param add_isotypes only for BCR data and uses the c_call column (it was previously an independent function)
-#' @param filter_isotypes_na description
-#' @param include_info description
-#'
-#' @returns description
-read_immune_data <- function(data_type, meta_file,
-                             data_dir = "changeo_combined",
-                             add_isotypes = FALSE, filter_isotypes_na = FALSE,
-                             include_info = TRUE) {
-  # setup
-  combined_vdj <- data.frame()
-
-  for (dataset in unique(meta_file$Dataset)) {
-    combined_file_name <- paste0(paste("combined", data_type, "productive",
-                                sep = "_"), ".tsv")
-
-    # read in the data
-    changeo <-
-      airr::read_rearrangement(file.path(path_data_root,
-                                         paste0("dataset", dataset),
-                                         data_dir, combined_file_name))
-    changeo <- changeo %>% mutate(across(c(SampleName, Subject, Dataset),
-                                         as.character)) # Dataset
-
-    # combine the files
-    combined_vdj <- bind_rows(combined_vdj, changeo)
-  }
-
-  # include isotype info for BCR data
-  if (add_isotypes) {
-    combined_vdj$Isotype <- NA # in case c_call is NA
-    combined_vdj <- mutate(combined_vdj,
-                           Isotype = case_when(str_detect(c_call, "IGHA") ~ "IgA",
-                                               str_detect(c_call, "IGHD") ~ "IgD",
-                                               str_detect(c_call, "IGHE") ~ "IgE",
-                                               str_detect(c_call, "IGHG") ~ "IgG",
-                                               str_detect(c_call, "IGHM") ~ "IgM"))
-  }
-
-  # make sure the levels are in alphanumeric order
-  # levels(combined_vdj$SampleType) <- sort(levels(combined_vdj$SampleType))
-
-  # remove NA isotypes (use with caution!)
-  if (filter_isotypes_na) {
-    combined_vdj <- combined_vdj[-which(is.na(combined_vdj$c_call)), ]
-  }
-
-  # print out some useful summary info
-  if (include_info) {
-    cat("The combined", data_type, "data has",
-        nrow(combined_vdj), "rows and", ncol(combined_vdj), "columns.\n")
-
-    num_na_calls <- sum(is.na(combined_vdj$c_call))
-    cat("There are", num_na_calls, "NA C calls out of", nrow(combined_vdj), "total calls",
-        paste0("(", round(100 * num_na_calls / nrow(combined_vdj), 2), "%).\n"))
-  }
-
-  return(combined_vdj)
-}
-```
-
 ### Plots
 
 #### Immcantation
@@ -2587,20 +2514,18 @@ plotOverlapSingleCell <- function(list_objOverlap = "",
 ##### General
 
 ```{r func-plot-immune-overlay}
-
-
-#' This function plots the annotated UMAPs alongside the BCR/TCR overlays.
+#' This function plots the annotated UMAPs alongside the TCR overlays.
 #'
 #' @details
 #' lightgray is Seurat's default background color and cells_total has to be a list for the labels to work later.
 #'
-#' @param seurat_obj The Seurat object (must contain Has_BCR/Has_TCR cols)
+#' @param seurat_obj The Seurat object (must contain Has_TCR col)
 #' @param tissue_type The tissue type e.g. Blood, Skin
-#' @param airr_type BCR or TCR
+#' @param airr_type TCR
 #' @param clrs_specific The specific color palette (should be named).
 #' @param barcode_col barcode, cell_id, Cell_ID_Unique
 #' @param plot_label Whether or not to include the labels.
-#' @param plot_by all samples, by dataset, by sample, by isotype (for BCR data)
+#' @param plot_by all samples, by dataset, by sample
 #' @param ncol_sample
 #'
 #' @returns
@@ -2707,94 +2632,6 @@ plot_immune_overlay <- function(seurat_obj, tissue_type, airr_type,
 
   # standardize the labels
   p <- p & labels_standard & clean_umap
-
-  return(p)
-}
-```
-
-##### Mutation freqs
-
-```{r func-plot-mu-freq}
-
-
-#' This function plots mutation frequencies on an annotated UMAP.
-#'
-#' @details
-#'   * "lightgray" is Seurat's default background color
-#'   * FeaturePlot can't do a label box like UMAPPlot can
-#'
-#' @param seurat_obj The Seurat object.
-#' @param tissue_type Blood or Skin.
-#' @param plot_label Add labels to the plot (or not).
-#' @param label_size The size of the plot labels.
-#' @param include_legend
-#'
-#' @returns
-plot_mu_freq <- function(seurat_obj, tissue_type = "", plot_label = TRUE,
-                         label_size = 4, include_legend = FALSE) {
-  # you need the NAs for the background
-  max_freq <- max(seurat_obj$mu_freq, na.rm = TRUE)
-  # for a consistent legend scale
-  max_freq <- round(max_freq, digits = 2)
-
-  # set up the plot
-  p <- FeaturePlot(seurat_obj, features = "mu_freq", pt.size = 0.2,
-                   order = TRUE, label = plot_label, label.size = label_size,
-                   raster = FALSE) +
-         labs(title = paste(tissue_type, "SHM Frequencies"),
-              subtitle = paste0("Max: ", percent(max_freq), ", Mean: ",
-                                percent(mean(seurat_obj$mu_freq, na.rm = TRUE)))) +
-         scale_color_viridis_c(name = "SHM Frequency",
-                               labels = percent, direction = -1,
-                               option = "C", na.value = "lightgray",
-                               breaks = seq(0, max_freq, 0.05),
-                               limits = c(0, max_freq))
-
-  # standardize the labels
-  p <- p + labels_standard + clean_umap
-
-  # remove the legend
-  if (!include_legend) p <- p + NoLegend()
-
-  return(p)
-}
-```
-
-##### Mutation freqs of isotypes
-
-```{r func-plot-mu-freq-isotype-overlay}
-
-
-#' This function plots mutation frequencies for specific isotypes.
-#'
-#' @details
-#'   * "lightgray" is Seurat's default background color
-#'   * it's a little slow
-#'
-#' @param seurat_obj The Seurat object.
-#' @param isotype The Isotype to overlay (IgA, IgD, IgE, IgG, IgM).
-#' @param tissue_type Blood or Skin.
-#'
-#' @returns
-plot_mu_freq_isotype_overlay <- function(seurat_obj, isotype, tissue_type) {
-  # you need the NAs for the background
-  obj <- subset(seurat_obj, Isotype == isotype | is.na(Isotype))
-  max_freq <- max(seurat_obj$mu_freq, na.rm = TRUE) # for a consistent legend scale
-
-  # set up the plot
-  p <- FeaturePlot(obj, features = "mu_freq", pt.size = 0.2,
-                   order = TRUE, raster = FALSE) +
-         labs(title = paste0(tissue_type, " (", isotype, ")"),
-              subtitle = paste0("Max: ", percent(max(obj$mu_freq, na.rm = TRUE)),
-                                ", Mean: ", percent(mean(obj$mu_freq, na.rm = TRUE)))) +
-         scale_color_viridis_c(name = "SHM Frequency",
-                               labels = percent, direction = -1,
-                               option = "C", na.value = "lightgray",
-                               breaks = seq(0, max_freq, 0.05),
-                               limits = c(0, max_freq))
-
-  # standardize the labels
-  p <- p + labels_standard + clean_umap
 
   return(p)
 }
@@ -3080,8 +2917,6 @@ gex_add_airr <- function(seurat_obj, airr_type = "BCR",
 ### Integration overview
 
 ```{r func-gex-airr-overview}
-
-
 #' Overview of the GEX/AIRR integration.
 #'
 #' @details
@@ -3190,8 +3025,6 @@ clusters_gex_airr <- function(seurat_obj, clusters_col, annotations_col,
 ### Selection overview
 
 ```{r func-subcluster-overview}
-
-
 #' This function provides an overview of subclusters based on the given parameters.
 #'
 #' @param seurat_obj The main Seurat object.
@@ -4174,8 +4007,6 @@ bulk_DE = function(x, targets,
 #### Run
 
 ```{r func-run-de}
-
-
 #' Run a scRNAseq differential expression analysis, given a Seurat object.
 #'
 #' @param sc
@@ -4184,7 +4015,6 @@ bulk_DE = function(x, targets,
 #'
 #' @returns
 run_DE = function(sc, de_test, params = list(), ...) {
-  # library(peakRAM)
   # check there are exactly two labels
   meta = sc@meta.data
   n_labels = n_distinct(meta$label)
@@ -4235,8 +4065,6 @@ run_DE = function(sc, de_test, params = list(), ...) {
 #### Plotting
 
 ```{r func-plot-pathways}
-
-
 #' Plot pathways for each cell type using Enrichr.
 #'
 #' @description
@@ -4294,8 +4122,6 @@ plot_pathways <- function(de, dbs, tissue_type, label_genes = FALSE) {
 ### Clones
 
 ```{r func-plot-clones}
-
-
 #' Plot the clones.
 #'
 #' @details
@@ -4345,8 +4171,6 @@ plot_clones <- function(barcodes, groups = NULL, clone = "clone_id",
 ### Lineage trees
 
 ```{r read-trees}
-
-
 #' Reads in the trees RDS file from airrflow if it exists in the sample subdirectory
 #'
 #' @description

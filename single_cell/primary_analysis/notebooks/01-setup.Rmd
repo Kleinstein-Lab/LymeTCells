@@ -22,44 +22,37 @@ path_tables <- file.path(path_base, "primary_analysis", "tables")
 # nf-core/airrflow specific
 airrflow_version <- "4.1.0" # set the airrflow version that was run
 path_airrflow <- file.path(path_data_root, "airrflow")
-path_airrflow_objs <- file.path(path_objs, "airr", paste0("airrflow_", airrflow_version))
-path_lineages <- file.path(path_airrflow, paste0("bcr_", airrflow_version),
-                           "results", "clonal_analysis", "dowser_lineages")
+path_airrflow_objs <-
+  file.path(path_objs, "airr", paste0("airrflow_", airrflow_version))
 
 # list (and install if needed) CRAN packages
-packages <- c("alakazam", "dowser", "scoper", "shazam", # Immcantation
-              "clustree", "DESeq2", "DoubletFinder", "DT", "enrichR",  "ggpubr",
+packages <- c("alakazam", "scoper", # Immcantation packages
+              "clustree", "DESeq2", "DoubletFinder", "DT", "enrichR", "ggpubr",
               "ggrepel", "ggsignif", "ggtext", "ggVennDiagram", "here", "hues",
-              "janitor", "jsonlite", "kableExtra", "knitr", "magrittr",
-              "Matrix", "pals", "patchwork", "peakRAM", "plyr",
-              "RColorBrewer", "reshape", "rlang", "scales", "scCATCH", # "Seurat",
-              "tidyverse")
-# "ggsankey", "networkD3", "pheatmap", "remotes", "rjson", "scCustomize"
-# "airr", "SeuratDisk", "lubridate"
-# "limma", "edgeR"
+              "kableExtra", "knitr", "magrittr", "Matrix", "pals", "patchwork",
+              "peakRAM", "plyr", "reshape", "rjson", "rlang", "scales",
+              "Seurat", "tidyverse")
 new_pkg <- packages[!(packages %in% installed.packages())]
 if (length(new_pkg)) {install.packages(new_pkg)}
+
 # note: DoubletFinder is installed differently
 # remotes::install_github("chris-mcginnis-ucsf/DoubletFinder")
 
-# load v4 of Seurat, not v5 (and v4.1.4 of SeuratObject too)
-library(Seurat, lib.loc = "~/R/seurat_v4")
-
 # list (and install if needed) Bioconductor packages
 # have to have BiocManager already installed
-packages_additional <- c("biomaRt", "celldex", "ComplexHeatmap", "edgeR",
-                         "ggtree", "limma", "Nebulosa", "scDblFinder",
-                         "scRNAseq", "scuttle", "SingleCellExperiment",
-                         "SingleR")
-# BiocParallel
-new_pkg_additional <- packages_additional[!(packages_additional %in% installed.packages())]
+packages_additional <- c("BiocParallel", "biomaRt", "celldex", "ComplexHeatmap",
+                         "edgeR", "limma", "Nebulosa", "scDblFinder",
+                         "scRNAseq", "SingleCellExperiment", "SingleR")
+new_pkg_additional <-
+  packages_additional[!(packages_additional %in% installed.packages())]
 if (length(new_pkg_additional)) {BiocManager::install(new_pkg_additional)}
 
 # load packages
 packages <- sort(append(packages, packages_additional)) # so the list of versions will be in order
 for (n in seq_along(packages)) {
   suppressPackageStartupMessages(library(packages[n], character.only = TRUE))
-  cat(paste0(packages[n], ": ", packageVersion(packages[n]), "\n")) # print simplified package versions
+  # print simplified package versions
+  cat(paste0(packages[n], ": ", packageVersion(packages[n]), "\n")) 
 }
 
 # remove unnecessary variables
@@ -76,11 +69,9 @@ Useful for pulling out immune cells later (e.g. for subclustering):
 
 ```{r annotations-cell-types}
 # update these depending on your annotation style
-b_cell_types <- c("B Cells", "Plasma Cells")
 t_cell_types <- "T Cells"
 
 # for plot subtitles
-b_cell_types_str <- str_c(b_cell_types, collapse = ", ")
 t_cell_types_str <- str_c(t_cell_types, collapse = ", ")
 ```
 
@@ -90,67 +81,13 @@ This will help the figures created later on to be more standardized and interpre
 
 ```{r colors}
 colors_dataset <- c("2" = "#47D1FF", "3" = "#0096C7", "4" = "#004D66") # shades of blue
-colors_datatype <- c("Bulk" = "#788896",
-                     "BCR" = "#00A785", "GEX" = "#0CDD6B", "TCR" = "#007860") # shades of green
+colors_datatype <- c("Bulk" = "#788896", "GEX" = "#0CDD6B", "TCR" = "#007860") # shades of green
 colors_airrflow <- "#00e5b7"
-# colors_isotype <- c("IgA" = "#8538FA", "IgD" = "#F82c7A", "IgE" = "#6718DC",
-#                     "IgG" = "#3A0688", "IgM" = "#B50045") # reds and purples
-colors_isotype <- c("IgA" = IG_COLORS[["IGHA"]], # blue
-                    "IgD" = IG_COLORS[["IGHD"]], # orange
-                    "IgE" = IG_COLORS[["IGHE"]], # red
-                    "IgG" = IG_COLORS[["IGHG"]], # green
-                    "IgM" = IG_COLORS[["IGHM"]]) # purple
 
-# based on IG_COLORS from alakazam (+ base colors blended with black)
-# doesn't have everything (e.g. there are 7 IGLCs)
-colors_isotype_full <- c("IGHA" = IG_COLORS[["IGHA"]],
-                         "IGHA1" = "#25547B",
-                         "IGHA2" = "#122A3D",
-                         "IGHD" = IG_COLORS[["IGHD"]],
-                         "IGHE" = IG_COLORS[["IGHE"]],
-                         "IGHG" = IG_COLORS[["IGHG"]],
-                         "IGHG1" = "#40923E",
-                         "IGHG2" = "#337531",
-                         "IGHG3" = "#275825",
-                         "IGHG4" = "#1A3A19",
-                         "IGHM" = IG_COLORS[["IGHM"]],
-                         "IGHK" = IG_COLORS[["IGHK"]],
-                         "IGKC" = IG_COLORS[["IGHK"]],
-                         "IGHL" = IG_COLORS[["IGHL"]],
-                         "IGL" = IG_COLORS[["IGHL"]],
-                         "IGLC1" = "#ffd208",
-                         "IGLC2" = "#e0b700",
-                         "IGLC3" = "#b99700")
-
-colors_locus <- c("IGH" = "#2AB0BD", "IGK" = "#DEA618", "IGL" = "#916800",
-                  "TRB" = "#085b63", "TRA" = "#57410a") # shades of blue, yellow, green
-
-colors_v_call_igh_fam <- setNames(c("#7690c7", "#8d4bca", "#72b648", "#d16099",
-                                    "#57865f", "#62396e", "#bc9149"),
-                                  nm = str_c("IGHV", 1:7))
-colors_v_call_igk_fam <- setNames(ocean.solar(n = 7),
-                                  nm = str_c("IGKV", 1:7))
-colors_v_call_igl_fam <- setNames(ocean.haline(n = 10),
-                                  nm = str_c("IGLV", 1:10))
-colors_v_call_fam <- c(colors_v_call_igh_fam, colors_v_call_igk_fam,
-                       colors_v_call_igl_fam)
-colors_d_call_fam <- setNames(ocean.turbid(n = 7),
-                              nm = str_c("IGHD", 1:7)) # heavy only
-colors_j_call_igh_fam <- setNames(ocean.ice(n = 7),
-                                  nm = str_c("IGHJ", 1:7))
-colors_j_call_igk_fam <- setNames(ocean.algae(n = 7),
-                                  nm = str_c("IGKJ", 1:7))
-colors_j_call_igl_fam <- setNames(ocean.matter(n = 10),
-                                  nm = str_c("IGLJ", 1:10))
-colors_j_call_fam <- c(colors_j_call_igh_fam, colors_j_call_igk_fam,
-                       colors_j_call_igl_fam)
+colors_locus <- c("TRB" = "#085b63", "TRA" = "#57410a")
 
 # for data type comparisons
-colors_bcr_gex <- c("GEX" = colors_datatype[["GEX"]], "BCR_GEX" = "black",
-                    "BCR" = colors_datatype[["BCR"]])
 colors_gex_tcr <- c("GEX" = colors_datatype[["GEX"]], "GEX_TCR" = "black",
-                    "TCR" = colors_datatype[["TCR"]])
-colors_bcr_tcr <- c("BCR" = colors_datatype[["BCR"]], "BCR_TCR" = "black",
                     "TCR" = colors_datatype[["TCR"]])
 
 # tissue and sample types
@@ -162,8 +99,6 @@ colors_germline <- c("Germline" = "black")
 colors_sample_types <- c(colors_sample_type_blood, colors_sample_type_skin)
 
 # QC specific
-colors_chain_bcr <- c("HeavyChainOnly" = "#1A759f", "Paired" = "#52b69A",
-                      "LightChainOnly" = "#99D98C") # green and blue
 colors_chain_tcr <- c("TRBOnly" = "#007F5F", "Paired" = "#55A630",
                       "TRAOnly" = "#DDDF00") # yellow and green
 colors_filt <- c("RawTotal" = "#482785", "PostFiltration" = "#9471D9")
@@ -190,15 +125,6 @@ colors_lineages <- c("Dermal" = "#8ab17d", "Endothelial" = "#e76f51",
                      "Stromal" = "#e9c46a")
 colors_immune <- c("Adaptive Immune" = "#006358", "Innate Immune" = "#00B19D",
                    "Immune" = "#008A7B", "Non Immune" = "#3ED55D")
-
-# for clonal explorations
-colors_overlaps <- c("Blood_EM_Only" = colors_sample_types[["Blood"]],
-                     "Control" = colors_sample_types[["Control"]],
-                     "EM_Only" = colors_sample_types[["EM"]])
-colors_expanded <- c("Singlet" = "#BAC893",
-                     "Expanded (>1 & <10)" = "#606c38",
-                     "Hyperexpanded (10+)" = "#30361C")
-colors_expanded_simple <- c("Singlet" = "#003452", "Expanded" = "#00a4ff")
 ```
 
 These functions aid with ggplot2 plotting:
