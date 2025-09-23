@@ -46,11 +46,11 @@ options(knitr.duplicate.label = "allow")
 
 ```{r, include = FALSE}
 # load packages, colors and themes, functions, and metadata (R code only)
-source(knitr::purl(here::here("primary_analysis", "notebooks",
+source(knitr::purl(here::here("single_cell", "primary_analysis", "notebooks",
                               "01-setup.Rmd"), documentation = 0))
-source(knitr::purl(here::here("primary_analysis", "notebooks",
+source(knitr::purl(here::here("single_cell", "primary_analysis", "notebooks",
                               "02-functions.Rmd"), documentation = 0))
-source(knitr::purl(here::here("primary_analysis", "notebooks",
+source(knitr::purl(here::here("single_cell", "primary_analysis", "notebooks",
                               "03-meta.Rmd"), documentation = 0))
 ```
 
@@ -81,21 +81,10 @@ Aggregation was done to help deal with the significant differences in read depth
 
 The full run details can be found in the "generate_aggr_csv.R" and "cellranger_aggr.sh" files within the cellranger subdirectory in the lyme repository. This is the actual script that was run:
 
-```{bash cellranger-command}
-#| class.source = "fold-show",
-#| eval = FALSE
-
-echo "Cell Ranger version: $(cellranger -V)"
-echo "Data Type: Single Cell Gene Expression"
-echo
-
-# user-specific
-id="aggr"
-csv_dir="/home/edelaron/git/Research/lyme/single_cell/primary_analysis/cellranger"
-out_dir="/media/edelaron/Midas/lyme"
-
-cd $out_dir
-cellranger aggr --id=$id --csv=$csv_dir/aggr.csv --localcores=12
+```{r cellranger-command}
+readLines(file.path(path_base, "primary_analysis", "cellranger",
+                    "cellranger_aggr.sh")) %>%
+  paste0(collapse = "\n") %>% cat
 ```
 
 Load in the data and create the aggregated Seurat object:
@@ -152,7 +141,7 @@ print_kable(obj_aggr[[]] %>% slice_sample(n = 5), kable_height = NULL)
 
 ## Separate, update and save objects
 
-Into blood and skin (control and EM) data
+Into blood and skin (control and EM) data:
 
 ```{r aggr-create-seurat-objects}
 #| eval = FALSE
