@@ -1,0 +1,1 @@
+nextflow run nf-core/airrflow -r 4.1.0 -profile docker --input /home/edelaron/git/Research/lyme/single_cell/lyme_processing/metadata/airrflow_tcr.tsv --mode assembled --outdir results --reassign --productive_only --clonal_threshold 0 --cloneby subject_id --max_cpus 10

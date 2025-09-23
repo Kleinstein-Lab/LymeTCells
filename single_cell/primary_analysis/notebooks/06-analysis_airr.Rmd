@@ -1,0 +1,312 @@
+---
+title: "AIRR Analysis"
+output:
+  html_document:
+    code_download: yes
+    code_folding: hide
+    css: ../"style.css"
+    dev: "png"
+    df_print: kable
+    fig_caption: yes
+    keep_md: no
+    self_contained: true
+    theme: yeti
+    toc: yes
+    toc_depth: 3
+    toc_float:
+        collapsed: false
+        smooth_scroll: false
+editor_options:
+  chunk_output_type: console
+---
+
+------------------------------------------------------------------------
+
+# Overview and setup
+
+```{r setup-options, include = FALSE}
+knitr::opts_chunk$set(comment = NA, dpi = 200, fig.align = "center",
+                      out.width = "100%", warning = FALSE, error = TRUE,
+                      message = FALSE,
+                      fig.path = here::here("primary_analysis", "figures",
+                                            "analysis", "airr", "airr-"))
+
+# will mess with chunk labels, but needed for parameterized reports
+options(knitr.duplicate.label = "allow")
+```
+
+**Author(s):** Edel Aron<br>
+**Date Created:** 2023-10-25<br>
+**Last Updated:** `r Sys.Date()`
+
+**R version:** `r R.Version()$version.string`<br>
+**Platform:** `r R.Version()$platform`<br>
+**Running under:** `r sessionInfo()$running`
+
+```{r, include = FALSE}
+# load packages, colors and themes, functions, and metadata (R code only)
+source(knitr::purl(here::here("primary_analysis", "notebooks",
+                              "01-setup.Rmd"), documentation = 0))
+source(knitr::purl(here::here("primary_analysis", "notebooks",
+                              "02-functions.Rmd"), documentation = 0))
+source(knitr::purl(here::here("primary_analysis", "notebooks",
+                              "03-meta.Rmd"), documentation = 0))
+```
+
+```{r}
+include_graphics(path = here::here("primary_analysis", "images",
+                                   "single_cell_immune_profiling_pipeline.png"))
+```
+
+[airrflow documentation](https://nf-co.re/airrflow/) and [airrflow GitHub](https://github.com/nf-core/airrflow)
+
+Latest version run:
+
+```{r}
+#| class.source = "fold-show"
+
+airrflow_version
+```
+
+------------------------------------------------------------------------
+
+# Read in the data
+
+Read in the GEX objects:
+
+```{r setup-combined-gex}
+combined_blood <- readRDS(file.path(path_objs, "combined_blood.rds"))
+combined_skin <- readRDS(file.path(path_objs, "combined_skin.rds"))
+
+combined_blood_t <- readRDS(file.path(path_objs, "combined_blood_t_ref.rds"))
+combined_skin_t <- readRDS(file.path(path_objs, "combined_skin_t_ref.rds"))
+```
+
+Read in the processed `airrflow` and AIRR objects:
+
+```{r setup-combined-airrflow}
+combined_tcr <-
+  readRDS(file.path(path_airrflow_objs, "combined_tcr.rds"))
+
+# for plotting purpose
+combined_tcr <- factor_family_info(combined_tcr)
+```
+
+Read in the bulk data:
+
+```{r}
+# just the TCRs
+combined_bulk <-
+  readRDS(file.path(path_objs, "airr", "bulk", "combined_bulk_tcr.rds"))
+
+# filter out the TRD and TRGs
+combined_bulk <- filter(combined_bulk, locus %in% c("TRA", "TRB"))
+```
+
+------------------------------------------------------------------------
+
+# Generate input files
+
+[Input samplesheet documentation](https://nf-co.re/airrflow/docs/usage#assembled-input-samplesheet-bulk-or-single-cell-sequencing).
+
+```{r setup-input}
+airrflow_clinical <- meta_clinical %>%
+                       select(`Study ID`, Age, Gender) %>%
+                       rename(Subject = `Study ID`) %>%
+                       mutate(Subject = as.character(Subject))
+
+airrflow_tcr <- meta %>%
+                  dplyr::filter(DataType == "TCR") %>%
+                  select(SampleDir, SampleName, Subject, TissueType,
+                         SampleType, Dataset, Year) %>%
+                  left_join(airrflow_clinical, by = join_by(Subject)) %>%
+                  mutate(SampleDir =
+                           file.path(path_data_root, paste0("dataset", Dataset),
+                                     "default", SampleDir, "outs",
+                                     "airr_rearrangement.tsv"),
+                         species = "human",
+                         biomaterial_provider = "10x Genomics",
+                         pcr_target_locus = "tr",
+                         single_cell = TRUE) %>%
+                  relocate(SampleDir, species, .before = SampleName) %>%
+                  rename(filename = SampleDir, subject_id = Subject,
+                         sample_id = SampleName, tissue = SampleType,
+                         sex = Gender, age = Age, tissue_full = TissueType,
+                         dataset = Dataset, year = Year) %>%
+                  relocate(tissue_full, dataset, year, .after = last_col()) %>%
+                  relocate(sex, .before = age)
+
+print_kable(airrflow_tcr)
+```
+
+```{r setup-input-save}
+#| eval = FALSE
+
+write_tsv(airrflow_tcr,
+          file.path(path_base, "metadata", "airrflow_tcr.tsv"))
+```
+
+------------------------------------------------------------------------
+
+# Run airrflow
+
+I ran `airrflow` with the following script. The clonal threshold was set to `0` since TCRs don't hypermutate.
+
+```{r script-tcr}
+# from /media/edelaron/Midas/lyme/airrflow/tcr
+readLines(file.path(path_airrflow, paste0("tcr_", airrflow_version),
+                    "airrflow.sh")) %>%
+  paste0(collapse = "\n") %>% cat
+```
+
+------------------------------------------------------------------------
+
+# Process the airrflow output
+
+## Read in the output
+
+Read in the initial `airrflow` output:
+
+```{r tcr-output-initial}
+#| eval = FALSE
+
+# there's only one file
+combined_tcr <-
+  plyr::ldply(list.files(file.path(path_airrflow,
+                                   paste0("tcr_", airrflow_version), "results",
+                                   "repertoire_comparison", "repertoires"),
+                         full.names = TRUE),
+              read_tsv, show_col_types = FALSE)
+
+# this reads in clone_id as numeric
+combined_tcr$clone_id <- as.character(combined_tcr$clone_id)
+```
+
+No threshold was set for the TCR data.
+
+Example of the output:
+
+```{r tcr-output-example}
+print_kable(combined_tcr %>% slice_sample(n = 5), kable_height = NULL)
+```
+
+## Add info
+
+### Columns
+
+My inputs to `airrflow` had to be called something different than what I use throughout these notebooks.
+
+```{r tcr-info-cols}
+#| eval = FALSE
+
+combined_tcr <- combined_tcr %>%
+                  rename(SampleName = sample_id, Subject = subject_id,
+                         SampleType = tissue, TissueType = tissue_full,
+                         Dataset = dataset, Year = year) %>%
+                  # remove unneeded columns
+                  select(-filename, -biomaterial_provider, -pcr_target_locus,
+                         -single_cell) %>%
+                  # add another column from my metadata
+                  mutate(DataType = "TCR", .after = SampleType) %>%
+                  # fix the data types
+                  mutate(Dataset = as.character(Dataset),
+                         Subject = as.character(Subject))
+```
+
+### Unique IDs
+
+```{r tcr-info-unique-ids}
+#| eval = FALSE
+
+combined_tcr <-
+  combined_tcr %>%
+    mutate(Cell_ID_Unique = reformat_vdj_barcode(data = combined_tcr,
+                                                 col_samples = "SampleName",
+                                                 col_barcodes = "cell_id",
+                                                 col_output = "Cell_ID_Unique"),
+           .after = cell_id) %>%
+    mutate(sequence_id_unique = paste0(Subject, "_", sequence_id),
+           clone_id_unique = paste0(Subject, "_", clone_id))
+```
+
+### c_calls
+
+Check the `c_call` column formatting:
+
+```{r tcr-info-c-calls-check}
+#| eval = FALSE
+
+sort(unique(combined_tcr$c_call))
+```
+
+Okay it seems like the base types are the same, so I'm just going to copy `c_call` into `c_call_original`, then trim down the values (for now) to make an updated `c_call` column. That way all of my checks and plots later on won't break.
+
+```{r tcr-info-c-calls-fix}
+#| eval = FALSE
+
+combined_tcr <- combined_tcr %>%
+                  mutate(c_call_original = c_call, .before = c_call,
+                         c_call = getFamily(c_call))
+```
+
+### Family and gene usage
+
+```{r tcr-info-usage}
+#| eval = FALSE
+
+combined_tcr <- add_family_info(airr_db = combined_tcr)
+```
+
+## Add bulk data
+
+```{r}
+#| eval = FALSE
+
+# only use the columns that line up with the single cell data
+combined_bulk_select <- combined_bulk %>%
+                          select(intersect(names(combined_tcr),
+                                           names(combined_bulk)))
+
+combined_tcr_full <- bind_rows(combined_tcr, combined_bulk_select)
+```
+
+Redo the clonal assignment:
+
+```{r}
+#| eval = FALSE
+
+# "To identify TCR clones, clones were assigned if T cells shared the same full-length aligned V(D)J sequence." - Roy's paper
+
+# using TRB only is okay
+combined_tcr_full_clones <-
+  combined_tcr_full %>% select(-clone_id, -clone_id_unique)
+combined_tcr_full_clones <-
+  scoper::identicalClones(test, method = "nt", fields = "Subject",
+                          only_heavy = TRUE, split_light = FALSE, nproc = 8,
+                          summarize_clones = FALSE)
+## Running defineClonesScoper in bulk mode and only keep heavy chains
+
+# add back the clonal information
+combined_tcr_full <- combined_tcr_full %>%
+                       rename(clone_id_sc = clone_id,
+                              clone_id_sc_unique = clone_id_unique) %>%
+                       left_join(combined_tcr_full_clones)
+combined_tcr_full <- combined_tcr_full %>%
+                       mutate(clone_id_unique =
+                                ifelse(!is.na(clone_id),
+                                       paste0(Subject, "_", clone_id), NA))
+```
+
+------------------------------------------------------------------------
+
+# Save the objects
+
+```{r save-processing}
+#| eval = FALSE
+
+# takes up less space than a TSV file
+saveRDS(combined_tcr,
+        file.path(path_airrflow_objs, "combined_tcr.rds"))
+saveRDS(combined_tcr_full,
+        file.path(path_objs, "airr", "combined_airrflow_bulk_tcr.rds"))
+```
