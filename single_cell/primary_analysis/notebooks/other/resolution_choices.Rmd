@@ -29,9 +29,7 @@ knitr::opts_chunk$set(comment = NA, dpi = 200, fig.align = "center",
                       out.width = "100%", warning = FALSE, error = TRUE,
                       message = FALSE,
                       fig.path = here::here("primary_analysis", "figures",
-                                            "experimental",
-                                            "clustering_resolution_choices",
-                                            "cluster-res-"))
+                                            "other", "cluster-res-"))
 
 # will mess with chunk labels, but needed for parameterized reports
 options(knitr.duplicate.label = "allow")
@@ -107,16 +105,16 @@ The chosen resolutions from other notebooks (watch for reproducibility):
 
 ```{r setup-resolutions}
 # full
-blood_res <- "0.4"
-skin_res <- "1"
+res_blood <- "0.4"
+res_skin <- "1"
 
 # subclustered
-blood_t_res <- "0.6"
-skin_t_res <- "0.9"
+res_blood_t <- "0.6"
+res_skin_t <- "0.9"
 
 # subclustered (refined)
-blood_t_ref_res <- "1.5"
-skin_t_ref_res <- "1.5"
+res_blood_t_ref <- "1.5"
+res_skin_t_ref <- "1.5"
 ```
 
 ------------------------------------------------------------------------
@@ -243,11 +241,15 @@ saveRDS(combined_skin_t_mult_res,
 
 ------------------------------------------------------------------------
 
-# Full tissue
+# Visualization
 
-## Blood
+Using `clustree` and `UMAP`s.
 
-Chosen resolution of `r blood_res`:
+## Full tissue
+
+### Blood
+
+Chosen resolution of `r res_blood`:
 
 ```{r blood-clustree}
 #| fig.dim = c(20, 14)
@@ -276,16 +278,16 @@ for (res in seq(0.1, 1.6, 0.1)) {
 }
 
 # highlight my current chosen resolution
-umaps_res[[blood_res]] <-
-  umaps_res[[blood_res]] + theme(plot.title = element_text(color = "red"))
+umaps_res[[res_blood]] <-
+  umaps_res[[res_blood]] + theme(plot.title = element_text(color = "red"))
 
 wrap_plots(umaps_res, ncol = 4) +
   plot_annotation(title = "Blood", theme = labels_standard)
 ```
 
-## Skin
+### Skin
 
-Chosen resolution of `r skin_res`:
+Chosen resolution of `r res_skin`:
 
 ```{r skin-clustree}
 #| fig.dim = c(20, 14)
@@ -314,20 +316,18 @@ for (res in seq(0.1, 1.6, 0.1)) {
 }
 
 # highlight my current chosen resolution
-umaps_res[[skin_res]] <-
-  umaps_res[[skin_res]] + theme(plot.title = element_text(color = "red"))
+umaps_res[[res_skin]] <-
+  umaps_res[[res_skin]] + theme(plot.title = element_text(color = "red"))
 
 wrap_plots(umaps_res, ncol = 4) +
   plot_annotation(title = "Skin", theme = labels_standard)
 ```
 
-------------------------------------------------------------------------
+## Subclustered
 
-# Subclustered
+### Blood T Cells
 
-## Blood T Cells
-
-Chosen resolution of `r blood_t_res`:
+Chosen resolution of `r res_blood_t`:
 
 ```{r subcluster-blood-t-clustree}
 #| fig.dim = c(16, 12)
@@ -356,16 +356,16 @@ for (res in seq(0.1, 1.6, 0.1)) {
 }
 
 # highlight my current chosen resolution
-umaps_res[[blood_t_res]] <-
-  umaps_res[[blood_t_res]] + theme(plot.title = element_text(color = "red"))
+umaps_res[[res_blood_t]] <-
+  umaps_res[[res_blood_t]] + theme(plot.title = element_text(color = "red"))
 
 wrap_plots(umaps_res, ncol = 4) +
   plot_annotation(title = "Blood T Cells", theme = labels_standard)
 ```
 
-## Skin T Cells
+### Skin T Cells
 
-Chosen resolution of `r skin_t_res`:
+Chosen resolution of `r res_skin_t`:
 
 ```{r subcluster-skin-t-clustree}
 #| fig.dim = c(16, 12)
@@ -394,20 +394,18 @@ for (res in seq(0.1, 1.6, 0.1)) {
 }
 
 # highlight my current chosen resolution
-umaps_res[[skin_t_res]] <-
-  umaps_res[[skin_t_res]] + theme(plot.title = element_text(color = "red"))
+umaps_res[[res_skin_t]] <-
+  umaps_res[[res_skin_t]] + theme(plot.title = element_text(color = "red"))
 
 wrap_plots(umaps_res, ncol = 4) +
   plot_annotation(title = "Skin T Cells", theme = labels_standard)
 ```
 
-------------------------------------------------------------------------
+## Subclustered (Refined)
 
-# Subclustered (Refined)
+### Blood T Cells
 
-## Blood T Cells
-
-Chosen resolution of `r blood_t_ref_res`:
+Chosen resolution of `r res_blood_t_ref`:
 
 ```{r subcluster-refine-blood-t-clustree}
 #| fig.dim = c(16, 12)
@@ -436,16 +434,16 @@ for (res in seq(0.1, 1.6, 0.1)) {
 }
 
 # highlight my current chosen resolution
-umaps_res[[blood_t_ref_res]] <-
-  umaps_res[[blood_t_ref_res]] + theme(plot.title = element_text(color = "red"))
+umaps_res[[res_blood_t_ref]] <-
+  umaps_res[[res_blood_t_ref]] + theme(plot.title = element_text(color = "red"))
 
 wrap_plots(umaps_res, ncol = 4) +
   plot_annotation(title = "Refined Blood T Cells", theme = labels_standard)
 ```
 
-## Skin T Cells
+### Skin T Cells
 
-Chosen resolution of `r skin_t_ref_res`:
+Chosen resolution of `r res_skin_t_ref`:
 
 ```{r subcluster-refine-skin-t-clustree}
 #| fig.dim = c(16, 12)
@@ -474,8 +472,8 @@ for (res in seq(0.1, 1.6, 0.1)) {
 }
 
 # highlight my current chosen resolution
-umaps_res[[skin_t_ref_res]] <-
-  umaps_res[[skin_t_ref_res]] + theme(plot.title = element_text(color = "red"))
+umaps_res[[res_skin_t_ref]] <-
+  umaps_res[[res_skin_t_ref]] + theme(plot.title = element_text(color = "red"))
 
 wrap_plots(umaps_res, ncol = 4) +
   plot_annotation(title = "Refined Skin T Cells", theme = labels_standard)
