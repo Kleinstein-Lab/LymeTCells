@@ -1,0 +1,1005 @@
+---
+title: "Doublet Removal"
+output:
+  html_document:
+    code_download: yes
+    code_folding: hide
+    css: ../"style.css"
+    dev: "png"
+    df_print: kable
+    fig_caption: yes
+    keep_md: no
+    self_contained: true
+    theme: yeti
+    toc: yes
+    toc_depth: 3
+    toc_float:
+        collapsed: false
+        smooth_scroll: false
+editor_options:
+  chunk_output_type: console
+---
+
+------------------------------------------------------------------------
+
+# Overview and setup
+
+```{r setup-options, include = FALSE}
+knitr::opts_chunk$set(comment = NA, dpi = 200, fig.align = "center",
+                      out.width = "100%", warning = FALSE, error = TRUE,
+                      message = FALSE,
+                      fig.path = here::here("primary_analysis", "figures",
+                                            "analysis", "doublets",
+                                            "doublets-"))
+
+# will mess with chunk labels
+options(knitr.duplicate.label = "allow")
+```
+
+**Author(s):** Edel Aron<br>
+**Date Created:** 2023-02-22<br>
+**Last Updated:** `r Sys.Date()`
+
+**R version:** `r R.Version()$version.string`<br>
+**Platform:** `r R.Version()$platform`<br>
+**Running under:** `r sessionInfo()$running`
+
+```{r, include = FALSE}
+# load packages, colors and themes, functions, and metadata (R code only)
+source(knitr::purl(here::here("single_cell", "primary_analysis", "notebooks",
+                              "01-setup.Rmd"), documentation = 0))
+source(knitr::purl(here::here("single_cell", "primary_analysis", "notebooks",
+                              "02-functions.Rmd"), documentation = 0))
+source(knitr::purl(here::here("single_cell", "primary_analysis", "notebooks",
+                              "03-meta.Rmd"), documentation = 0))
+```
+
+We decided to use `scDblFinder` as it was recommended by a benchmarking paper. You also don't have to manually adjust the doublet rate or worry about aggregated results like you have to for `DoubletFinder`.
+
+------------------------------------------------------------------------
+
+# Read in the data
+
+```{r setup}
+# objects
+combined_blood <-
+  readRDS(file.path(path_objs, "doublets", "with_doublets", "combined_blood.rds"))
+combined_skin <-
+  readRDS(file.path(path_objs, "doublets", "with_doublets", "combined_skin.rds"))
+
+# colors
+colors_annotated_blood <- combined_blood@misc$colors_annotated
+colors_annotated_skin <- combined_skin@misc$colors_annotated
+```
+
+With doublets removed:
+
+```{r}
+combined_blood_no_doublets <- readRDS(file.path(path_objs, "combined_blood.rds"))
+combined_skin_no_doublets <- readRDS(file.path(path_objs, "combined_skin.rds"))
+```
+
+------------------------------------------------------------------------
+
+# scDblFinder
+
+## Overview
+
+This is a [Bioconductor package](https://bioconductor.org/packages/release/bioc/html/scDblFinder.html). The code used here pulls from [scRNA-seq Analysis](https://hpap.pmacs.upenn.edu/explore/workflow/scRNAseq-analysis).
+
+It was recommended by [Best practices for single-cell analysis across modalities](https://www.nature.com/articles/s41576-023-00586-w#Sec2) and showed good results in [Doublet identification in single-cell sequencing data using scDblFinder](https://f1000research.com/articles/10-979/v2) (their own paper, surprise surprise). It is also in [Orchestrating Single Cell Analysis](https://bioconductor.org/books/3.18/OSCA.advanced/doublet-detection.html). Seems like it builds off of a package called `doubletCells`, which actually was in the main benchmarking paper ([Benchmarking Computational Doublet-Detection Methods for Single-Cell RNA Sequencing Data](https://www.sciencedirect.com/science/article/pii/S2405471220304592?via%3Dihub)) I looked at.
+
+- "They additionally assessed `scDblFinder` in an addendum to their benchmark which achieved the highest doublet detection accuracy and a good computational efficiency and stability."
+  - The addendum was in v3.
+- From peer review (slightly formatted): "Finally, it is unfortunate that the authors have not included, among the methods they compared, the [`scDblFinder` package](https://bioconductor.org/packages/devel/bioc/html/scDblFinder.html), which seems to gain support in the bioconductor community and purports to have a better performance than `DoubletFinder` (which the benchmark shows to have the best performance) at a fraction of the computing time. It would be great if the authors could test this claim, although I understand that it might be late to include new methods now. In any case, if the authors can manage to include it, it would ensure that the benchmark is still up-to-date when published. [From QJ: I think it's too late to change all of the figures and all of the text to incorporate a new method, especially since there's no guarantee that there won't be another one in a few weeks! Importantly, your paper provides a roadmap for interested people to benchmark new methods for themselves going forward.  You may wish to state this a bit more explicitly in the Discussion, but that's completely optional in my opinion.]"
+
+[scDblFinder: Expected proportion of doublets](https://bioconductor.org/packages/release/bioc/vignettes/scDblFinder/inst/doc/scDblFinder.html#expected-proportion-of-doublets):
+
+> The expected proportion of doublets has no impact on the density of artificial doublets in the neighborhood, but impacts the classifier’s score and, especially, where the cutoff will be placed. It is specified through the dbr parameter and the dbr.sd parameter (the latter specifies a +/- range around dbr within which the deviation from dbr will be considered null). For 10x data, the more cells you capture the higher the chance of creating a doublet, and Chromium documentation indicates a doublet rate of roughly 1% per 1000 cells captures (so with 5000 cells, (0.01*5)*5000 = 250 doublets), and the default expected doublet rate will be set to this value (with a default standard deviation of 0.015). Note however that different protocols may create considerably more doublets, and that this should be updated accordingly. If you have unsure about the doublet rate, you might consider increasing dbr.sd, so that it is estimated mostly/purely from the misclassification error.
+
+## Details
+
+**I ran the method by cluster.** I also didn't do any recovery of doublets.
+
+[Single-cell best practices](https://www.sc-best-practices.org/preprocessing_visualization/quality_control.html#doublet-detection):
+
+> New metadata examples:
+> - `sce$scDblFinder.score`: the final doublet score (the higher the more likely that the cell is a doublet)
+> - `sce$scDblFinder.ratio`: the ratio of artificial doublets in the cell’s neighborhood
+> - `sce$scDblFinder.class`: the classification (doublet or singlet)
+
+Note that converting the SCE objects back to Seurat objects removes the PCA and UMAP embeddings and the graph reductions (see [this post](https://www.biostars.org/p/9464198/)). Instead of `as.Seurat`, you could also run something like this: `combined_seurat <- CreateSeuratObject(counts = data.frame(as.matrix(counts(combined_sce))), row.names = counts(combined_sce))`
+
+```{r}
+# for parallelization
+bp <- BiocParallel::MulticoreParam(10, RNGseed = 42)
+```
+
+## Blood
+
+### Run the method
+
+Choose a doublet rate:
+
+```{r blood-setup}
+#| class.source = "fold-show"
+
+doublet_rate_blood <- 0.01
+```
+
+Run `scDblFinder`:
+
+```{r blood-run}
+#| eval = FALSE
+
+# convert to SingleCellExperiment (the Bioconductor format)
+combined_blood_sce <- as.SingleCellExperiment(combined_blood)
+
+# run scDblFinder
+combined_blood_sce <-
+  scDblFinder::scDblFinder(sce = combined_blood_sce, clusters = "seurat_clusters", # or FALSE
+                           samples = "SampleName", dbr = doublet_rate_blood,
+                           BPPARAM = bp)
+
+# convert back to Seurat
+combined_blood_seurat <- as.Seurat(combined_blood_sce,
+                                   counts = "counts", data = "logcounts")
+
+# save the results (you don't need most of the columns and saving the whole
+# object is computationally costly)
+combined_blood_seurat <- combined_blood_seurat[[]] %>%
+                           select(Cell_ID_Unique, starts_with("scDblFinder"))
+write_csv(combined_blood_seurat,
+          file.path(path_tables, "doublets",
+                    paste0("doublets_scDblFinder_blood_",
+                           doublet_rate_blood, ".csv")))
+```
+
+```{r blood-load}
+doublets_scDblFinder_blood <-
+  read_csv(file.path(path_tables, "doublets",
+                     paste0("doublets_scDblFinder_blood_",
+                            doublet_rate_blood, ".csv")),
+           show_col_types = FALSE)
+
+# add the scDblFinder metadata to the main object
+# everything should be in the right order, but join by cell id just in case
+combined_blood_scDblFinder <- left_join(combined_blood[[]] %>%
+                                          select(Cell_ID_Unique),
+                                        doublets_scDblFinder_blood,
+                                        by = "Cell_ID_Unique") %>%
+                                select(starts_with("scDblFinder"))
+
+for (meta_col in colnames(combined_blood_scDblFinder)) {
+  combined_blood[[meta_col]] <- combined_blood_scDblFinder[[meta_col]]
+}
+
+# standardize the column values
+combined_blood$scDblFinder.class <- str_to_title(combined_blood$scDblFinder.class)
+
+# get the doublets
+combined_blood_doublets <- combined_blood[[]] %>%
+                             dplyr::filter(scDblFinder.class == "Doublet")
+```
+
+### Results exploration
+
+Total number of doublets:
+
+```{r blood-counts}
+# total number of doublets
+table(combined_blood$scDblFinder.class)
+```
+
+Example of new clusters:
+
+```{r blood-example}
+# updated metadata
+print_kable(combined_blood[[]] %>% select(starts_with("scDblFinder")) %>% head(),
+            kable_height = NULL)
+```
+
+#### Counts {.tabset}
+
+##### Doublet counts by cluster
+
+```{r blood-composition-counts-cell-types-bar}
+#| fig.dim = c(12, 8)
+
+# by cell type
+plot_counts_cluster(clusters = combined_blood_doublets$annotated_clusters,
+                    clrs_specific = colors_annotated_blood,
+                    tissue_type = "Blood", x_axis = "Cell Type",
+                    details = "Doublets only")
+```
+
+##### Composition by cluster
+
+```{r blood-composition-clusters-bar}
+#| fig.dim = c(15, 12)
+
+# by cluster
+ggplot(combined_blood_doublets,
+       aes(x = seurat_clusters, fill = seurat_clusters)) +
+  geom_bar(linewidth = 0.2, color = "black") +
+  labs(title = "Blood Doublets by scDblFinder Cluster",
+       x = "Seurat Cluster", y = "Count", fill = "Seurat Cluster") +
+  facet_wrap(vars(scDblFinder.cluster), nrow = 3, scales = "free_x") +
+  theme_bw + labels_standard
+```
+
+##### Composition by cell type
+
+```{r blood-composition-cell-types-bar}
+#| fig.dim = c(21, 12)
+
+# by cell type
+ggplot(combined_blood_doublets,
+       aes(x = annotated_clusters, fill = annotated_clusters)) +
+  geom_bar(linewidth = 0.2, color = "black") +
+  labs(title = "Blood Doublets by scDblFinder Cluster",
+       x = "Cell Type", y = "Count", fill = "Cell Type") +
+  scale_fill_manual(values = colors_annotated_blood) +
+  facet_wrap(vars(scDblFinder.cluster), nrow = 3, scales = "free_x") +
+  theme_bw + labels_standard + labels_rotate_x
+```
+
+##### Most likely origins
+
+```{r}
+# not the most efficient approach
+combined_blood_origins <- combined_blood[[]] %>%
+                           dplyr::filter(!scDblFinder.originAmbiguous)
+
+combined_blood_origins <-
+  as.data.frame(table(combined_blood_origins$scDblFinder.mostLikelyOrigin)) %>%
+    rename(mostLikelyOrigin = Var1, Count = Freq) %>%
+    mutate(mostLikelyOrigin = factor(mostLikelyOrigin,
+                                     levels = str_sort(unique(mostLikelyOrigin),
+                                                       numeric = TRUE))) %>%
+    separate_wider_delim(mostLikelyOrigin, delim = "+",
+                         names = c("first_cluster", "second_cluster"),
+                         cols_remove = FALSE) %>%
+    mutate(first_cluster =
+             factor(first_cluster,
+                    levels = str_sort(unique(first_cluster), numeric = TRUE)),
+           second_cluster =
+             factor(second_cluster,
+                    levels = str_sort(unique(second_cluster), numeric = TRUE)))
+```
+
+Note that the y axes are different (otherwise cluster 0 would throw off the scale):
+
+```{r blood-mostLikelyOrigin-bar}
+#| fig.dim = c(24, 24)
+
+ggplot(combined_blood_origins,
+       aes(x = mostLikelyOrigin, y = Count, fill = second_cluster)) +
+  geom_col(linewidth = 0.2, color = "black") +
+  labs(title = "Blood scDblFinder Most Likely Cluster Origins",
+       subtitle = "Ambiguous removed", fill = "Second Cluster") +
+  facet_wrap(~ first_cluster, scales = "free") +
+  theme_bw + labels_standard + labels_rotate_x
+```
+
+#### Percentages {.tabset}
+
+Calculate the percentage of cells that are doublets:
+
+```{r blood-details}
+# for the plots
+doublet_details <- as.data.frame(table(combined_blood$scDblFinder.class)) %>%
+                     mutate(Frac = Freq/sum(Freq)) %>%
+                     dplyr::filter(Var1 == "Doublet") %>%
+                     pull(Frac)
+doublet_details <- label_percent(accuracy = 0.1)(doublet_details)
+```
+
+##### By Cluster
+
+```{r blood-clusters-umap-bar}
+#| fig.dim = c(27, 12)
+
+layout_doublets(seurat_obj = combined_blood, tissue_type = "Blood",
+                annotated = FALSE,
+                doublet_col = "scDblFinder.class",
+                doublet_package = "scDblFinder",
+                details = doublet_details)
+```
+
+##### By Cell Type
+
+```{r blood-cell-types-umap-bar}
+#| fig.dim = c(18, 12)
+
+layout_doublets(seurat_obj = combined_blood, tissue_type = "Blood",
+                clrs_specific = colors_annotated_blood, annotated = TRUE,
+                doublet_col = "scDblFinder.class",
+                doublet_package = "scDblFinder",
+                details = doublet_details)
+```
+
+```{r blood-cell-types-bar}
+#| fig.dim = c(18, 8)
+
+# setup
+doublets_blood <-
+  calc_pcts(data = combined_blood[[]],
+            meta_group_by = "annotated_clusters",
+            focus_group = "scDblFinder.class") %>%
+  dplyr::filter(scDblFinder.class == "Doublet")
+
+ggplot(doublets_blood,
+       aes(x = reorder(annotated_clusters, -Percent), y = Percent,
+           fill = annotated_clusters)) +
+    geom_bar(stat = "identity", position = "dodge",
+             color = "black", linewidth = 0.2) +
+    geom_text(aes(label = Count),
+              position = position_dodge(width = 0.9),
+              vjust = -1, size = 3) +
+    labs(title = "Blood Doublets by Cell Type", subtitle = doublet_details,
+         x = "Cell Type", y = "Percent", fill = "Cell Type") +
+    scale_y_continuous(labels = label_percent(scale = 1),
+                       expand = expansion(mult = 0.05)) +
+    scale_fill_manual(values = colors_annotated_blood) +
+    theme_bw + labels_standard
+```
+
+##### By Subject
+
+For the blood data, samples = subjects
+
+```{r blood-subjects-umap-bar}
+#| fig.dim = c(15, 12)
+
+doublet_col = "scDblFinder.class"
+doublet_package = "scDblFinder"
+
+# bar plots
+p1 <- ggplot(data.frame(table(combined_blood[[]] %>%
+                                select(Subject, doublet_col))),
+             aes(x = Subject, y = Freq, fill = !!sym(doublet_col))) +
+        geom_bar(stat = "identity", position = "dodge",
+                 color = "black", linewidth = 0.2) +
+        geom_text(aes(label = Freq), position = position_dodge(width = 0.9),
+                  vjust = -1, size = 3) +
+        labs(title = "Blood Doublets by Subject", subtitle = doublet_details,
+             x = "Subject", y = "Count", fill = doublet_package) +
+        scale_fill_manual(values = colors_doublet) +
+        theme_bw + labels_standard + labels_rotate_x
+
+p2 <- plot_pcts(pcts = calc_pcts(data = combined_blood[[]],
+                                 meta_group_by = "Subject",
+                                 focus_group = doublet_col),
+          tissue_type = "Blood", plot_type = "All", plot_value = "Doublets",
+          x_axis = "Subject", x_axis_label = "Subject",
+          fill_type = doublet_col, fill_label = doublet_package,
+          clrs_specific = colors_doublet, details = doublet_details)
+
+p1 / p2 + plot_layout(guides = "collect") + plot_anno
+```
+
+### Removal
+
+#### Remove the doublets
+
+Also regenerate the UMAP and removed the `scDblFinder` columns as they are no longer needed and just clutter up the object.
+
+```{r}
+#| eval = FALSE
+
+# note that this also removes cells with NAs (couldn't be classified)
+combined_blood_no_doublets <-
+  subset(combined_blood, subset = scDblFinder.class == "Singlet")
+
+# redo the UMAP
+combined_blood_no_doublets <- RunUMAP(object = combined_blood_no_doublets,
+                                      reduction = "pca",
+                                      dims = 1:20, verbose = FALSE)
+
+# remove metadata columns
+combined_blood_no_doublets@meta.data <-
+  combined_blood_no_doublets[[]] %>% select(-starts_with("scDblFinder"))
+
+# save the object
+saveRDS(combined_blood_no_doublets, file.path(path_objs, "combined_blood.rds"))
+```
+
+Check how many were removed:
+
+```{r}
+cat(paste("There were", ncol(combined_blood), "cells in the original object.",
+          "Post-doublet removal, there are now",
+          ncol(combined_blood_no_doublets), "cells",
+          paste0("(", ncol(combined_blood) - ncol(combined_blood_no_doublets),
+                 " removed).")))
+```
+
+#### Comparisons {.tabset}
+
+##### UMAPs
+
+```{r blood-removal-rna-umap-bar}
+#| fig.dim = c(18, 8)
+
+p1 <- plot_umap(seurat_obj = combined_blood,
+                tissue_type = "Blood",
+                clrs_specific = colors_annotated_blood,
+                plot_by = "cluster_all", annotated = TRUE,
+                include_legend = FALSE)
+p2 <- plot_umap(seurat_obj = combined_blood_no_doublets,
+                tissue_type = "Blood (Doublets Removed)",
+                clrs_specific = colors_annotated_blood,
+                plot_by = "cluster_all", annotated = TRUE,
+                include_legend = FALSE)
+# sometimes people just use high RNA counts
+p3 <- plot_umap_condition(seurat_obj = combined_blood_no_doublets,
+                          tissue_type = "Blood",
+                          condition_name = "nCount_RNA",
+                          operator = ">", condition_val = 10000,
+                          color_by = "name",
+                          clrs_specific = c("nCount_RNA" = "black"),
+                          label_plot = FALSE, include_subtitle = TRUE,
+                          include_legend = FALSE)
+
+# combine plots
+(p1 | p2 | p3) + plot_anno
+```
+
+##### Cluster counts
+
+```{r blood-removal-clusters-umap-bar}
+#| fig.dim = c(15, 8)
+
+# shoddy way but it works
+df_doublets <-
+  data.frame(table(combined_blood$seurat_clusters)) %>%
+  rename(Doublets = Freq)
+df_no_doublets <-
+  data.frame(table(combined_blood_no_doublets$seurat_clusters)) %>%
+  select(Freq) %>%
+  rename(No_Doublets = Freq)
+counts <- bind_cols(df_doublets, df_no_doublets) %>%
+            pivot_longer(cols = c(Doublets, No_Doublets),
+                        names_to = "Type", values_to = "Count") %>%
+            rename("Cluster" = Var1)
+
+ggplot(counts, aes(x = Cluster, y = Count, fill = Type)) +
+  geom_col(position = "dodge", color = "black", linewidth = 0.2) +
+  geom_text(aes(label = Count), vjust = -1, size = 2,
+            position = position_dodge(width = 0.9)) +
+  labs(title = "Blood Cell Counts per Cell Type") +
+  scale_fill_manual(values = c("Doublets" = colors_doublet[["Doublet"]],
+                               "No_Doublets" = colors_doublet[["Singlet"]])) +
+  theme_bw + labels_standard
+```
+
+##### Cell type counts
+
+```{r blood-removal-cell-types-umap-bar}
+#| fig.dim = c(15, 8)
+
+# shoddy way but it works
+df_doublets <-
+  data.frame(table(combined_blood$annotated_clusters)) %>%
+  rename(Doublets = Freq)
+df_no_doublets <-
+  data.frame(table(combined_blood_no_doublets$annotated_clusters)) %>%
+  select(Freq) %>%
+  rename(No_Doublets = Freq)
+counts <- bind_cols(df_doublets, df_no_doublets) %>%
+            pivot_longer(cols = c(Doublets, No_Doublets),
+                        names_to = "Type", values_to = "Count") %>%
+            rename("Cell Type" = Var1)
+
+ggplot(counts, aes(x = `Cell Type`, y = Count, fill = Type)) +
+  geom_col(position = "dodge", color = "black", linewidth = 0.2) +
+  geom_text(aes(label = Count), vjust = -1, size = 3,
+            position = position_dodge(width = 0.9)) +
+  labs(title = "Blood Cell Counts per Cell Type") +
+  scale_fill_manual(values = c("Doublets" = colors_doublet[["Doublet"]],
+                               "No_Doublets" = colors_doublet[["Singlet"]])) +
+  theme_bw + labels_standard
+```
+
+## Skin
+
+### Run the method
+
+Test a few doublet rates:
+
+```{r skin-setup}
+#| class.source = "fold-show"
+
+# I tested a few different rates
+doublet_rates_skin <- c(0.006, 0.01, NULL)
+
+# I also tried `dbr.sd = 1` "to disable any expectation of the number of doublets (thus letting the thresholding be entirely driven by the misclassification of artificial doublets)" but the results weren't very different
+```
+
+Run `scDblFinder`:
+
+```{r skin-run}
+#| eval = FALSE
+
+for (dbr in doublet_rates_skin) {
+  # convert to SingleCellExperiment (the Bioconductor format)
+  combined_skin_sce <- as.SingleCellExperiment(combined_skin)
+
+  # run scDblFinder
+  combined_skin_sce <-
+    scDblFinder::scDblFinder(sce = combined_skin_sce,
+                             clusters = "seurat_clusters", # or FALSE
+                             samples = "SampleName", dbr = dbr, BPPARAM = bp)
+
+  # convert back to Seurat
+  combined_skin_seurat <- as.Seurat(combined_skin_sce,
+                                    counts = "counts", data = "logcounts")
+
+  # save the results (you don't need most of the columns and saving the whole
+  # object is computationally costly)
+  combined_skin_seurat <- combined_skin_seurat[[]] %>%
+                            select(Cell_ID_Unique, starts_with("scDblFinder"))
+  write_csv(combined_skin_seurat,
+            file.path(path_tables, "doublets",
+                      paste0("doublets_scDblFinder_skin_",
+                             format(dbr), ".csv")))
+}
+```
+
+Select a doublet rate:
+
+```{r skin-select}
+#| class.source = "fold-show"
+
+doublet_rate_skin <- "0.01"
+```
+
+```{r skin-load}
+doublets_scDblFinder_skin <-
+  read_csv(file.path(path_tables, "doublets",
+                     paste0("doublets_scDblFinder_skin_",
+                            format(doublet_rate_skin), ".csv")),
+           show_col_types = FALSE)
+
+# add the scDblFinder metadata to the main object
+# everything should be in the right order, but join by cell id just in case
+combined_skin_scDblFinder <- left_join(combined_skin[[]] %>%
+                                         select(Cell_ID_Unique),
+                                       doublets_scDblFinder_skin,
+                                       by = "Cell_ID_Unique") %>%
+                               select(starts_with("scDblFinder"))
+
+for (meta_col in colnames(combined_skin_scDblFinder)) {
+  combined_skin[[meta_col]] <- combined_skin_scDblFinder[[meta_col]]
+}
+
+# standardize the column values
+combined_skin$scDblFinder.class <- str_to_title(combined_skin$scDblFinder.class)
+
+# get the doublets
+combined_skin_doublets <- combined_skin[[]] %>%
+                            dplyr::filter(scDblFinder.class == "Doublet")
+```
+
+Make sure that everything was classified:
+
+```{r}
+table(combined_skin$scDblFinder.class)
+```
+
+### Results exploration
+
+Total number of doublets:
+
+```{r skin-counts}
+# total number of doublets
+table(combined_skin$scDblFinder.class)
+```
+
+Example of new clusters:
+
+```{r skin-example}
+# updated metadata
+print_kable(combined_skin[[]] %>%
+              select(starts_with("scDblFinder")) %>%
+              slice_sample(n = 5),
+            kable_height = NULL)
+```
+
+#### Counts {.tabset}
+
+##### Doublet counts by cluster
+
+```{r skin-composition-counts-cell-types-bar}
+#| fig.dim = c(12, 8)
+
+# by cell type
+plot_counts_cluster(clusters = combined_skin_doublets$annotated_clusters,
+                    clrs_specific = colors_annotated_skin,
+                    tissue_type = "Skin", x_axis = "Cell Type",
+                    details = "Doublets only")
+```
+
+##### Composition by cluster
+
+```{r skin-composition-clusters-bar}
+#| fig.dim = c(15, 12)
+
+# by cluster
+ggplot(combined_skin_doublets,
+       aes(x = seurat_clusters, fill = seurat_clusters)) +
+  geom_bar(linewidth = 0.2, color = "black") +
+  labs(title = "Skin Doublets by scDblFinder Cluster",
+       x = "Seurat Cluster", y = "Count", fill = "Seurat Cluster") +
+  facet_wrap(vars(scDblFinder.cluster), nrow = 3, scales = "free_x") +
+  theme_bw + labels_standard
+```
+
+##### Composition by cell type
+
+```{r skin-composition-cell-types-bar}
+#| fig.dim = c(21, 12)
+
+# by cell type
+ggplot(combined_skin_doublets,
+       aes(x = annotated_clusters, fill = annotated_clusters)) +
+  geom_bar(linewidth = 0.2, color = "black") +
+  labs(title = "Skin Doublets by scDblFinder Cluster",
+       x = "Cell Type", y = "Count", fill = "Cell Type") +
+  scale_fill_manual(values = colors_annotated_skin) +
+  facet_wrap(vars(scDblFinder.cluster), nrow = 3, scales = "free_x") +
+  theme_bw + labels_standard + labels_rotate_x
+```
+
+##### Most likely origins
+
+```{r}
+# not the most efficient approach
+combined_skin_origins <- combined_skin[[]] %>%
+                           dplyr::filter(!scDblFinder.originAmbiguous)
+
+combined_skin_origins <-
+  as.data.frame(table(combined_skin_origins$scDblFinder.mostLikelyOrigin)) %>%
+    rename(mostLikelyOrigin = Var1, Count = Freq) %>%
+    mutate(mostLikelyOrigin = factor(mostLikelyOrigin,
+                                     levels = str_sort(unique(mostLikelyOrigin),
+                                                       numeric = TRUE))) %>%
+    separate_wider_delim(mostLikelyOrigin, delim = "+",
+                         names = c("first_cluster", "second_cluster"),
+                         cols_remove = FALSE) %>%
+    mutate(first_cluster =
+             factor(first_cluster,
+                    levels = str_sort(unique(first_cluster), numeric = TRUE)),
+           second_cluster =
+             factor(second_cluster,
+                    levels = str_sort(unique(second_cluster), numeric = TRUE)))
+```
+
+Note that the y axes are different (otherwise cluster 0 would throw off the scale):
+
+```{r skin-mostLikelyOrigin-bar}
+#| fig.dim = c(24, 24)
+
+ggplot(combined_skin_origins,
+       aes(x = mostLikelyOrigin, y = Count, fill = second_cluster)) +
+  geom_col(linewidth = 0.2, color = "black") +
+  labs(title = "Skin scDblFinder Most Likely Cluster Origins",
+       subtitle = "Ambiguous removed", fill = "Second Cluster") +
+  facet_wrap(~ first_cluster, scales = "free") +
+  theme_bw + labels_standard + labels_rotate_x
+```
+
+#### Percentages {.tabset}
+
+Calculate the percentage of cells that are doublets:
+
+```{r skin-details}
+# for the plots
+doublet_details <- as.data.frame(table(combined_skin$scDblFinder.class)) %>%
+                     mutate(Frac = Freq/sum(Freq)) %>%
+                     dplyr::filter(Var1 == "Doublet") %>%
+                     pull(Frac)
+doublet_details <- label_percent(accuracy = 0.1)(doublet_details)
+```
+
+##### By Cluster
+
+```{r skin-clusters-umap-bar}
+#| fig.dim = c(27, 12)
+
+layout_doublets(seurat_obj = combined_skin, tissue_type = "Skin",
+                annotated = FALSE,
+                doublet_col = "scDblFinder.class",
+                doublet_package = "scDblFinder",
+                details = doublet_details)
+```
+
+```{r skin-clusters-trails-bar-umap}
+#| fig.dim = c(18, 10)
+
+# setup
+doublets_skin <-
+  calc_pcts(data = combined_skin[[]],
+            meta_group_by = c("seurat_clusters", "annotated_clusters"),
+            focus_group = "scDblFinder.class") %>%
+  dplyr::filter(scDblFinder.class == "Doublet")
+
+# just the doublets
+p1 <- plot_umap(seurat_obj = combined_skin, tissue_type = "Skin",
+                clrs_specific = colors_doublet, plot_label = FALSE,
+                plot_by = "cluster_specific",
+                clusters_col = "scDblFinder.class",
+                specific_clusters = "Doublet",
+                include_legend = FALSE, details = "All Doublets")
+
+# doublets over 30%
+clusters_doublets_skin <- doublets_skin %>%
+                            dplyr::filter(Percent > 30) %>%
+                            pull(seurat_clusters) %>%
+                            as.character()
+p2 <- plot_umap(seurat_obj = combined_skin, tissue_type = "Skin",
+                plot_by = "cluster_specific", label_box = FALSE,
+                specific_clusters = clusters_doublets_skin,
+                details = "Clusters with over 30% doublets")
+
+# clusters with trails (visually determined)
+p3 <- plot_umap(seurat_obj = combined_skin, tissue_type = "Skin",
+                clrs_specific = rep("red",
+                                    n_distinct(combined_skin$seurat_clusters)),
+                plot_by = "cluster_specific", label_box = FALSE,
+                specific_clusters = c(39, 41, 35),
+                include_legend = FALSE, details = "Clusters with Clear Trails")
+
+# just doublets by percentage colored by the annotated cell type
+p4 <- ggplot(doublets_skin,
+             aes(x = reorder(seurat_clusters, -Percent), y = Percent,
+                 fill = annotated_clusters)) +
+        geom_bar(stat = "identity", position = "dodge",
+                 color = "black", linewidth = 0.2) +
+        geom_text(aes(label = Count),
+                  position = position_dodge(width = 0.9),
+                  vjust = -1, size = 3) +
+        geom_hline(yintercept = 50, linetype = "dashed", linewidth = 0.3) +
+        geom_hline(yintercept = 30, linetype = "dashed", linewidth = 0.3) +
+        labs(title = "Skin Doublets by Cluster", subtitle = doublet_details,
+             x = "Cluster", y = "Percent", fill = "Cell Type") +
+        scale_y_continuous(labels = label_percent(scale = 1),
+                           expand = expansion(mult = 0.05)) +
+        scale_fill_manual(values = colors_annotated_skin) +
+        theme_bw + labels_standard
+
+# just the regular annotated UMAP
+p5 <- plot_umap(seurat_obj = combined_skin, tissue_type = "Skin",
+                clrs_specific = colors_annotated_skin,
+                plot_by = "cluster_all", annotated = TRUE,
+                include_legend = FALSE)
+
+# combine all plots
+p4 / (p1 | p2 | p3 | p5 + plot_layout(nrow = 1))
+```
+
+##### By Cell Type
+
+```{r skin-cell-types-umap-bar}
+#| fig.dim = c(18, 12)
+
+layout_doublets(seurat_obj = combined_skin, tissue_type = "Skin",
+                clrs_specific = colors_annotated_skin, annotated = TRUE,
+                doublet_col = "scDblFinder.class",
+                doublet_package = "scDblFinder",
+                details = doublet_details)
+```
+
+```{r skin-cell-types-bar}
+#| fig.dim = c(18, 8)
+
+# setup
+doublets_skin <-
+  calc_pcts(data = combined_skin[[]],
+            meta_group_by = "annotated_clusters",
+            focus_group = "scDblFinder.class") %>%
+  dplyr::filter(scDblFinder.class == "Doublet")
+
+ggplot(doublets_skin,
+       aes(x = reorder(annotated_clusters, -Percent), y = Percent,
+           fill = annotated_clusters)) +
+    geom_bar(stat = "identity", position = "dodge",
+             color = "black", linewidth = 0.2) +
+    geom_text(aes(label = Count),
+              position = position_dodge(width = 0.9),
+              vjust = -1, size = 3) +
+    labs(title = "Skin Doublets by Cell Type", subtitle = doublet_details,
+         x = "Cell Type", y = "Percent", fill = "Cell Type") +
+    scale_y_continuous(labels = label_percent(scale = 1),
+                       expand = expansion(mult = 0.05)) +
+    scale_fill_manual(values = colors_annotated_skin) +
+    theme_bw + labels_standard
+```
+
+##### By Sample
+
+```{r skin-samples-umap-bar}
+#| fig.dim = c(15, 12)
+
+doublet_col = "scDblFinder.class"
+doublet_package = "scDblFinder"
+
+# bar plots
+p1 <- ggplot(data.frame(table(combined_skin[[]] %>%
+                                select(SampleName, all_of(doublet_col)))),
+             aes(x = SampleName, y = Freq, fill = !!sym(doublet_col))) +
+        geom_bar(stat = "identity", position = "dodge",
+                 color = "black", linewidth = 0.2) +
+        geom_text(aes(label = Freq), position = position_dodge(width = 0.9),
+                  vjust = -1, size = 3) +
+        labs(title = "Skin Doublets by Sample", subtitle = doublet_details,
+             x = "Sample", y = "Count", fill = doublet_package) +
+        scale_fill_manual(values = colors_doublet) +
+        theme_bw + labels_standard + labels_rotate_x
+
+p2 <- plot_pcts(pcts = calc_pcts(data = combined_skin[[]],
+                                 meta_group_by = "SampleName",
+                                 focus_group = doublet_col),
+          tissue_type = "Skin", plot_type = "All", plot_value = "Doublets",
+          x_axis = "SampleName", x_axis_label = "Sample",
+          fill_type = doublet_col, fill_label = doublet_package,
+          clrs_specific = colors_doublet, details = doublet_details)
+
+p1 / p2 + plot_layout(guides = "collect") + plot_anno
+```
+
+##### By Subject
+
+```{r skin-subjects-umap-bar}
+#| fig.dim = c(15, 12)
+
+doublet_col = "scDblFinder.class"
+doublet_package = "scDblFinder"
+
+# bar plots
+p1 <- ggplot(data.frame(table(combined_skin[[]] %>%
+                                select(Subject, doublet_col))),
+             aes(x = Subject, y = Freq, fill = !!sym(doublet_col))) +
+        geom_bar(stat = "identity", position = "dodge",
+                 color = "black", linewidth = 0.2) +
+        geom_text(aes(label = Freq), position = position_dodge(width = 0.9),
+                  vjust = -1, size = 3) +
+        labs(title = "Skin Doublets by Subject", subtitle = doublet_details,
+             x = "Subject", y = "Count", fill = doublet_package) +
+        scale_fill_manual(values = colors_doublet) +
+        theme_bw + labels_standard + labels_rotate_x
+
+p2 <- plot_pcts(pcts = calc_pcts(data = combined_skin[[]],
+                                 meta_group_by = "Subject",
+                                 focus_group = doublet_col),
+          tissue_type = "Skin", plot_type = "All", plot_value = "Doublets",
+          x_axis = "Subject", x_axis_label = "Subject",
+          fill_type = doublet_col, fill_label = doublet_package,
+          clrs_specific = colors_doublet, details = doublet_details)
+
+p1 / p2 + plot_layout(guides = "collect") + plot_anno
+```
+
+### Removal
+
+#### Remove the doublets
+
+Also regenerate the UMAP and removed the `scDblFinder` columns as they are no longer needed and just clutter up the object.
+
+```{r}
+#| eval = FALSE
+
+# note that this also removes cells with NAs (couldn't be classified)
+combined_skin_no_doublets <-
+  subset(combined_skin, subset = scDblFinder.class == "Singlet")
+
+# redo the UMAP
+combined_skin_no_doublets <- RunUMAP(object = combined_skin_no_doublets,
+                                     reduction = "pca",
+                                     dims = 1:20, verbose = FALSE)
+
+# remove metadata columns
+combined_skin_no_doublets@meta.data <-
+  combined_skin_no_doublets[[]] %>% select(-starts_with("scDblFinder"))
+
+# save the object
+saveRDS(combined_skin_no_doublets, file.path(path_objs, "combined_skin.rds"))
+```
+
+Check how many were removed:
+
+```{r}
+cat(paste("There were", ncol(combined_skin), "cells in the original object.",
+          "Post-doublet removal, there are now",
+          ncol(combined_skin_no_doublets), "cells",
+          paste0("(", ncol(combined_skin) - ncol(combined_skin_no_doublets),
+                 " removed).")))
+```
+
+#### Comparisons {.tabset}
+
+##### UMAPs
+
+```{r skin-removal-rna-umap-bar}
+#| fig.dim = c(18, 8)
+
+p1 <- plot_umap(seurat_obj = combined_skin,
+                tissue_type = "Skin",
+                clrs_specific = colors_annotated_skin,
+                plot_by = "cluster_all", annotated = TRUE,
+                include_legend = FALSE)
+p2 <- plot_umap(seurat_obj = combined_skin_no_doublets,
+                tissue_type = "Skin (Doublets Removed)",
+                clrs_specific = colors_annotated_skin,
+                plot_by = "cluster_all", annotated = TRUE,
+                include_legend = FALSE)
+# sometimes people just use high RNA counts
+p3 <- plot_umap_condition(seurat_obj = combined_skin_no_doublets,
+                          tissue_type = "Skin",
+                          condition_name = "nCount_RNA",
+                          operator = ">", condition_val = 10000,
+                          color_by = "name",
+                          clrs_specific = c("nCount_RNA" = "black"),
+                          label_plot = FALSE, include_subtitle = TRUE,
+                          include_legend = FALSE)
+
+# combine plots
+(p1 | p2 | p3) + plot_anno
+```
+
+##### Cluster counts
+
+```{r skin-removal-clusters-umap-bar}
+#| fig.dim = c(15, 8)
+
+# shoddy way but it works
+df_doublets <-
+  data.frame(table(combined_skin$seurat_clusters)) %>%
+  rename(Doublets = Freq)
+df_no_doublets <-
+  data.frame(table(combined_skin_no_doublets$seurat_clusters)) %>%
+  select(Freq) %>%
+  rename(No_Doublets = Freq)
+counts <- bind_cols(df_doublets, df_no_doublets) %>%
+            pivot_longer(cols = c(Doublets, No_Doublets),
+                        names_to = "Type", values_to = "Count") %>%
+            rename("Cluster" = Var1)
+
+ggplot(counts, aes(x = Cluster, y = Count, fill = Type)) +
+  geom_col(position = "dodge", color = "black", linewidth = 0.2) +
+  geom_text(aes(label = Count), vjust = -1, size = 2,
+            position = position_dodge(width = 0.9)) +
+  labs(title = "Skin Cell Counts per Cell Type") +
+  scale_fill_manual(values = c("Doublets" = colors_doublet[["Doublet"]],
+                               "No_Doublets" = colors_doublet[["Singlet"]])) +
+  theme_bw + labels_standard
+```
+
+##### Cell type counts
+
+```{r skin-removal-cell-types-umap-bar}
+#| fig.dim = c(15, 8)
+
+# shoddy way but it works
+df_doublets <-
+  data.frame(table(combined_skin$annotated_clusters)) %>%
+  rename(Doublets = Freq)
+df_no_doublets <-
+  data.frame(table(combined_skin_no_doublets$annotated_clusters)) %>%
+  select(Freq) %>%
+  rename(No_Doublets = Freq)
+counts <- bind_cols(df_doublets, df_no_doublets) %>%
+            pivot_longer(cols = c(Doublets, No_Doublets),
+                        names_to = "Type", values_to = "Count") %>%
+            rename("Cell Type" = Var1)
+
+ggplot(counts, aes(x = `Cell Type`, y = Count, fill = Type)) +
+  geom_col(position = "dodge", color = "black", linewidth = 0.2) +
+  geom_text(aes(label = Count), vjust = -1, size = 3,
+            position = position_dodge(width = 0.9)) +
+  labs(title = "Skin Cell Counts per Cell Type") +
+  scale_fill_manual(values = c("Doublets" = colors_doublet[["Doublet"]],
+                               "No_Doublets" = colors_doublet[["Singlet"]])) +
+  theme_bw + labels_standard
+```
