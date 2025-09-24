@@ -1,0 +1,138 @@
+---
+title: "Bulk Analysis"
+output:
+  html_document:
+    code_download: yes
+    code_folding: hide
+    css: ../"style.css"
+    dev: "png"
+    df_print: kable
+    fig_caption: yes
+    keep_md: no
+    self_contained: true
+    theme: yeti
+    toc: yes
+    toc_depth: 4
+    toc_float:
+        collapsed: false
+        smooth_scroll: false
+editor_options:
+  chunk_output_type: console
+---
+
+------------------------------------------------------------------------
+
+# Overview and setup
+
+```{r setup-options, include = FALSE}
+knitr::opts_chunk$set(comment = NA, dpi = 200, fig.align = "center",
+                      out.width = "100%", warning = FALSE, error = TRUE,
+                      message = FALSE,
+                      fig.path = here::here("primary_analysis", "figures",
+                                            "analysis", "bulk", "bulk-"))
+
+# will mess with chunk labels, but needed for parameterized reports
+options(knitr.duplicate.label = "allow")
+```
+
+**Author(s):** Edel Aron<br>
+**Date Created:** 2022-11-03<br>
+**Last Updated:** `r Sys.Date()`
+
+**R version:** `r R.Version()$version.string`<br>
+**Platform:** `r R.Version()$platform`<br>
+**Running under:** `r sessionInfo()$running`
+
+```{r, include = FALSE}
+# load packages, colors and themes and functions (R code only)
+code_setup <-
+  knitr::purl(here::here("single_cell", "primary_analysis", "notebooks",
+                         "01-setup.Rmd"),
+              output = tempfile(), documentation = 0)
+code_functions <-
+  knitr::purl(here::here("single_cell", "primary_analysis", "notebooks",
+                         "02-functions.Rmd"),
+              output = tempfile(), documentation = 0)
+code_meta <- 
+  knitr::purl(here::here("single_cell", "primary_analysis", "notebooks",
+                         "03-meta.Rmd"),
+              output = tempfile(), documentation = 0)
+
+# read in the code, then remove the temp files
+source(code_setup)
+source(code_functions)
+source(code_meta)
+unlink(c(code_setup, code_functions, code_meta))
+```
+
+------------------------------------------------------------------------
+
+# Read in the data
+
+```{r setup}
+combined_bulk <-
+  readRDS(file.path(path_objs, "airr", "bulk", "combined_bulk.rds"))
+```
+
+Change-O format to AIRR-C reference:
+
+```{r}
+# I made this myself from
+# https://changeo.readthedocs.io/en/stable/standard.html#change-o-format
+changeo_airr <- read_csv(file.path(path_base, "primary_analysis", "resources",
+                                   "changeo_airr.csv"), show_col_types = FALSE)
+
+# not all of the columns were translated
+changeo_airr <- filter(changeo_airr, !is.na(airr))
+```
+
+------------------------------------------------------------------------
+
+# Published data
+
+We only have bulk data for samples that were [previously published](https://insight.jci.org/articles/view/148035). So for reproducibility, let's pull that data straight from the [official GEO version](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE172225). I downloaded the "RAW" file and extracted it, then extracted all of the files within it with `gunzip` in Unix (e.g. *GSM5244384_192561.airr.txt.gz* became *192561.tsv*). The files were all saved within a "GSE172225" subdirectory.
+
+Read in and combine all of the results:
+
+```{r}
+#| eval = FALSE
+
+combined_bulk <-
+  purrr::map(list.files(file.path(path_data_root, "dataset2", "GSE172225"),
+                        full.names = TRUE),
+             ~read_tsv(.x, show_col_types = FALSE) %>%
+             mutate(Subject = basename(.x))) %>%
+  purrr::list_rbind() %>%
+  # there was only bulk run for dataset 2 and only on the PBMCs
+  mutate(Subject = str_split(Subject, ".tsv", simplify = TRUE)[, 1],
+         TissueType = "Blood", SampleType = "Blood", DataType = "Bulk",
+         Dataset = "2") %>%
+  mutate(SampleName = Subject, .before = Subject)
+
+# use the AIRR-C standard names (Change-O is no longer supported)
+# not all of the columns will be renamed
+new_names <- filter(changeo_airr, changeo %in% names(combined_bulk))
+new_names <- set_names(new_names$changeo, new_names$airr)
+combined_bulk <- combined_bulk %>% rename(!!!new_names)
+
+saveRDS(combined_bulk,
+        file.path(path_objs, "airr", "bulk", "combined_bulk.rds"))
+```
+
+Example of the combined file:
+
+```{r}
+print_kable(combined_bulk %>% slice_sample(n = 5), kable_height = NULL)
+```
+
+Do a little exploration:
+
+```{r}
+table(combined_bulk$Subject)
+## 192561 192563 192564 192565 192566 192567 
+##  27718  36694  19815  15126  30429  24492
+
+table(combined_bulk$locus)
+## TRA    TRB    TRD    TRG 
+## 231 154005     35      3
+```

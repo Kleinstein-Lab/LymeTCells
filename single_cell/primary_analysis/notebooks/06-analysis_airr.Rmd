@@ -66,7 +66,7 @@ unlink(c(code_setup, code_functions, code_meta))
 ```
 
 ```{r}
-include_graphics(path = here::here("primary_analysis", "images",
+include_graphics(path = here::here("single_cell", "primary_analysis", "images",
                                    "single_cell_immune_profiling_pipeline.png"))
 ```
 

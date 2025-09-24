@@ -1087,7 +1087,7 @@ create_metrics_summary <- function(meta, path_data_specific,
   }
 
   colnames(metrics_summary) <- c("SampleName", "Subject", "SampleType",
-                                 "DataType", "Timepoint", "Dataset",
+                                 "DataType", "Dataset",
                                  "EstimatedNumberofCells", "NumberofReads",
                                  "ReadsPerCell", "MedianGenesperCell")
   return(metrics_summary)
@@ -1191,7 +1191,6 @@ count_barcode_overlaps <- function(barcodes_list1, barcodes_list2,
 #' @param x_axis what to plot along the bottom
 #' @param x_axis_label what to call the x axis
 #' @param clrs_datatype must be given in the correct order if plotting barcodes
-#' @param include_hlines
 #'
 #' @returns
 plot_counts <- function(summary_df, data_types = "All",
@@ -1199,7 +1198,7 @@ plot_counts <- function(summary_df, data_types = "All",
                         samples = "All Samples",
                         fill_type_label = "Data Type",
                         x_axis = "SampleName", x_axis_label = "Sample",
-                        clrs_datatype, include_hlines = TRUE) {
+                        clrs_datatype) {
   # data details
   if ("All" %in% data_types) {
     data_types <- unique(summary_df$DataType)
@@ -1248,38 +1247,6 @@ plot_counts <- function(summary_df, data_types = "All",
 
   # remove scientific notation
   p <- p + scale_y_continuous(labels = label_comma(), breaks = breaks_pretty())
-
-  # add information horizontal lines based on YCGA information
-  if (include_hlines & count_type != "Barcode" & "GEX" %in% data_types) {
-    summary_df_gex <- dplyr::filter(summary_df, DataType == "GEX")
-
-    if (count_type == "Read") {
-      p <-
-        p + labs(subtitle = "YCGA recommends 200 million reads",
-                 caption = "Solid line: recommended amount | dotted line: current GEX minimum") +
-            geom_hline(yintercept = min(summary_df_gex[[y_axis]]),
-                       linetype = "dotted", linewidth = 0.5) +
-            geom_hline(yintercept = 2*10^8, linetype = "solid", linewidth = 0.5)
-    }
-    else if (count_type == "reads_per_cell") {
-      p <-
-        p + labs(subtitle = "10x recommends 20,000 reads per cell",
-                 caption = "Solid line: suggested amount | dot-dashed line: current GEX average") +
-            geom_hline(yintercept = mean(summary_df_gex[[y_axis]], na.rm = TRUE),
-                       linetype = "dotdash", linewidth = 0.5) +
-            geom_hline(yintercept = 20000, linetype = "solid", linewidth = 0.5)
-    }
-    else if (count_type == "Cell") {
-      p <-
-        p + labs(subtitle = "We tend to ask for 10,000 cells",
-                 caption = "Solid line: requested amount | dot-dashed line: current GEX average | dashed line: current GEX median") +
-            geom_hline(yintercept = mean(summary_df_gex[[y_axis]], na.rm = TRUE),
-                       linetype = "dotdash", linewidth = 0.5) +
-            geom_hline(yintercept = median(summary_df_gex[[y_axis]], na.rm = TRUE),
-                       linetype = "dashed", linewidth = 0.5) +
-            geom_hline(yintercept = 10^4, linetype = "solid", linewidth = 0.5)
-    }
-  }
 
   # add remaining styling
   p <- p + theme_bw + labels_rotate_x + labels_standard
@@ -1333,7 +1300,7 @@ plot_qc_heatmap <- function(input_matrix, data_types,
                           simple_anno_size_adjust = TRUE)
 
   ComplexHeatmap::Heatmap(matrix = input_matrix,
-                          col = rev(brewer.pal(n = 7, name = "RdYlBu")), # like in pheatmap
+                          col = rev(pals::brewer.rdylbu(n = 7)), # like in pheatmap
                           name = legend_title,
                           rect_gp = gpar(col = "lightgray", lwd = 0.5),
                           layer_fun = function(j, i, x, y, width, height, fill) {
@@ -2432,7 +2399,7 @@ plotOverlapSingleCell <- function(list_objOverlap = "",
                                 10, 20, 30, 99.99999, 100),
                      right = FALSE, include.lowest = TRUE)
     copa <- c("white",
-              colorRampPalette(brewer.pal(9, "Oranges"))(nlevels(data_m$Y1) - 1))
+              colorRampPalette(pals::brewer.oranges(n = 9))(nlevels(data_m$Y1) - 1))
     names(copa) <- levels(data_m$Y1)
 
     names(data_m)[3] <- "Percent"

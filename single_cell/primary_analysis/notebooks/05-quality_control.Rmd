@@ -66,15 +66,13 @@ unlink(c(code_setup, code_functions, code_meta))
 ```
 
 ```{r}
-include_graphics(path = here::here("primary_analysis", "images",
+include_graphics(path = here::here("single_cell", "primary_analysis", "images",
                                    "single_cell_qc_pipeline.png"))
 ```
 
 ------------------------------------------------------------------------
 
 # Read in the data
-
-The IGs and TRs have *not* been filtered out of the GEX data.
 
 ```{r setup}
 combined_blood <- 
@@ -130,7 +128,7 @@ print_kable(read_csv(file.path(path_base, "primary_analysis",
 ```{r unaggr-metrics-summary}
 metrics_summary <- create_metrics_summary(meta = meta,
                                           path_data_specific = path_data_root,
-                                          data_types =  c("GEX", "TCR"),
+                                          data_types = c("GEX", "TCR"),
                                           samples_list = samples)
 ```
 
@@ -180,11 +178,10 @@ plot_counts(summary_df = metrics_summary, count_type = "Read",
             x_axis = "SampleName", x_axis_label = "Sample",
             aggregation_state = "Unaggregated") %>%
   add_info_bar(info_type = "Dataset") +
-  labs(caption = "Solid line: YCGA's recommended amount | dashed line: current minimum") +
+  labs(caption = "Dashed line: current minimum") +
   geom_hline(yintercept = min((dplyr::filter(metrics_summary,
                                              DataType == "GEX"))$NumberofReads),
-             linetype = "dotted", linewidth = 0.5) +
-  geom_hline(yintercept = 2*10^8, linetype = "solid", linewidth = 0.5)
+             linetype = "dotted", linewidth = 0.5)
 ```
 
 ##### By Sample Type
@@ -197,11 +194,10 @@ plot_counts(summary_df = metrics_summary, count_type = "Read",
             x_axis = "SampleName", x_axis_label = "Sample",
             aggregation_state = "Unaggregated") %>%
   add_info_bar(info_type = "SampleType", label = FALSE) +
-  labs(caption = "Solid line: YCGA's recommended amount | dashed line: current minimum") +
+  labs(caption = "Dashed line: current minimum") +
   geom_hline(yintercept = min((dplyr::filter(metrics_summary,
                                              DataType == "GEX"))$NumberofReads),
-             linetype = "dotted", linewidth = 0.5) +
-  geom_hline(yintercept = 2*10^8, linetype = "solid", linewidth = 0.5)
+             linetype = "dotted", linewidth = 0.5)
 ```
 
 #### AIRR {.tabset}
@@ -319,15 +315,14 @@ plot_counts(summary_df = metrics_summary, count_type = "Cell",
 ```{r unaggr-metrics-summary-median-genes-dataset-bar}
 #| fig.dim = c(12, 6)
 
-p <- ggplot(dplyr::filter(metrics_summary, DataType %in% "GEX"),
-            aes(x = SampleName, y = MedianGenesperCell, fill = SampleType)) +
-       geom_bar(stat = "identity", color = "black", linewidth = 0.2) +
-       labs(title = "Median Genes per Cell for All Samples and GEX Data",
-              x = "Sample", y = "Median Genes per Cell") +
-       scale_fill_manual(values = colors_sample_types) +
-       theme_bw + labels_standard + labels_rotate_x
-
-add_info_bar(p, info_type = "Dataset") 
+ggplot(filter(metrics_summary, DataType %in% "GEX"),
+       aes(x = SampleName, y = MedianGenesperCell, fill = SampleType)) %>%
+  add_info_bar(info_type = "Dataset") +
+  geom_bar(stat = "identity", color = "black", linewidth = 0.2) +
+  labs(title = "Median Genes per Cell for All Samples and GEX Data",
+       x = "Sample", y = "Median Genes per Cell") +
+  scale_fill_manual(values = colors_sample_types) +
+  theme_bw + labels_standard + labels_rotate_x
 ```
 
 #### By Sample Type
@@ -335,15 +330,14 @@ add_info_bar(p, info_type = "Dataset")
 ```{r unaggr-metrics-summary-median-genes-sampletype-bar}
 #| fig.dim = c(12, 6)
 
-p <- ggplot(dplyr::filter(metrics_summary, DataType %in% "GEX"),
-            aes(x = SampleName, y = MedianGenesperCell, fill = Dataset)) +
-       geom_bar(stat = "identity", color = "black", linewidth = 0.2) +
-       labs(title = "Median Genes per Cell for All Samples and GEX Data",
-              x = "Sample", y = "Median Genes per Cell") +
-       scale_fill_manual(values = colors_dataset) +
-       theme_bw + labels_standard + labels_rotate_x
-
-add_info_bar(p, info_type = "SampleType", label = FALSE) 
+ggplot(filter(metrics_summary, DataType %in% "GEX"),
+       aes(x = SampleName, y = MedianGenesperCell, fill = Dataset)) %>%
+  add_info_bar(info_type = "SampleType", label = FALSE) +
+  geom_bar(stat = "identity", color = "black", linewidth = 0.2) +
+  labs(title = "Median Genes per Cell for All Samples and GEX Data",
+        x = "Sample", y = "Median Genes per Cell") +
+  scale_fill_manual(values = colors_dataset) +
+  theme_bw + labels_standard + labels_rotate_x
 ```
 
 ------------------------------------------------------------------------
@@ -375,12 +369,11 @@ Full list of JSON information:
 #| attr.output = 'style="max-height: 300px;"'
 
 # read in the summary file
-aggr_results <- fromJSON(file.path(path_data_root, "aggr",
-                                   "outs", "count", "summary.json"))
-# aggr_results <- rjson::fromJSON(file.path(path_data_root, "aggr", "outs", "count", "summary.json"))
+# you have to specify `file =` for this to run
+aggr_results <- rjson::fromJSON(file = file.path(path_data_root, "aggr",
+                                          "outs", "count", "summary.json"))
 
 str(aggr_results)
-# as.data.frame(aggr_results)
 ```
 
 Table of relevant information:
@@ -423,8 +416,6 @@ print_kable(aggr_results_summary)
 
 # switch rows and columns
 # aggr_results
-
-# ggplot(aggr_results_summary)
 ```
 
 ### Read counts
@@ -432,29 +423,28 @@ print_kable(aggr_results_summary)
 ```{r aggr-metrics-summary-read-counts-bar}
 #| fig.dim = c(12, 6)
 
-# preaggregation
-add_info_bar(ggplot(dplyr::filter(metrics_summary, DataType == "GEX"),
-                    aes(x = SampleName, y = NumberofReads,
-                        fill = Dataset)) +
-               geom_col(color = "black", linewidth = 0.2) +
-               labs(title = "Read Counts for All Samples and GEX Unaggregated Data",
-                    x = "Sample", y = "Number of Reads") +
-               scale_fill_manual(values = colors_dataset) +
-               theme_bw + labels_standard + labels_rotate_x +
-               theme(legend.position = "none"),
-             info_type = "Dataset")
+# pre-aggregation
+ggplot(filter(metrics_summary, DataType == "GEX"),
+       aes(x = SampleName, y = NumberofReads, fill = Dataset)) %>%
+  add_info_bar(info_type = "Dataset") +
+  geom_col(color = "black", linewidth = 0.2) +
+  labs(title = "Read Counts for All Samples and GEX Unaggregated Data",
+       x = "Sample", y = "Number of Reads") +
+  scale_fill_manual(values = colors_dataset) +
+  theme_bw + labels_standard + labels_rotate_x +
+  theme(legend.position = "none")
 
-# post aggregation
-add_info_bar(ggplot(aggr_results_summary,
-                    aes(x = SampleName, y = pre_normalization_feature_reads,
-                        fill = Dataset)) +
-               geom_col(color = "black", linewidth = 0.2) +
-               labs(title = "Read Counts for All Samples and GEX Aggregated Data",
-                    x = "Sample", y = "Pre Normalization Feature Reads") +
-               scale_fill_manual(values = colors_dataset) +
-               theme_bw + labels_standard + labels_rotate_x +
-               theme(legend.position = "none"),
-             info_type = "Dataset")
+# post-aggregation
+ggplot(aggr_results_summary,
+       aes(x = SampleName, y = pre_normalization_feature_reads,
+           fill = Dataset)) %>%
+  add_info_bar(info_type = "Dataset") +
+  geom_col(color = "black", linewidth = 0.2) +
+  labs(title = "Read Counts for All Samples and GEX Aggregated Data",
+       x = "Sample", y = "Pre Normalization Feature Reads") +
+  scale_fill_manual(values = colors_dataset) +
+  theme_bw + labels_standard + labels_rotate_x +
+  theme(legend.position = "none")
 ```
 
 ### Fraction of reads kept
@@ -462,16 +452,16 @@ add_info_bar(ggplot(aggr_results_summary,
 ```{r aggr-metrics-summary-frac-read-bar}
 #| fig.dim = c(12, 6)
 
-add_info_bar(ggplot(aggr_results_summary,
-                    aes(x = SampleName, y = frac_reads_kept, fill = Dataset)) +
-               geom_col(color = "black", linewidth = 0.2) +
-               labs(title = "Fraction of Reads Kept for All Samples and GEX Aggregated Data",
-                    x = "Sample", y = "Percentage of Reads Kept") +
-               scale_y_continuous(labels = percent) +
-               scale_fill_manual(values = colors_dataset) +
-               theme_bw + labels_standard + labels_rotate_x +
-               theme(legend.position = "none"),
-             info_type = "Dataset")
+ggplot(aggr_results_summary,
+       aes(x = SampleName, y = frac_reads_kept, fill = Dataset)) %>%
+  add_info_bar(info_type = "Dataset") +
+  geom_col(color = "black", linewidth = 0.2) +
+  labs(title = "Fraction of Reads Kept for All Samples and GEX Aggregated Data",
+       x = "Sample", y = "Percentage of Reads Kept") +
+  scale_y_continuous(labels = percent) +
+  scale_fill_manual(values = colors_dataset) +
+  theme_bw + labels_standard + labels_rotate_x +
+  theme(legend.position = "none")
 ```
 
 ### Cell counts
@@ -479,16 +469,15 @@ add_info_bar(ggplot(aggr_results_summary,
 ```{r aggr-metrics-summary-cell-counts-bar}
 #| fig.dim = c(12, 6)
 
-add_info_bar(ggplot(aggr_results_summary,
-                    aes(x = SampleName, y = num_cells_by_library,
-                        fill = Dataset)) +
-               geom_col(color = "black", linewidth = 0.2) +
-               labs(title = "Cell Counts by Library for All Samples and GEX Aggregated Data",
-                    x = "Sample", y = "Cell Counts by Library") +
-               scale_fill_manual(values = colors_dataset) +
-               theme_bw + labels_standard + labels_rotate_x +
-               theme(legend.position = "none"),
-             info_type = "Dataset")
+ggplot(aggr_results_summary,
+       aes(x = SampleName, y = num_cells_by_library, fill = Dataset)) %>%
+  add_info_bar(info_type = "Dataset") +
+  geom_col(color = "black", linewidth = 0.2) +
+  labs(title = "Cell Counts by Library for All Samples and GEX Aggregated Data",
+       x = "Sample", y = "Cell Counts by Library") +
+  scale_fill_manual(values = colors_dataset) +
+  theme_bw + labels_standard + labels_rotate_x +
+  theme(legend.position = "none")
 ```
 
 ------------------------------------------------------------------------
@@ -554,14 +543,13 @@ cat("GEX:", head(barcodes_GEX[[1]]), "\n\nTCR:", head(barcodes_TCR[[1]]))
 ```
 
 ```{r barcodes-venn}
-#| fig.dim = c(9, 8)
+#| fig.dim = c(7.5, 5)
 
-ggVennDiagram(x = list(GEX = unlist(barcodes_GEX),
-                       TCR = unlist(barcodes_TCR)),
-              set_color = colors_datatype[c("GEX", "TCR")]) +
+ggVennDiagram(x = list(GEX = unlist(barcodes_GEX), TCR = unlist(barcodes_TCR)),
+              set_color = colors_datatype[c("GEX", "TCR")], label_alpha = 0) +
   labs(title = "Combined Cell ID Overlaps across Assays", fill = "Cell Count") +
-  scale_fill_distiller(palette = "Greys", direction = 1) +
-  labels_standard_venn
+  scale_fill_gradient2(low = "white", high = "grey40") +
+  labels_standard_venn + coord_flip()
 ```
 
 ## Barcode overlaps
@@ -581,9 +569,8 @@ Count all of the cell barcode overlaps:
 # set up the empty matrices
 L <- replicate(6, matrix(0, ncol = length(samples), nrow = length(samples),
                          dimnames = list(samples, samples)), simplify = FALSE)
-names(L) <- c("GEX_GEX_matrix", "TCR_TCR_matrix",
-              "GEX_GEX_matrix_p", "TCR_TCR_matrix_p",
-              "GEX_TCR_matrix", "GEX_TCR_matrix_p")
+names(L) <- c("GEX_GEX_matrix", "TCR_TCR_matrix", "GEX_TCR_matrix", 
+              "GEX_GEX_matrix_p", "TCR_TCR_matrix_p", "GEX_TCR_matrix_p")
 invisible(list2env(L, envir = .GlobalEnv)) # convert them to variables
 
 # remove the sample names
@@ -609,29 +596,29 @@ for (i in seq_along(samples)) {
     # check all of this!!
     if (i > j) {
       GEX_GEX_matrix_p[i, j] <-
-        GEX_GEX_matrix[i, j] / length(barcodes_GEX[[samples[i]]])*100
+        GEX_GEX_matrix[i, j] / length(barcodes_GEX[[samples[i]]]) * 100
       TCR_TCR_matrix_p[i, j] <-
-        TCR_TCR_matrix[i, j] / length(barcodes_TCR[[samples[i]]])*100
+        TCR_TCR_matrix[i, j] / length(barcodes_TCR[[samples[i]]]) * 100
       GEX_TCR_matrix_p[i, j] <-
-        GEX_TCR_matrix[i, j] / length(barcodes_TCR[[samples[i]]])*100
+        GEX_TCR_matrix[i, j] / length(barcodes_TCR[[samples[i]]]) * 100
     } else if (i < j) {
       GEX_GEX_matrix_p[i, j] <-
-        GEX_GEX_matrix[i, j] / length(barcodes_GEX[[samples[j]]])*100
+        GEX_GEX_matrix[i, j] / length(barcodes_GEX[[samples[j]]]) * 100
       TCR_TCR_matrix_p[i, j] <-
-        TCR_TCR_matrix[i, j] / length(barcodes_TCR[[samples[j]]])*100
+        TCR_TCR_matrix[i, j] / length(barcodes_TCR[[samples[j]]]) * 100
       GEX_TCR_matrix_p[i, j] <-
-        GEX_TCR_matrix_p[i, j] / length(barcodes_TCR[[samples[j]]])*100
+        GEX_TCR_matrix_p[i, j] / length(barcodes_TCR[[samples[j]]]) * 100
     } else if (i == j) {
       GEX_GEX_matrix_p[i, j] <-
         GEX_GEX_matrix[i, j] / length(unique(c(barcodes_GEX[[samples[i]]],
-                                             barcodes_GEX[[samples[j]]])))*100
+                                               barcodes_GEX[[samples[j]]]))) * 100
       TCR_TCR_matrix_p[i, j] <-
         TCR_TCR_matrix[i, j] / length(unique(c(barcodes_TCR[[samples[i]]],
-                                             barcodes_TCR[[samples[j]]])))*100
+                                               barcodes_TCR[[samples[j]]]))) * 100
 
       GEX_TCR_matrix_p[i, j] <-
         GEX_TCR_matrix_p[i, j] / length(unique(c(barcodes_TCR[[samples[i]]],
-                                               barcodes_GEX[[samples[j]]])))*100
+                                                 barcodes_GEX[[samples[j]]]))) * 100
     }
   }
 }
@@ -724,6 +711,8 @@ plot_qc_heatmap(input_matrix = GEX_TCR_matrix_p, data_types = c("GEX", "TCR"),
 
 ### Bar plots {.tabset}
 
+#### GEX and TCR
+
 With duplicate barcodes for the singular AIRR data types:
 
 ```{r barcode-heatmap-setup-bar}
@@ -738,8 +727,6 @@ print_kable(datatype_overlaps)
 ```
 
 <br>
-
-#### GEX and TCR
 
 Using the unique TCR barcodes
 
@@ -766,11 +753,11 @@ plot_counts(summary_df = GEX_TCR_summary_df,
   add_info_bar(info_type = "Dataset")
 ```
 
-## Beta and alpha chain matches
+#### Beta and alpha chain matches
 
 The chains should mostly be overlapping. These plots help with immediately showing outliers.
 
-### TCR barcode summary
+##### TCR barcode summary
 
 ```{r calc-tcr-summary}
 TCR_summary <- c()
@@ -795,7 +782,7 @@ TCR_summary <- meta %>%
 print_kable(TCR_summary)
 ```
 
-### TCR barcode overlaps {.tabset}
+##### TCR barcode overlaps
 
 ```{r chains-tcr}
 chain_types_tcr <- c("TRBOnly", "Paired", "TRAOnly")
@@ -811,7 +798,7 @@ p <- plot_counts(summary_df = TCR_summary_df, data_types = "TCR",
                  clrs_datatype = colors_chain_tcr)
 ```
 
-#### By Dataset
+By dataset:
 
 ```{r chains-tcr-dataset-bar}
 #| fig.dim = c(16, 8)
@@ -819,7 +806,7 @@ p <- plot_counts(summary_df = TCR_summary_df, data_types = "TCR",
 add_info_bar(plot = p, info_type = "Dataset")
 ```
 
-#### By Sample Type
+By sample type:
 
 ```{r chains-tcr-sampletype-bar}
 #| fig.dim = c(16, 8)
@@ -861,7 +848,7 @@ VlnPlot(combined, features = "nFeature_RNA",
         cols = colors_vln_sampletype, pt.size = 0.01, raster = FALSE) %>%
   add_info_bar(method = "add", info_type = "Dataset", info = combined) +
   labs(title = "Number of Features (All Samples) - Pre-Filtering",
-       x = "SampleName") +
+       x = "Sample") +
   NoLegend() + labels_standard
 ```
 
@@ -873,7 +860,7 @@ VlnPlot(combined, features = "nFeature_RNA",
   add_info_bar(method = "add", info_type = "SampleType", info = combined,
                label = FALSE) +
   labs(title = "Number of Features (All Samples) - Pre-Filtering",
-       x = "SampleName") +
+       x = "Sample") +
   NoLegend() + labels_standard
 ```
 
@@ -886,7 +873,7 @@ VlnPlot(combined, features = "nFeature_RNA",
         cols = colors_vln_sampletype, pt.size = 0, raster = FALSE) %>%
   add_info_bar(method = "add", info_type = "Dataset", info = combined) +
   labs(title = "Number of Features (All Samples) - Pre-Filtering",
-       x = "SampleName") +
+       x = "Sample") +
   NoLegend() + labels_standard
 ```
 
@@ -898,7 +885,7 @@ VlnPlot(combined, features = "nFeature_RNA",
   add_info_bar(method = "add", info_type = "SampleType", info = combined,
                label = FALSE) +
   labs(title = "Number of Features (All Samples) - Pre-Filtering",
-       x = "SampleName") +
+       x = "Sample") +
   NoLegend() + labels_standard
 ```
 
@@ -915,7 +902,7 @@ VlnPlot(combined, features = "nCount_RNA",
         cols = colors_vln_sampletype, pt.size = 0.01, raster = FALSE) %>%
   add_info_bar(method = "add", info_type = "Dataset", info = combined) +
   labs(title = "Number of Counts (All Samples) - Pre-Filtering",
-       x = "SampleName") +
+       x = "Sample") +
   NoLegend() + labels_standard
 ```
 
@@ -927,7 +914,7 @@ VlnPlot(combined, features = "nCount_RNA",
   add_info_bar(method = "add", info_type = "SampleType", info = combined,
                label = FALSE) +
   labs(title = "Number of Counts (All Samples) - Pre-Filtering",
-       x = "SampleName") +
+       x = "Sample") +
   NoLegend() + labels_standard
 ```
 
@@ -940,7 +927,7 @@ VlnPlot(combined, features = "nCount_RNA",
         cols = colors_vln_sampletype, pt.size = 0, raster = FALSE) %>%
   add_info_bar(method = "add", info_type = "Dataset", info = combined) +
   labs(title = "Number of Counts (All Samples) - Pre-Filtering",
-       x = "SampleName") +
+       x = "Sample") +
   NoLegend() + labels_standard
 ```
 
@@ -952,7 +939,7 @@ VlnPlot(combined, features = "nCount_RNA",
   add_info_bar(method = "add", info_type = "SampleType", info = combined,
                label = FALSE) +
   labs(title = "Number of Counts (All Samples) - Pre-Filtering",
-       x = "SampleName") +
+       x = "Sample") +
   NoLegend() + labels_standard
 ```
 
@@ -967,7 +954,7 @@ VlnPlot(combined, features = "percent.mt",
         cols = colors_vln_sampletype, pt.size = 0.01, raster = FALSE) %>%
   add_info_bar(method = "add", info_type = "Dataset", info = combined) +
   labs(title = "Percent Mitochondrial (All Samples) - Pre-Filtering",
-       x = "SampleName") +
+       x = "Sample") +
   scale_y_continuous(labels = label_percent(scale = 1)) +
   NoLegend() + labels_standard
 ```
@@ -980,7 +967,7 @@ VlnPlot(combined, features = "percent.mt",
   add_info_bar(method = "add", info_type = "SampleType", info = combined,
                label = FALSE) +
   labs(title = "Percent Mitochondrial (All Samples) - Pre-Filtering",
-       x = "SampleName") +
+       x = "Sample") +
   scale_y_continuous(labels = label_percent(scale = 1)) +
   NoLegend() + labels_standard
 ```
@@ -994,7 +981,7 @@ VlnPlot(combined, features = "percent.mt",
         cols = colors_vln_sampletype, pt.size = 0, raster = FALSE) %>%
   add_info_bar(method = "add", info_type = "Dataset", info = combined) +
   labs(title = "Percent Mitochondrial (All Samples) - Pre-Filtering",
-       x = "SampleName") +
+       x = "Sample") +
   scale_y_continuous(labels = label_percent(scale = 1)) +
   NoLegend() + labels_standard
 ```
@@ -1007,7 +994,7 @@ VlnPlot(combined, features = "percent.mt",
   add_info_bar(method = "add", info_type = "SampleType", info = combined,
                label = FALSE) +
   labs(title = "Percent Mitochondrial (All Samples) - Pre-Filtering",
-       x = "SampleName") +
+       x = "Sample") +
   scale_y_continuous(labels = label_percent(scale = 1)) +
   NoLegend() + labels_standard
 ```
@@ -1026,7 +1013,7 @@ VlnPlot(combined, features = "percent.ribo",
         cols = colors_vln_sampletype, pt.size = 0, raster = FALSE) %>%
   add_info_bar(method = "add", info_type = "Dataset", info = combined) +
   labs(title = "Percent Ribosomal (All Samples) - Pre-Filtering",
-       x = "SampleName") +
+       x = "Sample") +
   scale_y_continuous(labels = label_percent(scale = 1)) +
   NoLegend() + labels_standard
 ```
@@ -1131,7 +1118,7 @@ VlnPlot(combined, features = "nFeature_RNA",
         cols = colors_vln_sampletype, pt.size = 0.01, raster = FALSE) %>%
   add_info_bar(method = "add", info_type = "Dataset", info = combined) +
   labs(title = "Number of Features (All Samples) - Post-Filtering",
-       x = "SampleName") +
+       x = "Sample") +
   NoLegend() + labels_standard
 ```
 
@@ -1143,7 +1130,7 @@ VlnPlot(combined, features = "nFeature_RNA",
   add_info_bar(method = "add", info_type = "SampleType", info = combined,
                label = FALSE) +
   labs(title = "Number of Features (All Samples) - Post-Filtering",
-       x = "SampleName") +
+       x = "Sample") +
   NoLegend() + labels_standard
 ```
 
@@ -1156,7 +1143,7 @@ VlnPlot(combined, features = "nFeature_RNA",
         cols = colors_vln_sampletype, pt.size = 0, raster = FALSE) %>%
   add_info_bar(method = "add", info_type = "Dataset", info = combined) +
   labs(title = "Number of Features (All Samples) - Post-Filtering",
-       x = "SampleName") +
+       x = "Sample") +
   NoLegend() + labels_standard
 ```
 
@@ -1168,7 +1155,7 @@ VlnPlot(combined, features = "nFeature_RNA",
   add_info_bar(method = "add", info_type = "SampleType", info = combined,
                label = FALSE) +
   labs(title = "Number of Features (All Samples) - Post-Filtering",
-       x = "SampleName") +
+       x = "Sample") +
   NoLegend() + labels_standard
 ```
 
@@ -1185,7 +1172,7 @@ VlnPlot(combined, features = "nCount_RNA",
         cols = colors_vln_sampletype, pt.size = 0.01, raster = FALSE) %>%
   add_info_bar(method = "add", info_type = "Dataset", info = combined) +
   labs(title = "Number of Counts (All Samples) - Post-Filtering",
-       x = "SampleName") +
+       x = "Sample") +
   NoLegend() + labels_standard
 ```
 
@@ -1197,7 +1184,7 @@ VlnPlot(combined, features = "nCount_RNA",
   add_info_bar(method = "add", info_type = "SampleType", info = combined,
                label = FALSE) +
   labs(title = "Number of Counts (All Samples) - Post-Filtering",
-       x = "SampleName") +
+       x = "Sample") +
   NoLegend() + labels_standard
 ```
 
@@ -1210,7 +1197,7 @@ VlnPlot(combined, features = "nCount_RNA",
         cols = colors_vln_sampletype, pt.size = 0, raster = FALSE) %>%
   add_info_bar(method = "add", info_type = "Dataset", info = combined) +
   labs(title = "Number of Counts (All Samples) - Post-Filtering",
-       x = "SampleName") +
+       x = "Sample") +
   NoLegend() + labels_standard
 ```
 
@@ -1222,7 +1209,7 @@ VlnPlot(combined, features = "nCount_RNA",
   add_info_bar(method = "add", info_type = "SampleType", info = combined,
                label = FALSE) +
   labs(title = "Number of Counts (All Samples) - Post-Filtering",
-       x = "SampleName") +
+       x = "Sample") +
   NoLegend() + labels_standard
 ```
 
@@ -1237,7 +1224,7 @@ VlnPlot(combined, features = "percent.mt",
         cols = colors_vln_sampletype, pt.size = 0.01, raster = FALSE) %>%
   add_info_bar(method = "add", info_type = "Dataset", info = combined) +
   labs(title = "Percent Mitochondrial (All Samples) - Post-Filtering",
-       x = "SampleName") +
+       x = "Sample") +
   scale_y_continuous(labels = label_percent(scale = 1)) +
   NoLegend() + labels_standard
 ```
@@ -1250,7 +1237,7 @@ VlnPlot(combined, features = "percent.mt",
   add_info_bar(method = "add", info_type = "SampleType", info = combined,
                label = FALSE) +
   labs(title = "Percent Mitochondrial (All Samples) - Post-Filtering",
-       x = "SampleName") +
+       x = "Sample") +
   scale_y_continuous(labels = label_percent(scale = 1)) +
   NoLegend() + labels_standard
 ```
@@ -1264,7 +1251,7 @@ VlnPlot(combined, features = "percent.mt",
         cols = colors_vln_sampletype, pt.size = 0, raster = FALSE) %>%
   add_info_bar(method = "add", info_type = "Dataset", info = combined) +
   labs(title = "Percent Mitochondrial (All Samples) - Post-Filtering",
-       x = "SampleName") +
+       x = "Sample") +
   scale_y_continuous(labels = label_percent(scale = 1)) +
   NoLegend() + labels_standard
 ```
@@ -1277,7 +1264,7 @@ VlnPlot(combined, features = "percent.mt",
   add_info_bar(method = "add", info_type = "SampleType", info = combined,
                label = FALSE) +
   labs(title = "Percent Mitochondrial (All Samples) - Post-Filtering",
-       x = "SampleName") +
+       x = "Sample") +
   scale_y_continuous(labels = label_percent(scale = 1)) +
   NoLegend() + labels_standard
 ```
