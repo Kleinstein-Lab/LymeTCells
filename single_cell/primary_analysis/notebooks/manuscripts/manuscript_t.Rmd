@@ -1694,9 +1694,9 @@ for (feature in cd45_feats) {
                     order = TRUE) +
           scale_color_viridis(option = "G", direction = -1) +
           labs(color = "Expression") +
-          labels_standard + clean_umap#2
+          labels_standard + clean_umap
   p4 <- plot_density(combined_skin_t_ideis, features = feature, size = 0.2) +
-          labels_standard + clean_umap#2
+          labels_standard + clean_umap
 
   # make the density plots match the axes thickness of p3
   p4[["theme"]][["axis.line"]][["linewidth"]] <-

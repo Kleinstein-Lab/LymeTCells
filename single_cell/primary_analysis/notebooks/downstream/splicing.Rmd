@@ -66,15 +66,27 @@ source(code_meta)
 unlink(c(code_setup, code_functions, code_meta))
 ```
 
-Also needed:
+*I also tried Velocyto, SCASL, and MARVEl but they were difficult to install and/or run.*
 
-```{r}
-packages <- c("tximport")
-for (n in seq_along(packages)) {
-  suppressPackageStartupMessages(library(packages[n], character.only = TRUE))
-  cat(paste0(packages[n], ": ", packageVersion(packages[n]), "\n"))
-}
+------------------------------------------------------------------------
+
+# Read in the data
+
+```{r setup-gex}
+# object
+combined_skin_t <-
+  readRDS(file.path(path_objs, "final", "combined_skin_t_ref.rds"))
+combined_skin_t_ideis <-
+  readRDS(file.path(path_objs, "downstream", "splicing",
+                    "combined_skin_t_ideis.rds"))
+
+# colors
+colors_annotated_skin_t <- combined_skin_t@misc$colors_annotated
 ```
+
+------------------------------------------------------------------------
+
+# Background
 
 Literature:
 
@@ -88,22 +100,6 @@ Literature:
   - CD45RO+ cells, on the other hand, migrate to the lymph via tissues, possess the capacity to respond to recall antigen and provide B cell helper function. Whilst they represent non-overlapping subsets, a proportion of resting peripheral blood T cells express intermediate levels of both CD45RA and CD45RO isoforms on the cell surface.
 - [Activation of Endothelium by Borrelia burgdorferi In Vitro Enhances Transmigration of Specific Subsets of T Lymphocytes](https://journals.asm.org/doi/full/10.1128/iai.69.4.2190-2197.2001)
   - Compared to the initially added population of T lymphocytes, the population that migrated across untreated endothelium or HUVEC activated with B. burgdorferi or IL-1 contained a significantly smaller percentage of CD45RA+RO− (naı̈ve) cells and a greater proportion of CD45RA+RO+ cells.
-
-
-I also tried Velocyto, SCASL, and MARVEl but they were difficult to install and/or run.
-
-------------------------------------------------------------------------
-
-# Read in the data
-
-```{r setup-gex}
-# object
-combined_skin_t <-
-  readRDS(file.path(path_objs, "final", "combined_skin_t_ref.rds"))
-
-# colors
-colors_annotated_skin_t <- combined_skin_t@misc$colors_annotated
-```
 
 ------------------------------------------------------------------------
 
@@ -120,14 +116,14 @@ colors_annotated_skin_t <- combined_skin_t@misc$colors_annotated
 
 ```{bash, eval = FALSE}
 # To obtain the copy of this software simply clone this repository in your current directory using the following command:
-cd ~/git/Papers
+cd ~/git/Papers # change the location as needed
 git clone https://github.com/Lab-of-Adaptive-Immunity/IDEIS
 
 # Some modes of software will require 10X Cell Ranger whitelists to be present in 'IDEIS/cr_whitelists' subdirectory, specifically files named '3M-february-2018.txt' and '737K-august-2016.txt'. You can find them in your installation of 10X Cell Ranger at 'cellranger-x.y.z/cellranger-cs/x.y.z/lib/python/cellranger/barcodes' (for versions 3 and earlier) or at 'cellranger-x.y.z/lib/python/cellranger/barcodes/' (for later versions), but you can also download them here:
-ls /opt/cellranger-7.2.0/lib/python/cellranger/barcodes
+ls /opt/cellranger-6.1.2/lib/python/cellranger/barcodes # or whatever version you have
 
 # Finally, you can download an example data set to run file on, but it is not required; you may want to skip directly to the analysis of your own data.
-mkdir /media/edelaron/Midas/packages/ideis
+mkdir /media/edelaron/Midas/packages/ideis # change the location as needed
 cd /media/edelaron/Midas/packages/ideis
 git clone https://github.com/Lab-of-Adaptive-Immunity/Test_Data_IDEIS
 
@@ -164,6 +160,7 @@ Test the example run:
 ```{r ideis-example-umap}
 #| fig.dim = c(12, 6)
 
+# or wherever you saved it
 seu.data <- readRDS(file.path("~", "git", "Papers", "IDEIS", "Results_data",
                               "Results", "Datasets", "dataset_with_cd45.rds"))
 seu.data <- NormalizeData(seu.data, assay = "CD45isoforms",
@@ -189,57 +186,55 @@ cd 10x-cd45-isoform-quantification
 
 python ./CD45er/run.py /media/edelaron/Midas/lyme/dataset2/default/192567SKL_GEX_HHT/outs/possorted_genome_bam.bam reference/CD45_exons.hg38.txt
 
-Filtering 13192/24185 reads with minimum possible length >=500
-5647/24185 reads informative for splicing
-Estimated parameters:
-mu:298.02400355632017,var:15546.585700865076
-RX       0.484523
-RAX      0.000040
-RBX      0.199155
-RABX     0.092181
-RBCX     0.096348
-RABCX    0.127753
-dtype: float64
+<!-- Filtering 13192/24185 reads with minimum possible length >=500 -->
+<!-- 5647/24185 reads informative for splicing -->
+<!-- Estimated parameters: -->
+<!-- mu:298.02400355632017,var:15546.585700865076 -->
+<!-- RX       0.484523 -->
+<!-- RAX      0.000040 -->
+<!-- RBX      0.199155 -->
+<!-- RABX     0.092181 -->
+<!-- RBCX     0.096348 -->
+<!-- RABCX    0.127753 -->
+<!-- dtype: float64 -->
 
 python ./CD45er/run.py /media/edelaron/Midas/lyme/dataset2/default/192567SKN_GEX_HHT/outs/possorted_genome_bam.bam reference/CD45_exons.hg38.txt
 
-Filtering 6583/11024 reads with minimum possible length >=500
-2732/11024 reads informative for splicing
-Estimated parameters:
-mu:302.89669342517647,var:17467.920803797428
-RX       0.568801
-RAX      0.005764
-RBX      0.249378
-RABX     0.062134
-RBCX     0.070661
-RABCX    0.043262
-dtype: float64
+<!-- Filtering 6583/11024 reads with minimum possible length >=500 -->
+<!-- 2732/11024 reads informative for splicing -->
+<!-- Estimated parameters: -->
+<!-- mu:302.89669342517647,var:17467.920803797428 -->
+<!-- RX       0.568801 -->
+<!-- RAX      0.005764 -->
+<!-- RBX      0.249378 -->
+<!-- RABX     0.062134 -->
+<!-- RBCX     0.070661 -->
+<!-- RABCX    0.043262 -->
+<!-- dtype: float64 -->
 ```
 
 ## Real data
 
 I wrote a script:
 
-* For some reason our `cell_id` column has a lot of `NA`s in the Seurat objects, so we're not going to use the whitelist/Seurat object option.
+* I only kept the `Cell_ID_Unique` column in the Seurat objects which won't match with the bam file cell ids, so we're not going to use the whitelist/Seurat object option.
 * The default expected cells is 6000, but that's not what I saw in the QC so I changed it to 4000 instead (which didn't end up changing the total mapped reads)
 * The full script runs in a couple of minutes, so I didn't add any more cores.
 
 ```{r raw-processing}
 #| attr.output = 'style="max-height: 300px;"'
 
-cat(readLines(file.path("~", "git", "Research", "lyme", "single_cell",
-                        "accessory_scripts", "splicing.sh")),
-    sep = "\n")
-
-# some errors e.g.
-## The application salmon alevin has thrown an error. The process was not finished. Please check logs located in /media/edelaron/Midas/lyme/splicing/ideis/2029430SC_HHT/Results/alevin/alevin and try again.
+cat(readLines(file.path(path_base, "primary_analysis", "scripts",
+                        "splicing.sh")), sep = "\n")
 ```
 
 Parse the output:
 
 ```{r}
+#| eval = FALSE
+
 # setup
-sample_names <- list.dirs(file.path(path_data_root, "splicing", "ideis"),
+sample_names <- list.dirs(file.path(path_data_root, "splicing"),
                           full.names = FALSE, recursive = FALSE)
 cell_id_names <- c()
 cd45_objs <- list()
@@ -251,14 +246,14 @@ sample_names <- meta %>%
 
 # read in the spliced data for all of the samples
 for (sample in sample_names) {
-  files <- file.path(path_data_root, "splicing", "ideis", sample,
-                     "Results", "alevin", "alevin", "quants_mat.gz")
+  files <- file.path(path_data_root, "splicing", sample, "Results", "alevin",
+                     "alevin", "quants_mat.gz")
 
   if (file.exists(files)) {
     txi <- tximport(files, type = "alevin")
     cd45_objs[[sample]] <- CreateSeuratObject(counts = txi$counts)
 
-    # perhaps not all of the samples ran through, so we can't just pull a metadata columns
+    # perhaps not all of the samples ran through, so we can't just pull metadata columns
     cell_id_names <- c(cell_id_names, sample)
   }
 }
@@ -287,9 +282,9 @@ DefaultAssay(combined_skin_t_ideis) <- "CD45"
 cd45_feats <- str_c("PTPRC-R", c("A", "B", "C", "O"))
 
 # save the object
-# saveRDS(combined_skin_t_ideis,
-#         file.path(path_objs, "downstream", "splicing",
-#                   "combined_skin_t_ideis.rds"))
+saveRDS(combined_skin_t_ideis,
+        file.path(path_objs, "downstream", "splicing",
+                  "combined_skin_t_ideis.rds"))
 ```
 
 Counts before and after:
@@ -325,13 +320,13 @@ p3 <- FeaturePlot(combined_skin_t_ideis, features = cd45_feats,
                   raster = FALSE) &
         scale_color_viridis(option = "G", direction = -1) &
         labs(color = "Expression") &
-        labels_standard & clean_umap#2
+        labels_standard & clean_umap
 
 p4 <- list()
 for (marker in cd45_feats) {
   p4[[marker]] <-
       plot_density(combined_skin_t_ideis, features = marker, size = 0.2,
-                   raster = FALSE) + labels_standard + clean_umap#2
+                   raster = FALSE) + labels_standard + clean_umap
 }
 p4 <- wrap_plots(p4, ncol = length(cd45_feats))
 
@@ -339,26 +334,5 @@ p5 <- vln_cell_info(seurat_obj = combined_skin_t_ideis, feature = "PTPRC-RA",
                     clrs_specific = colors_annotated_skin_t,
                     split_by = NULL, pt_size = 0.2, num_dec = 1, label_size = 3)
 
-# p1 + p2 + p3
-# (free(p1, type = "label") + free(p2, type = "label") + p3) +
-#   plot_layout(widths = c(1, 2, 1))
 ((p1 | p2) / p3 / p4 / free(p5)) + plot_layout(heights = c(2, 1, 1, 3))
-```
-
-“Additionally, though TEMRAs are typically considered to be a circulating T cell subset, we identified a small population of cytotoxic TEMRAs expressing CD103 in skin and blood.” (Shah et al., 2024, p. 12)
-
-Let's call the TEMRAs the CD8+ cells with positive expression of CD45RA:
-
-```{r, eval = FALSE}
-seurat_obj <- combined_skin_t
-
-data_matrix <- GetAssayData(combined_skin_t_ideis, assay = "CD45")["PTPRC-RA", ]
-positive_cells <- colnames(combined_skin_t_ideis)[data_matrix > 0]
-
-# Subset the Seurat object
-seurat_obj <- subset(seurat_obj, cells = positive_cells)
-
-vln_cell_info(seurat_obj = seurat_obj, feature = "ITGAE",
-              clrs_specific = colors_annotated_skin_t,
-              split_by = NULL, pt_size = 0.2, num_dec = 1, label_size = 3)
 ```

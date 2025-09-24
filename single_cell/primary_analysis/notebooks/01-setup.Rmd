@@ -31,6 +31,8 @@ packages <- c(# Immcantation packages
               # needed for manuscript figures
               "APackOfTheClones", "clusterProfiler", "ggpubr", "msigdbr",
               "SeuratExtend", "xlsx",
+              # splicing
+              "tximport",
               # other
               "clustree", "DESeq2", "DoubletFinder", "DT", "enrichR", "ggrepel",
               "ggsignif", "ggtext", "ggVennDiagram", "here", "hues",
