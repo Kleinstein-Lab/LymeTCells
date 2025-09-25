@@ -31,19 +31,18 @@ packages <- c(# Immcantation packages
               # needed for manuscript figures
               "APackOfTheClones", "clusterProfiler", "ggpubr", "msigdbr",
               "SeuratExtend", "xlsx",
+              # only for functions
+              "circlize", "DESeq2", "DT", "ggsignif", "kableExtra", "knitr",
+              "magrittr", "peakRAM", "rlang",
               # splicing
               "tximport",
+              # plotting
+              "ggrepel", "ggtext", "ggVennDiagram", "hues", "pals", "patchwork",
               # other
-              "clustree", "DESeq2", "DoubletFinder", "DT", "enrichR", "ggrepel",
-              "ggsignif", "ggtext", "ggVennDiagram", "here", "hues",
-              "kableExtra", "knitr", "magrittr", "Matrix", "pals", "patchwork",
-              "peakRAM", "plyr", "reshape", "rjson", "rlang", "scales",
-              "Seurat", "tidyverse")
+              "clustree", "enrichR", "here", "Matrix", "plyr", "reshape",
+              "rjson", "scales", "Seurat", "tidyverse")
 new_pkg <- packages[!(packages %in% installed.packages())]
 if (length(new_pkg)) {install.packages(new_pkg)}
-
-# note: DoubletFinder is installed differently
-# remotes::install_github("chris-mcginnis-ucsf/DoubletFinder")
 
 # list (and install if needed) Bioconductor packages
 # have to have BiocManager already installed

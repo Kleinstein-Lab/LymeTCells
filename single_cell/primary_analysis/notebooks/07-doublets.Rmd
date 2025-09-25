@@ -68,6 +68,8 @@ unlink(c(code_setup, code_functions, code_meta))
 
 We decided to use `scDblFinder` as it was recommended by a benchmarking paper. You also don't have to manually adjust the doublet rate or worry about aggregated results like you have to for `DoubletFinder`.
 
+Sometimes people just use high RNA counts, but there are some cell types that do genuinely just have high counts without being doublets.
+
 ------------------------------------------------------------------------
 
 # Read in the data
@@ -432,7 +434,7 @@ cat(paste("There were", ncol(combined_blood), "cells in the original object.",
 ##### UMAPs
 
 ```{r blood-removal-rna-umap-bar}
-#| fig.dim = c(18, 8)
+#| fig.dim = c(12, 8)
 
 p1 <- plot_umap(seurat_obj = combined_blood,
                 tissue_type = "Blood",
@@ -444,18 +446,9 @@ p2 <- plot_umap(seurat_obj = combined_blood_no_doublets,
                 clrs_specific = colors_annotated_blood,
                 plot_by = "cluster_all", annotated = TRUE,
                 include_legend = FALSE)
-# sometimes people just use high RNA counts
-p3 <- plot_umap_condition(seurat_obj = combined_blood_no_doublets,
-                          tissue_type = "Blood",
-                          condition_name = "nCount_RNA",
-                          operator = ">", condition_val = 10000,
-                          color_by = "name",
-                          clrs_specific = c("nCount_RNA" = "black"),
-                          label_plot = FALSE, include_subtitle = TRUE,
-                          include_legend = FALSE)
 
 # combine plots
-(p1 | p2 | p3) + plot_anno
+(p1 | p2) + plot_anno
 ```
 
 ##### Cluster counts
@@ -934,7 +927,7 @@ cat(paste("There were", ncol(combined_skin), "cells in the original object.",
 ##### UMAPs
 
 ```{r skin-removal-rna-umap-bar}
-#| fig.dim = c(18, 8)
+#| fig.dim = c(12, 8)
 
 p1 <- plot_umap(seurat_obj = combined_skin,
                 tissue_type = "Skin",
@@ -946,18 +939,9 @@ p2 <- plot_umap(seurat_obj = combined_skin_no_doublets,
                 clrs_specific = colors_annotated_skin,
                 plot_by = "cluster_all", annotated = TRUE,
                 include_legend = FALSE)
-# sometimes people just use high RNA counts
-p3 <- plot_umap_condition(seurat_obj = combined_skin_no_doublets,
-                          tissue_type = "Skin",
-                          condition_name = "nCount_RNA",
-                          operator = ">", condition_val = 10000,
-                          color_by = "name",
-                          clrs_specific = c("nCount_RNA" = "black"),
-                          label_plot = FALSE, include_subtitle = TRUE,
-                          include_legend = FALSE)
 
 # combine plots
-(p1 | p2 | p3) + plot_anno
+(p1 | p2) + plot_anno
 ```
 
 ##### Cluster counts

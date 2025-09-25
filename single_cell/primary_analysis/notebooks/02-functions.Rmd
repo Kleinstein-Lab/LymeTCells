@@ -424,7 +424,7 @@ Along the right side for easy comparison (plus dot plots only show GEX info)
 #' @param seurat_obj The Seurat object.
 #' @param row_identity The y axis identities.
 #' @param facet_col The column to facet by e.g. "Cell_Type_Full".
-#' @param info_to_add The options are: `cluster_size`, `mean_mu_freq`, `percent_BCR`, `percent_TCR`, and `TRUST4`.
+#' @param info_to_add The options are: `cluster_size`, `percent_TCR`, and `TRUST4`.
 #'
 #' @returns A Seurat DotPlot with annotations along the right side.
 plot_dot_side <- function(plot, seurat_obj, row_identity = "seurat_clusters",
@@ -446,44 +446,6 @@ plot_dot_side <- function(plot, seurat_obj, row_identity = "seurat_clusters",
                           side = "left", pad = " ")
 
     side_labels <- bind_cols(side_labels, "total counts" = counts_sum)
-  }
-
-  if ("mean_mu_freq" %in% info_to_add) {
-    mean_mu_freq <- seurat_obj[[]] %>%
-                      group_by(!!rlang::sym(row_identity)) %>%
-                      arrange(factor(!!rlang::sym(row_identity), levels = row_idents)) %>%
-                      mutate(mean_mu_freq = mean(mu_freq, na.rm = TRUE)) %>%
-                      distinct(mean_mu_freq) %>%
-                      pull()
-
-    # reformat
-    # mean_mu_freq <- sprintf("%.2f", mean_mu_freq)
-    mean_mu_freq <- label_percent(accuracy = 0.1)(mean_mu_freq)
-    mean_mu_freq <- replace_na(mean_mu_freq, replace = "NA")
-    mean_mu_freq <- str_pad(string = as.character(mean_mu_freq),
-                            width = max(nchar(mean_mu_freq)),
-                            side = "left", pad = " ")
-
-    side_labels <- bind_cols(side_labels, "mean mutation frequency" = mean_mu_freq)
-  }
-
-  if ("percent_BCR" %in% info_to_add) {
-    # needs more work
-    percent_BCR <- calc_pcts(data = seurat_obj[[]],
-                             meta_group_by = row_identity,
-                             focus_group = "Has_BCR") %>%
-                    dplyr::filter(Has_BCR) %>%
-                    # mutate(Percent = round(Percent, digits = 1)) %>%
-                    arrange(factor(!!rlang::sym(row_identity), levels = row_idents)) %>%
-                    pull(Percent)
-
-    # reformat
-    percent_BCR <- label_percent(accuracy = 1, scale = 1)(percent_BCR)
-    percent_BCR <- str_pad(string = as.character(percent_BCR),
-                           width = max(nchar(percent_BCR)),
-                           side = "left", pad = " ")
-
-    side_labels <- bind_cols(side_labels, "percent BCR" = percent_BCR)
   }
 
   if ("percent_TCR" %in% info_to_add) {
@@ -555,9 +517,7 @@ plot_dot_side <- function(plot, seurat_obj, row_identity = "seurat_clusters",
 }
 ```
 
-### UMAPs
-
-#### General UMAP
+### UMAP
 
 Includes whether or not the object has been annotated with specific cell types
 
@@ -764,169 +724,6 @@ plot_umap <- function(seurat_obj, tissue_type = "", clrs_specific,
 }
 ```
 
-#### Overlay a condition
-
-Can be used for plotting QC metrics, isolating specific cell types, overlaying AIRR data, overlaying B cell isotypes, etc.
-
-```{r func-plot-umap-condition}
-#' Plot a specific condition on a Seurat UMAPPlot.
-#'
-#' @details
-#' Based on: https://github.com/satijalab/seurat/issues/1053
-#'
-#' @param seurat_obj The Seurat object.
-#' @param tissue_type The tissue type e.g. Blood, Skin.
-#' @param condition_name
-#' @param operator <, >, ==
-#' @param condition_val
-#' @param color_by name, value
-#' @param clrs_specific The specific color palette (should be named).
-#' @param plot_type general, overlay (BCR/TCR)
-#' @param label_plot Put labels on the plot (or not).
-#' @param include_subtitle Include a subtitle (or not).
-#' @param include_legend Include a legend (or not).
-#'
-#' @returns A Seurat UMAPPlot.
-plot_umap_condition <- function(seurat_obj, tissue_type,
-                                condition_name, operator, condition_val,
-                                color_by = "value",
-                                clrs_specific, plot_type = "general",
-                                label_plot = TRUE, include_subtitle = TRUE,
-                                include_legend = FALSE) {
-  # plot options
-  pt_size <- 0.2
-  label_size <- 4
-  sizes_highlight <- 0.2
-
-  # cells of interest
-  condition <- FetchData(seurat_obj, vars = condition_name)
-  cells_highlight <-
-    switch(operator,
-           "<" = Cells(seurat_obj[, which(x = condition < condition_val)]),
-           ">" = Cells(seurat_obj[, which(x = condition > condition_val)]),
-           "==" = Cells(seurat_obj[, which(x = condition == condition_val)]),
-           stop("Invalid operator, please try again."))
-
-  # color by
-  if (color_by == "name") {
-    cols_highlight <- clrs_specific[[condition_name]]
-    plot_title <- paste(condition_name, operator, condition_val)
-  }
-  else if (color_by == "value") {
-    cols_highlight <- clrs_specific[[condition_val]]
-    plot_title <- condition_val
-  }
-  else {
-    cat("Invalid coloring system, please try again.")
-  }
-
-  # set up the plot
-  p <- UMAPPlot(seurat_obj, pt.size = pt_size,
-                label = label_plot, label.size = label_size,
-                cells.highlight = cells_highlight,
-                cols.highlight = cols_highlight,
-                sizes.highlight = sizes_highlight,
-                raster = FALSE) +
-        labs(title = paste(tissue_type, paste0("(", plot_title, ")")))
-
-  # include a subtitle counting the condition
-  if (include_subtitle) {
-    p <- p + labs(subtitle = paste("Count:", length(cells_highlight)))
-  }
-
-  # remove the legend if desired
-  if (!include_legend) {
-    p <- p + NoLegend()
-  }
-  else {
-    if (plot_type == "overlay") {
-      data_type <- substr(condition_name, nchar(condition_name) - 2,
-                          nchar(condition_name)) # BCR or TCR
-
-      p <- p + scale_color_manual(name = "Data Type",
-                                  labels = c(paste0("non-", data_type), data_type),
-                                  values = c("lightgray",
-                                             unname(clrs_specific[data_type]))
-      )
-    }
-    else {
-      p <- p + scale_color_manual(name = paste(condition_name, operator, condition_val),
-                                  labels = c("False", "True"),
-                                  values = c("lightgray",
-                                             unname(clrs_specific[condition_name]))
-      )
-    }
-  }
-
-  # standardize the labels
-  p <- p + labels_standard + clean_umap
-
-  return(p)
-}
-```
-
-#### Plot booleans
-
-From Roy:
-
-```{r func-plot-bool}
-#' Plot boolean selection on PCA or UMAP projections.
-#'
-#' @description
-#' Creates a scatter plot showing a subset of cells highlighted on either PCA or UMAP projections.
-#' The function overlays selected cells on top of all plotted cells with different visual properties.
-#'
-#' @details
-#' This function is useful for visualizing specific cell subsets or conditions on dimensionality
-#' reduction plots. Selected cells are highlighted with higher alpha values while maintaining
-#' the overall context of the full dataset.
-#'
-#' @param object A Seurat object containing the dimensionality reduction data.
-#' @param plot_cell Logical vector indicating which cells to plot. If NULL, all cells are plotted.
-#' @param select_cell Character vector of cell names to highlight.
-#' @param type Type of dimensionality reduction to plot, either "pca" or "umap".
-#' @param COLORS Color palette for cell subsets.
-#' @param ASSIGN_DICT Dictionary mapping identities to subset assignments.
-#'
-#' @returns A ggplot object showing the dimensionality reduction plot with highlighted cells.
-plotBool <- function(object, plot_cell, select_cell, type = "pca",
-                     COLORS = SUBSET_COLORS, ASSIGN_DICT = SUBSET_DICT) {
-  if (is.null(plot_cell)) {
-    plot_cell <- rep(TRUE, length(object@active.ident))
-  }
-
-  identity_df <- data.frame(IDENTITY = object@active.ident[plot_cell]) %>%
-                   rowwise() %>%
-                   mutate(SUBSET = ASSIGN_DICT[IDENTITY])
-
-  if (type == "pca") {
-    projection_df <- data.frame(object@reductions$pca@cell.embeddings)[plot_cell, ]
-    p <- ggplot(projection_df[plot_cell, ], aes(x = PC1, y = PC2))
-  }
-  if (type == "umap") {
-    projection_df <- data.frame(object@reductions$umap@cell.embeddings)[plot_cell, ]
-    p <- ggplot(projection_df, aes(x = UMAP_1, y = UMAP_2))
-  }
-
-  projection_df <- projection_df %>%
-                     add_rownames("CELL") %>%
-                     mutate(BOOL = (CELL %in% select_cell))
-
-  # plot the UMAP
-  p + geom_point(size = 0.5, aes(color = identity_df$SUBSET), alpha = 0.4) +
-      geom_point(data = dplyr::filter(projection_df, BOOL == TRUE),
-                 size = 0.5, alpha = 0.8) +
-      scale_color_manual(values = COLORS) +
-      labs(x = "Component 1", y = "Component 2") +
-      theme_bw() + labels_standard + clean_umap +
-      theme(legend.position = "none",
-            panel.grid.major = element_blank(),
-            panel.grid.minor = element_blank(),
-            axis.text.x = element_blank(), axis.text.y = element_blank(),
-            axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
-}
-```
-
 ## Unprocessed data
 
 ### Create or update Seurat objects
@@ -1046,7 +843,7 @@ You can provide a specific list of samples or data types to create summaries for
 #'
 #' @param meta The metadata file.
 #' @param path_data_specific Where the data is located.
-#' @param data_types e.g. BCR, GEX, TCR
+#' @param data_types e.g. GEX, TCR
 #' @param samples_list The samples you would like to examine.
 #'
 #' @returns A data.frame.
@@ -1183,7 +980,7 @@ count_barcode_overlaps <- function(barcodes_list1, barcodes_list2,
 #' Bar plot of read or cell counts for QC.
 #'
 #' @param summary_df output of create_metrics_summary()
-#' @param data_types e.g. BCR, GEX, TCR
+#' @param data_types e.g. GEX, TCR
 #' @param count_type Read, Cell, Barcode
 #' @param aggregation_state Aggregated or Unaggregated (`cellranger aggr`)
 #' @param samples
@@ -1263,7 +1060,7 @@ plot_counts <- function(summary_df, data_types = "All",
 #' @details colors the sample names by the sample type and splits by dataset
 #'
 #' @param input_matrix the matrix you would like to plot
-#' @param data_types list of 2 values (GEX, BCR, TCR), preferably alphanumeric
+#' @param data_types list of 2 values (GEX, TCR), preferably alphanumeric
 #' @param row_cluster if you would like to cluster the rows or not
 #' @param col_cluster if you would like to cluster the columns or not
 #' @param text_size a character vector of the inner text, border text and title text sizes respectively
@@ -1328,114 +1125,6 @@ plot_qc_heatmap <- function(input_matrix, data_types,
 }
 ```
 
-### Doublets
-
-```{r func-layout-doublets}
-#' This function plots an overview of a doublet identification method
-#'
-#' It assumes that colors_doublet has been defined
-#' Depends on other plots
-#'
-#' @param seurat_obj The Seurat object.
-#' @param tissue_type Blood, Skin.
-#' @param clrs_specific The specific color palette (should be named).
-#' @param plot_by
-#' @param clusters_col Which column in the object stores the clusters.
-#' @param annotated If the cell types have been identified.
-#' @param annotations_col Which column in the object stores the cell types.
-#' @param doublet_col The column containing the doublets information
-#' @param details The optional subtitle.
-#'
-#' @returns
-layout_doublets <- function(seurat_obj, tissue_type, clrs_specific,
-                            clusters_col = "seurat_clusters",
-                            annotated = FALSE,
-                            annotations_col = "annotated_clusters",
-                            doublet_col, doublet_package, details = NULL) {
-  # if you want to use the default ggplot2 colors
-  if (is_missing(clrs_specific)) {
-    clrs_specific <- hue_pal()(n_distinct(seurat_obj[[clusters_col]]))
-  }
-
-  # define the legends
-  if (annotated) {
-    plot_col <- annotations_col
-    cluster_legend <- "Cell Type"
-
-    # subclustered only
-    if (annotations_col == "annotated_subclusters") {
-      cluster_legend <- paste("Subclustered", cluster_legend)
-    }
-
-    Idents(seurat_obj) <- annotations_col
-  }
-  else {
-    plot_col <- clusters_col
-    cluster_legend <- "Cluster"
-
-    # subclustered only
-    if (clusters_col == "seurat_subclusters") {
-      cluster_legend <- "Subcluster"
-    }
-
-    Idents(seurat_obj) <- clusters_col
-  }
-
-  # UMAP colored by doublets/singlets
-  p1 <- plot_umap(seurat_obj = seurat_obj, tissue_type = tissue_type,
-                  clrs_specific = colors_doublet, specific_clusters = "Doublet",
-                  specific_col = doublet_col,
-                  plot_by = "cluster_all", plot_label = FALSE,
-                  include_legend = FALSE) +
-          labs(subtitle = details)
-
-  # bar plot of doublets with raw counts
-  df <- data.frame(table(seurat_obj[[]] %>%
-                           select(all_of(plot_col), all_of(doublet_col))))
-  p2 <- ggplot(df,
-               aes(x = !!rlang::sym(plot_col), y = Freq,
-                   fill = !!rlang::sym(doublet_col))) +
-          geom_bar(stat = "identity", position = "dodge",
-                   color = "black", linewidth = 0.2) +
-          geom_text(aes(label = Freq), position = position_dodge(width = 0.9),
-                    vjust = -1, size = 3) +
-          labs(title = paste(tissue_type, "Doublets by", cluster_legend),
-               subtitle = details, x = cluster_legend,
-               y = "Count", fill = doublet_package) +
-          scale_fill_manual(values = colors_doublet) +
-          theme_bw + labels_standard
-
-  # UMAP colored by clusters/annotations
-  if (annotated) {
-    # since we're checking annotation status anyways
-    p2 <- p2 + labels_rotate_x
-
-    p3 <- plot_umap(seurat_obj = seurat_obj, tissue_type = tissue_type,
-                    clrs_specific = clrs_specific,
-                    plot_by = "cluster_all", annotated = TRUE,
-                    annotations_col = plot_col,
-                    include_legend = FALSE)
-  } else {
-    p3 <- plot_umap(seurat_obj = seurat_obj, tissue_type = tissue_type,
-                    plot_by = "cluster_all", clusters_col = clusters_col,
-                    include_legend = FALSE)
-  }
-
-  # bar plot of doublets with percentage counts
-  p4 <- plot_pcts(pcts = calc_pcts(data = seurat_obj[[]],
-                                   meta_group_by = plot_col,
-                                   focus_group = doublet_col),
-                  tissue_type = tissue_type, plot_type = "All",
-                  plot_value = "Doublets",
-                  x_axis = plot_col, x_axis_label = cluster_legend,
-                  fill_type = doublet_col, fill_label = doublet_package,
-                  clrs_specific = colors_doublet, details = details)
-
-  # combine plots
-  p1 + p2 + p3 + p4 +
-    plot_layout(guides = "collect", widths = c(1, 3)) + plot_anno
-}
-```
 
 ## GEX
 
@@ -1661,31 +1350,6 @@ plot_tile <- function(seurat_obj, tissue_type, clrs_specific,
 
 ### Annotation
 
-#### Find markers
-
-```{r search-markers}
-#' This function will return a list of the full markers found within the provided Seurat object based on the provided partial matches.
-#'
-#'
-#' @param seurat_obj The Seurat object.
-#' @param markers List of the first few letters of the marker genes to search the object for.
-#'
-#' @returns A list of markers.
-search_markers <- function(seurat_obj, markers) {
-  markers_list <- c()
-
-  for (marker in markers) {
-    marker <- paste0("^", marker)
-
-    markers_list <-
-      c(markers_list,
-        sort(rownames(seurat_obj)[grepl(marker, rownames(seurat_obj))]))
-  }
-
-  markers_list
-}
-```
-
 #### Get features of interest
 
 ```{r func-get-features-all}
@@ -1766,58 +1430,6 @@ get_cell_types <- function(markers_df) {
     select(Cell_Type_Full, Marker) %>%
     rename(features.plot = Marker) %>%
     mutate(Cell_Type_Full = str_replace_all(Cell_Type_Full, "_", " "))
-}
-```
-
-#### Generate title
-
-```{r func-gen-dot-title}
-#' Generates a title for the DotPlot
-#'
-#' @description
-#' Creates a formatted title string for DotPlots by combining a data description
-#' with marker sources in parentheses.
-#'
-#' @param data_desc Dataset description
-#' @param marker_sources The list of marker sources
-#'
-#' @returns A string with sources comma-separated and in parentheses
-gen_dot_title <- function(data_desc, marker_sources) {
-  paste0(data_desc, " (",
-         str_c(sort(str_replace_all(marker_sources, "_", " ")),
-               collapse = ", "),
-         ")")
-}
-```
-
-#### Feature + violin plot
-
-```{r func-vln-feat-plot}
-#' Plots a Seurat `VlnPlot` and a `FeaturePlot` side by side for the same marker
-#'
-#' @details
-#' Will put the highest expressing cells on top for the latter.
-#' Assumes that you are using the RNA assay.
-#'
-#' @param seurat_obj The Seurat object with GEX data.
-#' @param tissue_type
-#' @param feature The feature of interest
-#'
-#' @returns Two patchworked Seurat plots.
-vln_feat_plot <- function(seurat_obj, tissue_type, feature) {
-  p1 <- VlnPlot(seurat_obj, features = feature, pt.size = 0.1, raster = FALSE) +
-          labels_standard_vln + NoLegend()
-
-  p2 <- FeaturePlot(seurat_obj, features = feature, pt.size = 0.1, order = TRUE,
-                    min.cutoff = 0, label = TRUE, label.size = 3,
-                    raster = FALSE) +
-          labels_standard + clean_umap
-
-  if (!is_missing(tissue_type)) {
-    p2 <- p2 + labs(title = tissue_type)
-  }
-
-  (p1 | p2) & plot_layout(nrow = 1, widths = c(2, 1))
 }
 ```
 
@@ -2014,471 +1626,118 @@ vln_cell_info <- function(seurat_obj, feature, clrs_specific,
 }
 ```
 
-## AIRR
+### Doublets
 
-### Plots
-
-#### Immcantation
-
-```{r func-plot-immune-counts}
-
-
-#' Dot plot of Immcantation values.
+```{r func-layout-doublets}
+#' This function plots an overview of a doublet identification method
 #'
-#' @param counts Immcantation data to plot e.g. countGenes() output.
+#' It assumes that colors_doublet has been defined
+#' Depends on other plots
+#'
+#' @param seurat_obj The Seurat object.
+#' @param tissue_type Blood, Skin.
+#' @param clrs_specific The specific color palette (should be named).
+#' @param plot_by
+#' @param clusters_col Which column in the object stores the clusters.
+#' @param annotated If the cell types have been identified.
+#' @param annotations_col Which column in the object stores the cell types.
+#' @param doublet_col The column containing the doublets information
+#' @param details The optional subtitle.
 #'
 #' @returns
-plot_immune_counts <- function(plt_type, tissue_type = "All", counts, filter_by,
-                               plt_color, clrs_specific,
-                               x_axis, x_axis_label,
-                               y_axis, y_axis_label = "Repertoire Percentage",
-                               y_axis_percent = TRUE,
-                               plt_title, legend_title, legend_exist = FALSE,
-                               pt_size = 1) {
-  # filter out NAs if desired
-  if (!missing(filter_by)) counts <- dplyr::filter(counts, !is.na(!!rlang::sym(filter_by)))
-
-  # filter the data by tissue type if applicable
-  if (tissue_type != "All") {
-    counts <- dplyr::filter(counts, TissueType == tissue_type)
+layout_doublets <- function(seurat_obj, tissue_type, clrs_specific,
+                            clusters_col = "seurat_clusters",
+                            annotated = FALSE,
+                            annotations_col = "annotated_clusters",
+                            doublet_col, doublet_package, details = NULL) {
+  # if you want to use the default ggplot2 colors
+  if (is_missing(clrs_specific)) {
+    clrs_specific <- hue_pal()(n_distinct(seurat_obj[[clusters_col]]))
   }
 
-  # x axis title
-  if (rlang::is_missing(x_axis_label)) x_axis_label <- x_axis
+  # define the legends
+  if (annotated) {
+    plot_col <- annotations_col
+    cluster_legend <- "Cell Type"
 
-  # legend title
-  if (rlang::is_missing(legend_title)) legend_title <- plt_color
+    # subclustered only
+    if (annotations_col == "annotated_subclusters") {
+      cluster_legend <- paste("Subclustered", cluster_legend)
+    }
 
-  # set up the plot
-  if (plt_type == "point") {
-    p <- ggplot(data = counts, aes(x = !!rlang::sym(x_axis), y = !!rlang::sym(y_axis))) +
-           geom_point(aes(color = !!rlang::sym(plt_color)), size = pt_size) +
-           scale_color_manual(name = legend_title,
-                              values = clrs_specific, limits = force)
-  }
-  else if (plt_type == "box") {
-    p <- ggplot(data = counts, aes(x = !!rlang::sym(x_axis), y = !!rlang::sym(y_axis),
-                                   fill = !!rlang::sym(plt_color))) +
-           geom_boxplot(outlier.size = pt_size) +
-           scale_fill_manual(name = legend_title,
-                             values = clrs_specific, limits = force)
+    Idents(seurat_obj) <- annotations_col
   }
   else {
-    cat("Invalid plot type, please try again.")
-  }
+    plot_col <- clusters_col
+    cluster_legend <- "Cluster"
 
-  # add plot labels
-  p <- p + labs(title = paste0(plt_title, " (", tissue_type, ")"),
-                x = x_axis_label, y = y_axis_label)
-
-  # convert to percentage if applicable
-  if (y_axis_percent) {
-    p <- p + scale_y_continuous(labels = percent, expand = expansion(mult = .02))
-  }
-
-  # add remaining styling
-  p <- p + theme_bw + labels_standard
-  if (!legend_exist) p <- p + theme(legend.position = "none")
-
-  return(p)
-}
-```
-
-#### Heatmaps
-
-Based on **OverlapHeatmap_singlecell.R** from Hailong (and Susanna)
-
-##### Sharing matrix
-
-```{r}
-
-
-# This function modified previous overlap heatmap function and is used to show, between two samples
-# in single cell data, the overlap of cells which has same barcode and sequences
-# This script deal wiht samples "P05_PBMC_2_5_Y1" &&  jj == "P05_PBMC_2_0_Y1" separately
-# Will keep all duplicated cells in Year 1
-
-# library(alakazam)
-# library(gplots)
-# library(reshape)
-# library('RColorBrewer')
-# suppressMessages(library(scales))
-# suppressMessages(library(gridExtra))
-
-# find cells having same seq and cell barcode
-
-#' Create sharing matrix for single-cell data between samples.
-#'
-#' @description
-#' This function creates overlap matrices showing shared cells between samples based
-#' on matching barcodes and sequences in single-cell data.
-#'
-#' @details
-#' The function compares cells between samples and identifies those with identical
-#' barcodes and sequences. It returns count, total, and percentage overlap matrices.
-#'
-#' @param clip_df A data frame containing single-cell sequence data.
-#' @param group Column name for grouping samples.
-#' @param cell Column name for cell barcodes. Default is "CELL".
-#' @param seq Column name for sequences. Default is "SEQUENCE_IMGT".
-#' @param order_by Optional vector to specify the order of groups in the output matrices.
-#'
-#' @returns A list containing overlap count, total, and percentage matrices.
-singlecell_sharing_matrix <- function(clip_df, group, cell = "CELL",
-                                      seq = "SEQUENCE_IMGT", order_by = NULL) {
-  # checking the validity of input parameters
-  if (!(group %in% names(clip_df))) {
-    stop("Please supply a valid column label for the 'group' parameter")
-  }
-
-  # extract group names
-  GROUPS <- unique(clip_df[, group])
-  NUM_GROUPS <- length(GROUPS)
-
-  # define clone overlap matrices to be plotted
-  overlap_matrix <- matrix(0, NUM_GROUPS, NUM_GROUPS)
-  dimnames(overlap_matrix) <- list(GROUPS, GROUPS)
-
-  overlap_count <- overlap_matrix # matrix of overlap count
-  overlap_total <- overlap_matrix # matrix of overlap total
-  overlap_percent <- overlap_matrix # matrix of overlap percent
-
-  # calculate the number of overlapped cells
-  for (ii in GROUPS) {
-    for (jj in GROUPS) {
-      # cell in groups i and j
-      cells_ii <- clip_df[clip_df[, group] == ii, cell]
-      cells_jj <- clip_df[clip_df[, group] == jj, cell]
-      # seqs in groups i and j
-      seqs_ii <- clip_df[clip_df[, group] == ii, seq]
-      seqs_jj <- clip_df[clip_df[, group] == jj, seq]
-
-      # find the number of cells having same seq and cell barcode shared between groups i and j
-      # TO reduce match time, find shared cells first and then compare seq for those cells
-      shared_cells <- unique(intersect(cells_ii, cells_jj))
-      index_ii <- match(shared_cells, cells_ii)
-      index_jj <- match(shared_cells, cells_jj)
-
-      num_shared_cells <- length(which(seqs_ii[index_ii] == seqs_jj[index_jj]))
-
-      total_ii_cells <- length(unique(cells_ii))
-      total_jj_cells <- length(unique(cells_jj))
-      total_cells <- min(total_ii_cells, total_jj_cells)
-      # total_cells = length(union(seqs_ii, seqs_jj))
-
-      # find the percentage of clones shared relative to the total number of clones
-      perc_shared_clones <- round(num_shared_cells / total_cells * 100, 4)
-
-      # Fill in matrices
-      overlap_count[ii, jj] <- num_shared_cells
-      overlap_total[ii, jj] <- total_cells
-      overlap_percent[ii, jj] <- perc_shared_clones
-
-      #if (ii == jj) { overlap_perc_matrix[ii, jj] = length(seqs_ii) }
-    }
-  }
-  if (!is.null(order_by)) {
-    overlap_count <- overlap_count[order_by, order_by]
-    overlap_total <- overlap_total[order_by, order_by]
-    overlap_percent <- overlap_percent[order_by, order_by]
-  }
-
-  return(createOverlap(overlap_count, overlap_total, overlap_percent))
-}
-```
-
-##### Remove duplicates 1
-
-```{r}
-
-
-#' Remove cells with same barcode and sequences between samples.
-#'
-#' @description
-#' Identifies and removes duplicate cells that have identical barcodes and sequences
-#' across different sample groups.
-#'
-#' @details
-#' This function finds cells that appear in multiple samples with the same barcode
-#' and sequence, marking them for removal to eliminate cross-sample contamination.
-#'
-#' @param clip_df A data frame containing single-cell sequence data.
-#' @param group Column name for grouping samples.
-#' @param cell Column name for cell barcodes. Default is "CELL".
-#' @param seq Column name for sequences. Default is "SEQUENCE_IMGT".
-#'
-#' @returns A data frame with duplicate cells removed.
-removeSingleCellDuplicate <- function(clip_df, group,
-                                      cell = "CELL", seq = "SEQUENCE_IMGT") {
-  # checking the validity of input parameters
-  if (!(group %in% names(clip_df))) {
-    stop("Please supply a valid column label for the 'group' parameter")
-  }
-
-  GROUPS <- unique(clip_df[, group])
-  dup_index <- c() # index of duplicates
-
-  # cells with same 1) barcode and 2) sequences between samples (group)
-  for (ii in GROUPS) {
-    for (jj in GROUPS) {
-      if (ii != jj) {
-      # cells in groups i and j
-      cells_ii <- clip_df[clip_df[, group] == ii, cell]
-      cells_jj <- clip_df[clip_df[, group] == jj, cell]
-
-      # seqs in groups i and j
-      seqs_ii <- clip_df[clip_df[, group] == ii, seq]
-      seqs_jj <- clip_df[clip_df[, group] == jj, seq]
-
-      # find the number of cells having same seq and cell barcode shared between groups i and j
-      # TO reduce match time, find shared cells first and then compare seq for those cells
-      shared_cells <- unique(intersect(cells_ii, cells_jj))
-      if (length(shared_cells) != 0) {
-        #find index of shared cells in original data
-        index_ii <- match(shared_cells, cells_ii)
-        index_jj <- match(shared_cells, cells_jj)
-
-        for (i in 1:length(shared_cells)) {
-          # indicate removal if seqs are same too
-          if (seqs_ii[index_ii[i]] == seqs_jj[index_jj[i]]) {
-            index_tmp1 <- intersect(which(clip_df[, cell] == shared_cells[i]),
-                                    which(clip_df[, seq] == seqs_ii[index_ii[i]]))
-              dup_index <- c(dup_index,
-                             intersect(index_tmp1, which(clip_df[, group] == ii)))
-              dup_index <- c(dup_index,
-                             intersect(index_tmp1, which(clip_df[, group] == jj)))
-          }
-        }
-      }
-      }
-    }
-  }
-
-  dup_index <- unique(dup_index)
-
-  if (length(dup_index) == 0) { # no duplicate is found
-    return(clip_df)
-  }
-  else {
-    return(clip_df[-dup_index, ])
-  }
-}
-```
-
-##### Remove duplicates 2
-
-```{r}
-
-
-#' Remove all duplicates iteratively from single cell data.
-#'
-#' @description
-#' Main function to remove duplicates in single cell data by repeatedly calling
-#' removeSingleCellDuplicate until no more duplicates are found.
-#'
-#' @details
-#' This function may need multiple cycles to remove all duplicates, as removing
-#' some duplicates may reveal additional ones.
-#'
-#' @param clip_df A data frame containing single-cell sequence data.
-#' @param group Column name for grouping samples.
-#' @param cell Column name for cell barcodes. Default is "CELL".
-#' @param seq Column name for sequences. Default is "SEQUENCE_IMGT".
-#'
-#' @returns A data frame with all duplicate cells removed.
-removeSingleCellDuplicates <- function(clip_df, group,
-                                       cell = "CELL", seq = "SEQUENCE_IMGT") {
-  # may need multiple cycles to remove duplicates
-  cycle.index <- 1
-  cat("Remove duplicates - cycle", cycle.index, "\n")
-
-  df1 <- removeSingleCellDuplicate(clip_df, group, cell, seq)
-  df2 <- removeSingleCellDuplicate(df1, group, cell, seq)
-
-  while (dim(df1)[1] != dim(df2)[1]) { # stop until no duplicate is found
-    cycle.index <- cycle.index + 1
-    cat("De-duplication cycle", cycle.index, ".\n")
-
-    df1 <- df2
-    df2 <- removeSingleCellDuplicate(df1, group, cell, seq)
-  }
-
-  return(df2)
-}
-```
-
-##### Create overlaps
-
-```{r}
-
-
-# S4 class defining a Overlap object
-setClass("Overlap", slots = c(overlap_count = "matrix",
-                              overlap_total = "matrix",
-                              overlap_percent = "matrix"))
-
-
-#' Create an Overlap S4 object.
-#'
-#' @description
-#' Creates an S4 object of class "Overlap" containing matrices for overlap counts,
-#' totals, and percentages between samples.
-#'
-#' @param overlap_count Matrix containing overlap counts between samples.
-#' @param overlap_total Matrix containing total counts for each comparison.
-#' @param overlap_percent Matrix containing overlap percentages.
-#'
-#' @returns An Overlap S4 object containing the three matrices.
-createOverlap <- function(overlap_count = overlap_count,
-                          overlap_total = overlap_total,
-                          overlap_percent = overlap_percent ) {
-  # Define RegionDefinition object
-  overlap <- new("Overlap", overlap_count = overlap_count,
-                            overlap_total = overlap_total,
-                            overlap_percent = overlap_percent)
-
-  return(overlap)
-}
-```
-
-##### Plot overlaps
-
-```{r}
-
-
-# https://stackoverflow.com/questions/69666867/constant-warning-message-with-reshapemelt-in-r
-
-#' Plot overlap heatmap for single-cell data.
-#'
-#' @description
-#' Creates a heatmap visualization showing overlaps between samples in single-cell data,
-#' with customizable region of interest and text sizes.
-#'
-#' @details
-#' This function visualizes overlap matrices as heatmaps with counts on diagonals
-#' and percentages in off-diagonal elements.
-#'
-#' @param list_objOverlap List of Overlap objects to plot.
-#' @param titleText Title for the plot.
-#' @param subtitleText Subtitle for the plot.
-#' @param ROI Region of interest to subset the data.
-#' @param order_by Vector specifying the order of samples.
-#' @param sizeDiag Size of diagonal text elements.
-#' @param sizeCount Size of count text elements.
-#' @param sizePercent Size of percentage text elements.
-#'
-#' @returns A ggplot heatmap showing sample overlaps.
-plotOverlapSingleCell <- function(list_objOverlap = "",
-                                  titleText = "", subtitleText = "",
-                                  ROI = NULL, order_by = NULL,
-                                  sizeDiag = 3.5, sizeCount = 5,
-                                  sizePercent = 4) {
-  list_data_m <- list()
-
-  for (x in seq_along(list_objOverlap)) {
-    objOverlap <- list_objOverlap[[x]]
-    if (!is.null(ROI)) {
-      if (length(ROI) > 1) {
-        roi <- match(ROI, row.names(objOverlap@overlap_count))
-        roi <- roi[!is.na(roi)]
-      }
-      else {
-        roi <- which(grepl(ROI, row.names(objOverlap@overlap_count)))
-      }
-
-      objOverlap@overlap_count <- objOverlap@overlap_count[roi, roi]
-      objOverlap@overlap_total <- objOverlap@overlap_total[roi, roi]
-      objOverlap@overlap_percent <- objOverlap@overlap_percent[roi, roi]
+    # subclustered only
+    if (clusters_col == "seurat_subclusters") {
+      cluster_legend <- "Subcluster"
     }
 
-    data_m_count <- reshape::melt(objOverlap@overlap_count)
-    data_m <- reshape::melt(objOverlap@overlap_percent)
-
-    data_m$Y1 <- cut(data_m$value,
-                     breaks = c(0, 0.00001, 1, 2, 3, 4, 6,
-                                10, 20, 30, 99.99999, 100),
-                     right = FALSE, include.lowest = TRUE)
-    copa <- c("white",
-              colorRampPalette(pals::brewer.oranges(n = 9))(nlevels(data_m$Y1) - 1))
-    names(copa) <- levels(data_m$Y1)
-
-    names(data_m)[3] <- "Percent"
-    data_m$Count <- data_m_count$value
-    data_m <- data_m[ is.finite(data_m$Percent), ]
-
-    # Format value to print
-    data_m$Value <- round(data_m$Percent, 2)
-    data_m$Value[ data_m$Value == 0 ] <- ""
-
-    # Non diagonals are counts/percent
-    data_m$Value[ data_m$Value != "" ] <- data_m$Count[ data_m$Value != "" ]
-    data_m$Value[ as.vector(data_m$X1) == as.vector(data_m$X2) ] <- ""
-
-    data_m$ValuePercent <- data_m$Value
-    data_m$ValuePercent[ data_m$Value != "" ] <- data_m$Percent[ data_m$Value != "" ]
-
-    data_m$ValuePercent <- unlist(
-      sapply(data_m$ValuePercent,
-             function(x) {
-               if (x != "") return(paste0(format(round(as.numeric(x), 1), nsmall = 1), "%"))
-               else return("")
-               }
-             )
-      )
-
-    # Diagonals are counts
-    data_m$DiagonalCount <- ""
-    data_m$DiagonalCount[as.vector(data_m$X1) == as.vector(data_m$X2)] <-
-      data_m$Count[as.vector(data_m$X1) == as.vector(data_m$X2)]
-
-    data_m$X1 <- factor(data_m$X1, levels = order_by)
-    data_m$X2 <- factor(data_m$X2, levels = order_by)
-
-    list_data_m[[x]] <- data_m
+    Idents(seurat_obj) <- clusters_col
   }
 
-  data_m1 <- list_data_m[[1]]
-  data_m2 <- list_data_m[[2]]
+  # UMAP colored by doublets/singlets
+  p1 <- plot_umap(seurat_obj = seurat_obj, tissue_type = tissue_type,
+                  clrs_specific = colors_doublet, specific_clusters = "Doublet",
+                  specific_col = doublet_col,
+                  plot_by = "cluster_all", plot_label = FALSE,
+                  include_legend = FALSE) +
+          labs(subtitle = details)
 
-  data_m <- data_m1
-  numbItems <- nrow(list_objOverlap[[1]]@overlap_count)
-  pos <- as.vector(upper.tri(matrix(NA, nrow = numbItems, ncol = numbItems, byrow = TRUE)))
+  # bar plot of doublets with raw counts
+  df <- data.frame(table(seurat_obj[[]] %>%
+                           select(all_of(plot_col), all_of(doublet_col))))
+  p2 <- ggplot(df,
+               aes(x = !!rlang::sym(plot_col), y = Freq,
+                   fill = !!rlang::sym(doublet_col))) +
+          geom_bar(stat = "identity", position = "dodge",
+                   color = "black", linewidth = 0.2) +
+          geom_text(aes(label = Freq), position = position_dodge(width = 0.9),
+                    vjust = -1, size = 3) +
+          labs(title = paste(tissue_type, "Doublets by", cluster_legend),
+               subtitle = details, x = cluster_legend,
+               y = "Count", fill = doublet_package) +
+          scale_fill_manual(values = colors_doublet) +
+          theme_bw + labels_standard
 
-  data_m$Value[pos] <- data_m2$Value[pos]
-  data_m$ValuePercent[pos] <- data_m2$ValuePercent[pos]
-  data_m$DiagonalCountLower <- data_m$DiagonalCount
-  data_m$DiagonalCount <- data_m2$DiagonalCount
-  data_m$Y1[pos] <- data_m2$Y1[pos]
+  # UMAP colored by clusters/annotations
+  if (annotated) {
+    # since we're checking annotation status anyways
+    p2 <- p2 + labels_rotate_x
 
-  p <- ggplot(data = data_m, aes(X1, X2)) +
-        geom_tile(aes(fill = Y1), color = "gray90") +
-        geom_text(aes(label = DiagonalCount), size = sizeDiag,
-                  angle = 50, color = "white", vjust = -.5, hjust = 0.5) +
-        geom_text(aes(label = DiagonalCountLower), size = sizeDiag,
-                  angle = 50, color = "white", vjust = 1.5, hjust = 0.5) +
-        geom_text(aes(label = Value), size = sizeCount,
-                  color = "black", vjust = 0) +
-        geom_text(aes(label = ValuePercent), size = sizePercent,
-                  color = "black", vjust = 1.4) +
-        scale_fill_manual(name = "% Overlap",
-                          breaks = names(copa), values = copa,
-                          na.value = "white") + # guide = "none"
-        annotate("segment", x = 0.5, xend = numbItems + .5, y = 0.5,
-                 yend = numbItems + .5, color = "white") +
-        labs(title = titleText, subtitle = subtitleText, x = "", y = "") +
-        theme_bw + labels_standard + labels_rotate_x +
-        theme(axis.text.x = element_text(color = "black", size = 10),
-              axis.text.y = element_text(color = "black", size = 10, hjust = 0),
-              axis.ticks = element_blank(),
-              text = element_text(size = 12, color = "black"))
+    p3 <- plot_umap(seurat_obj = seurat_obj, tissue_type = tissue_type,
+                    clrs_specific = clrs_specific,
+                    plot_by = "cluster_all", annotated = TRUE,
+                    annotations_col = plot_col,
+                    include_legend = FALSE)
+  } else {
+    p3 <- plot_umap(seurat_obj = seurat_obj, tissue_type = tissue_type,
+                    plot_by = "cluster_all", clusters_col = clusters_col,
+                    include_legend = FALSE)
+  }
 
-  return(p)
+  # bar plot of doublets with percentage counts
+  p4 <- plot_pcts(pcts = calc_pcts(data = seurat_obj[[]],
+                                   meta_group_by = plot_col,
+                                   focus_group = doublet_col),
+                  tissue_type = tissue_type, plot_type = "All",
+                  plot_value = "Doublets",
+                  x_axis = plot_col, x_axis_label = cluster_legend,
+                  fill_type = doublet_col, fill_label = doublet_package,
+                  clrs_specific = colors_doublet, details = details)
+
+  # combine plots
+  p1 + p2 + p3 + p4 +
+    plot_layout(guides = "collect", widths = c(1, 3)) + plot_anno
 }
 ```
 
-#### Overlays
+## AIRR
 
-##### General
+### Overlays
 
 ```{r func-plot-immune-overlay}
 #' This function plots the annotated UMAPs alongside the TCR overlays.
@@ -2604,9 +1863,7 @@ plot_immune_overlay <- function(seurat_obj, tissue_type, airr_type,
 }
 ```
 
-### Add information
-
-#### Families and genes
+### Add family and gene info
 
 ```{r func-add-family-info}
 # TO DO: Add an option to add them in a particular order in the columns
@@ -2672,53 +1929,6 @@ factor_family_info <- function(airr_db) {
 }
 ```
 
-#### Bin mutation frequency
-
-```{r}
-#' Bin the mutation frequency
-#'
-#' @description
-#' Creates binned categories for mutation frequency values in a Seurat object
-#' to facilitate visualization and analysis.
-#'
-#' @details
-#' The function creates categorical bins from continuous mutation frequency values.
-#' When more_bins is TRUE, it uses a more granular binning scheme.
-#'
-#' @param seurat_obj The Seurat object.
-#' @param more_bins Use more bins.
-#' @param col The name of the new column.
-#'
-#' @returns The provided Seurat object with a new binned mu_freq column.
-bin_mu_freq <- function(seurat_obj, more_bins = TRUE, col = "mu_freq_bins") {
-  # get the current mutation frequencies
-  mutation_frequencies <- seurat_obj$mu_freq
-  mutation_frequencies[is.na(mutation_frequencies)] <- -1
-  # mutation_frequencies <- mutation_frequencies[!is.na(mutation_frequencies)]
-  max_mu_freq <- max(mutation_frequencies)
-
-  # define the bins
-  if (more_bins) {
-    # bins <- seq(0, round(max_mu_freq, digits = 1), by = 0.05)
-    bins <- c(-1, 0, 0.01, 0.04, 0.1, max_mu_freq + 0.001) # for rounding
-    labels <- c("0%", "0% to 1%", "1% to 5%", "5% to 10%",
-                paste0("10% to ", round(100 * max_mu_freq), "%"))
-
-    seurat_obj[[col]] <-
-      cut(mutation_frequencies, breaks = bins, labels = labels)
-  }
-  else { # keep it simple
-    bins <- c(-1, 0, 0.01, max_mu_freq + 0.001) # for rounding
-    labels <- c("0%", "0% to 1%", ">1%")
-
-    seurat_obj[[col]] <-
-      cut(mutation_frequencies, breaks = bins, labels = labels)
-  }
-
-  return(seurat_obj)
-}
-```
-
 ## GEX & AIRR
 
 ### Add AIRR to GEX
@@ -2727,53 +1937,23 @@ bin_mu_freq <- function(seurat_obj, more_bins = TRUE, col = "mu_freq_bins") {
 #' Add AIRR information to a GEX Seurat object.
 #'
 #' @details
-#' Assumes that the BCR/TCR data includes light/alpha chains.
+#' Assumes that the TCR data includes alpha chains.
 #' Collapsed light chains are alphabetized.
 #'
 #' @param seurat_obj The Seurat object.
-#' @param airr_type BCR or TCR.
+#' @param airr_type TCR
 #' @param combined_airr AIRR formatted data frame with heavy and light chains
 #' @param airr_cols
 #' @param overview
 #'
 #' @returns The Seurat object with AIRR columns added to the metadata.
-gex_add_airr <- function(seurat_obj, airr_type = "BCR",
+gex_add_airr <- function(seurat_obj, airr_type = "TCR",
                          combined_airr, airr_cols, overview = TRUE) {
   airr_col <- paste0("Has_", airr_type)
   airr_type <- paste0(airr_type, "s")
 
   # Seurat only takes unique cell ids, hence the filter to heavy/beta chains
-  if (airr_type == "BCRs") {
-    # save light chain information
-    data_heavy <- (dplyr::filter(combined_airr, locus == "IGH"))$Cell_ID_Unique
-    data_light <- (dplyr::filter(combined_airr, locus != "IGH"))$Cell_ID_Unique
-    data_paired <- data_heavy[which(data_heavy %in% data_light)]
-
-    # select columns of interest from the AIRR data
-    combined_airr_select_heavy <-
-      combined_airr %>%
-        dplyr::filter(locus == "IGH") %>%
-        select(all_of(airr_cols)) %>%
-        mutate(Has_BCR = TRUE, paired_light = Cell_ID_Unique %in% data_paired,
-               .before = Cell_ID_Unique)
-
-    # pick out some light chain info (this is inelegant, but roll with it)
-    # you have to pivot and combine since there can be multiple light chains
-    combined_airr_select_light <-
-      combined_airr %>%
-      dplyr::filter(locus != "IGH") %>%
-      select(Cell_ID_Unique, locus, v_call_family, j_call_family) %>%
-      pivot_wider(names_from = locus,
-                  values_from = c(v_call_family, j_call_family),
-                  values_fn = function(x) paste(sort(x), collapse = ", "))
-
-    # add in the light chain info
-    combined_airr_select <-
-      left_join(combined_airr_select_heavy, combined_airr_select_light,
-                by = join_by(Cell_ID_Unique)) %>%
-      relocate(v_call_family_IGK, v_call_family_IGL, .before = v_call_gene) %>%
-      relocate(j_call_family_IGK, j_call_family_IGL, .before = j_call_gene)
-  } else { # TCRs
+  if (airr_type == "TCRs") {
     # save alpha chain information
     data_beta <- (dplyr::filter(combined_airr, locus == "TRB"))$Cell_ID_Unique
     data_alpha <- (dplyr::filter(combined_airr, locus != "TRB"))$Cell_ID_Unique
@@ -2805,7 +1985,7 @@ gex_add_airr <- function(seurat_obj, airr_type = "BCR",
   }
 
   # make select columns into alphabetized factors (useful for plotting later)
-  for (col in c("paired_light", "paired_alpha", "Isotype", "c_call", "locus")) {
+  for (col in c("paired_alpha", "c_call", "locus")) {
     if (col %in% names(combined_airr_select)) {
       combined_airr_select[[col]] <-
         factor(combined_airr_select[[col]],
@@ -2831,16 +2011,7 @@ gex_add_airr <- function(seurat_obj, airr_type = "BCR",
   # print out an overview of the integration
   if (overview) {
     # paired chain info
-    if (airr_type == "BCRs") {
-      main_chain <- "heavy"
-
-      message <-
-        paste("There are",
-              nrow(dplyr::filter(combined_airr_select, get(airr_col))),
-              main_chain, "chain", airr_type, "being integrated in,",
-              nrow(dplyr::filter(combined_airr_select, paired_light == "TRUE")),
-              "of which have at least one paired light chain.")
-    } else {
+    if (airr_type == "TCRs") {
       main_chain <- "beta"
 
       message <-
@@ -2871,7 +2042,7 @@ gex_add_airr <- function(seurat_obj, airr_type = "BCR",
   # check that cell counts match
   # ncol(seurat_obj@assays$RNA) == nrow(combined_airr_select_obj)
 
-  # integrate BCR data with the GEX Seurat object
+  # integrate TCR data with the GEX Seurat object
   # you could also just bind_cols with seurat_obj[[]]
   for (meta_col in colnames(combined_airr_select_obj)) {
     seurat_obj[[meta_col]] <- combined_airr_select_obj[[meta_col]]
@@ -2896,7 +2067,7 @@ gex_add_airr <- function(seurat_obj, airr_type = "BCR",
 #' @param gex_airr_select
 #'
 #' @returns A text printout of the GEX/AIRR integration.
-gex_airr_overview <- function(seurat_obj, tissue_type, airr_type,
+gex_airr_overview <- function(seurat_obj, tissue_type, airr_type = "TCR",
                               airr_select, gex_airr_select) {
   airr_col <- paste0("Has_", airr_type)
   airr_type <- paste0(airr_type, "s")
@@ -2906,10 +2077,10 @@ gex_airr_overview <- function(seurat_obj, tissue_type, airr_type,
                    tolower(tissue_type), airr_type, "being integrated in")
 
   # paired light chain info
-  if (airr_type == "BCRs") {
+  if (airr_type == "TCRs") {
     message <- paste0(message, " (",
-                      nrow(dplyr::filter(gex_airr_select, paired_light)),
-                      " of which have paired light chains),")
+                      nrow(dplyr::filter(gex_airr_select, paired_alpha)),
+                      " of which have paired alpha chains),")
   }
 
   message <- paste(message, "which covers",
@@ -2930,8 +2101,6 @@ gex_airr_overview <- function(seurat_obj, tissue_type, airr_type,
 ### Cluster checks
 
 ```{r func-clusters-gex-airr}
-
-
 #' [Description]
 #'
 #' @details
@@ -2940,13 +2109,13 @@ gex_airr_overview <- function(seurat_obj, tissue_type, airr_type,
 #' @param seurat_obj The Seurat object.
 #' @param clusters_col The current column in the Seurat object that you want to annotate on e.g. seurat_clusters or seurat_subclusters.
 #' @param annotations_col
-#' @param airr_type BCR or TCR.
+#' @param airr_type TCR
 #' @param cell_types
 #' @param paired Whether or not to include paired light/alpha information.
 #'
 #' @returns A table with percentages for the AIRR data and main cell type
 clusters_gex_airr <- function(seurat_obj, clusters_col, annotations_col,
-                              airr_type, cell_types, paired = TRUE) {
+                              airr_type = "TCR", cell_types, paired = TRUE) {
   airr_col <- paste0("Has_", airr_type)
   gex_col <- paste("Has", substr(airr_type, 0, 1), "Cells", sep = "_")
 
@@ -2969,8 +2138,7 @@ clusters_gex_airr <- function(seurat_obj, clusters_col, annotations_col,
   percs <- merge(seurat_obj_gex, seurat_obj_airr)
 
   if (paired) {
-    if (airr_type == "BCR") paired_col <- "paired_light"
-    else paired_col <- "paired_alpha"
+    if (airr_type == "TCR") paired_col <- "paired_alpha"
 
     seurat_obj_paired <- calc_pcts(data = seurat_obj[[]],
                                    meta_group_by = clusters_col,
@@ -3021,8 +2189,6 @@ subcluster_overview <- function(seurat_obj, seurat_obj_sub,
 ### Match clusters
 
 ```{r func-match-sub-orig}
-
-
 #' This function returns the original Seurat clusters from the full tissues that the annotated subclusters map back to
 #'
 #' @param seurat_obj The Seurat object for the full tissue.
@@ -3066,8 +2232,6 @@ match_sub_orig <- function(seurat_obj, seurat_obj_sub, cell_types,
 ### Recombine subclusters
 
 ```{r func-recombine-subclusters}
-
-
 #' This function replaced B and/or T cell type labels with annotated subpopulations based on cell ID.
 #'
 #' @details
@@ -3148,8 +2312,6 @@ recombine_subclusters <- function(seurat_obj,
 ### Subset frequencies
 
 ```{r func-plot-subsets}
-
-
 #' This function will return a ggplot2 of subset frequencies for blood or skin data.
 #'
 #' @details
@@ -3385,11 +2547,9 @@ plot_subsets <- function(seurat_obj, tissue_type, clrs_specific,
 Taken directly from Hailong's "run_de.R" file, which itself pulls from the
 [original manuscript's analysis](https://github.com/neurorestore/DE-analysis/tree/167f55a5bff09f23cfd5b535763e13db2bc278b3).
 
-#### Seurat
+#### Seurat DE
 
 ```{r func-seurat-de}
-
-
 #' Run a DE analysis within each cell type using Seurat
 #'
 #' @details
@@ -3499,8 +2659,6 @@ seurat_DE = function(sc, de_test, params = list()) {
 #### Pseudobulk
 
 ```{r func-pseudobulk-de}
-
-
 #' Run a DE analysis within each cell type using pseudobulk methods
 #'
 #' @details
@@ -3796,182 +2954,7 @@ pseudobulk_DE = function(sc,
 }
 ```
 
-#### Bulk
-
-```{r func-bulk-de}
-
-
-#' Run a DE analysis on a bulk dataset object including targets
-#'
-#' @param x
-#' @param targets
-#' @param de_test
-#' @param used_voom
-#' @param params
-#'
-#' @returns
-bulk_DE = function(x, targets,
-                   de_test = c("bulk_limma", "bulk_DESeq2", "bulk_edgeR"),
-                   used_voom = "auto", params = list()) {
-  # split out params
-  params_vec = strsplit(de_test, ",") %>%
-    unlist() %>%
-    extract(-1)
-  for (param_idx in seq_along(params_vec)) {
-    param_name = gsub("\\?.*$", "", params_vec[param_idx])
-    param_value = gsub("^.*\\?", "", params_vec[param_idx])
-    params[[param_name]] = param_value
-  }
-  de_test = gsub(",.*$", "", de_test)
-  ## print them
-  message("running ", de_test, " with params: ", names(params), params)
-
-  if (de_test == "bulk_limma") {
-    # library(limma)
-
-    # run limma
-    if (n_distinct(targets$label) > 2)
-      return(NULL)
-    # create design
-    design = model.matrix(~ label, data = targets)
-
-    # limma-trend vs. limma-voom
-    used_voom = FALSE
-    if (params$mode == "trend") {
-      # library(edgeR)
-      dge = DGEList(as.matrix(x), group = targets$label)
-      dge = calcNormFactors(dge)
-      x = new("EList")
-      x$E = edgeR::cpm(dge, log = TRUE, prior.count = 3)
-    } else {
-      ## limma-voom: default
-      counts = all(as.matrix(x) %% 1 == 0)
-      if (counts) {
-        x = voom(as.matrix(x), design)
-        used_voom = T
-      }
-    }
-
-    # run limma
-    trend_bool = params$mode == "trend"
-    DE = lmFit(x, design) %>%
-      eBayes(trend = trend_bool, robust = trend_bool) %>%
-      # extract all coefs except intercept
-      topTable(number = Inf, coef = -1) %>%
-      rownames_to_column("gene") %>%
-      # flag voom usage
-      mutate(used_voom = used_voom) %>%
-      # flag test used
-      mutate(test = "bulk_limma")
-    return(DE)
-  } else if (de_test == "bulk_DESeq2") {
-    # library(DESeq2)
-
-    # run DEseq2
-    # create DESeq dataset
-    dds = DESeqDataSetFromMatrix(countData = x, colData = targets,
-                                 design = ~ label)
-
-    # set defaults on params
-    if (!"test" %in% names(params))
-      params$test = "LRT"
-    if (!"fitType" %in% names(params))
-      params$fitType = "parametric"
-    if (!"sfType" %in% names(params))
-      params$sfType = "poscounts"
-    if (!"independentFiltering" %in% names(params))
-      params$independentFiltering = FALSE
-    if (!"betaPrior" %in% names(params))
-      params$betaPrior = FALSE
-
-    # run differential expression
-    if (params$test == "Wald") {
-      # remove "reduced" argument for Wald test
-      dds = try(DESeq(dds,
-                      test = params$test,
-                      # reduced = ~ 1,
-                      fitType = params$fitType,
-                      sfType = params$sfType,
-                      betaPrior = params$betaPrior))
-
-    } else {
-      dds = try(DESeq(dds,
-                      test = params$test,
-                      reduced = ~ 1,
-                      fitType = params$fitType,
-                      sfType = params$sfType,
-                      betaPrior = params$betaPrior))
-    }
-    res = results(dds,
-                  independentFiltering = params$independentFiltering)
-
-    # write
-    DE = as.data.frame(res) %>%
-      mutate(gene = rownames(x)) %>%
-      # flag test used
-      mutate(test = "bulk_DESeq2")
-    return(DE)
-  } else if (de_test == "bulk_edgeR") {
-    # library(edgeR)
-
-    # run edgeR
-    design = model.matrix(~ label, data = targets)
-    y = DGEList(counts = x, group = targets$label)
-
-    # set defaults on params
-    if (!"test" %in% names(params))
-      params$test = "LRT"
-    if (!"method" %in% names(params))
-      params$method = "TMM"
-    if (!"trend.method" %in% names(params))
-      params$trend.method = "locfit"
-    if (!"robust" %in% names(params))
-      params$robust = FALSE
-
-    y = calcNormFactors(y, method = params$method)
-    if (params$robust) {
-      y = estimateGLMRobustDisp(y, design,
-                                trend.method = params$trend.method)
-    } else {
-      y = estimateDisp(y, design, trend.method = params$trend.method)
-    }
-
-    if (params$test == "LRT") {
-      fit = glmFit(y, design = design)
-      test = glmLRT(fit)
-    } else {
-      # QLF: default
-      fit = glmQLFit(y, design)
-      test = glmQLFTest(fit, coef = -1)
-    }
-
-    # write
-    DE = topTags(test, n = Inf) %>%
-      as.data.frame() %>%
-      rownames_to_column("gene") %>%
-      # flag test used
-      mutate(test = "bulk_edgeR")
-    return(DE)
-  }
-
-  # standardize column names to match Seurat output
-  colnames(DE) %<>%
-    fct_recode("p_val" = "p.value",  ## DESeq2
-               "p_val" = "p.value",  ## t/wilcox
-               "p_val" = "P.Value",  ## limma
-               "p_val" = "PValue", ## edgeR
-               "p_val_adj" = "padj", ## DESeq2/t/wilcox
-               "p_val_adj" = "adj.P.Val", ## limma
-               "p_val_adj" = "FDR", ## edgeER
-               "avg_logFC" = "log2FoldChange", ## DESEeq2
-               "avg_logFC" = "logFC" ## limma/edgeR
-    ) %>%
-    as.character()
-  return(DE)
-}
-```
-
-#### Run
+#### Run DE
 
 ```{r func-run-de}
 #' Run a scRNAseq differential expression analysis, given a Seurat object.
@@ -4029,199 +3012,6 @@ run_DE = function(sc, de_test, params = list(), ...) {
 }
 ```
 
-#### Plotting
-
-```{r func-plot-pathways}
-#' Plot pathways for each cell type using Enrichr.
-#'
-#' @description
-#' Performs pathway enrichment analysis for differentially expressed genes
-#' and creates enrichment plots for each cell type.
-#'
-#' @details
-#' This will upload data to Enrichr.
-#' Note that the labels for the x and y axes are inverted. There are also some labelling options within `plotEnrich` itself.
-#'
-#' @param de The DE results.
-#' @param dbs The reference gene set.
-#' @param tissue_type The tissue type.
-#' @param label_genes Whether or not to label the genes on the plot.
-#'
-#' @returns A list of enrichment plots for each cell type.
-plot_pathways <- function(de, dbs, tissue_type, label_genes = FALSE) {
-  for (cell_type in names(de)) {
-    temp <- de[[cell_type]][de[[cell_type]]$p_val_adj < 0.1, ]
-
-    # sometimes NAs can get through
-    temp <- dplyr::filter(temp, !is.na(gene))
-    enriched <- enrichr(genes = temp$gene, databases = dbs)[[dbs]]
-
-    # if (nrow(temp) > 0) {
-    if (!is.null(enriched) && nrow(enriched) > 0) {
-      p <- plotEnrich(enriched, showTerms = 20,
-                      numChar = 40, y = "Count", orderBy = "P.value") +
-             labs(title = paste0(tissue_type, " (", cell_type, ")"),
-                  subtitle = paste("Genes with q_val < 0.05:", length(temp$gene)),
-                  caption = paste("Gene set:", str_replace_all(dbs, "_", " ")),
-                  x = "Enriched Terms", y = "Gene Count") +
-             labels_standard
-
-      if (label_genes) {
-        p <-
-          p +
-          geom_text(aes(label = str_replace_all(p$data$Genes, ";", ", "),
-                        y = 0),
-                    color = "white", size = 2.5, hjust = 0, fontface = "bold")
-        }
-
-      plot(p)
-      # }
-    }
-    else {
-      cat(paste0("No enriched terms found for ", cell_type, ".\n\n"))
-    }
-  }
-}
-```
-
-## Supplemental
-
-### Clones
-
-```{r func-plot-clones}
-#' Plot the clones.
-#'
-#' @details
-#' Helps with selecting monoclonal antibodies
-#'
-#' @param barcodes A dataframe contains info about BCRs of interest
-#' @param groups For `countClones`
-#' @param clone For `countClones`
-#' @param barcodes_type The reason for looking at those particular BCRs e.g. isotype
-#' @param title_details More information for the title
-#' @param mult_clones Whether or not to highlight multiple clones vs. singletons
-#' @param clrs_specific The specific color palette (should be named).
-#'
-#' @returns
-plot_clones <- function(barcodes, groups = NULL, clone = "clone_id",
-                        barcodes_type, title_details = "Clone Count",
-                        mult_clones = TRUE,
-                        clrs_specific = colors_binary_clones) {
-  count_clones <- countClones(barcodes, groups = groups, clone = clone)
-
-  # set up the base plot
-  p <- ggplot(count_clones, aes(x = clone_id, y = seq_count)) +
-         labs(title = paste(barcodes_type, "Clone Sizes by", title_details),
-              x = "Clone ID", y = "Count",
-              caption = paste("Total Clones:", nrow(count_clones), "|",
-                              "Total Barcodes:", nrow(barcodes)))
-
-  # if you want to highlight expanded clones
-  if (mult_clones) {
-    p <- p + geom_bar(stat = "identity", aes(fill = seq_count > 1),
-                      color = "black", linewidth = 0.2) +
-             labs(fill = "More than 1 Clone?")
-  }
-  else {
-    p <- p + geom_bar(stat = "identity", aes(fill = !!rlang::sym(groups)),
-                  color = "black", linewidth = 0.2) +
-             labs(fill = title_details)
-  }
-
-  # plot with the remaining settings
-  p + scale_y_continuous(breaks = breaks_pretty(), expand = c(0, 0)) +
-      scale_fill_manual(values = clrs_specific) +
-      theme_bw + labels_standard + labels_rotate_x
-}
-```
-
-### Lineage trees
-
-```{r read-trees}
-#' Reads in the trees RDS file from airrflow if it exists in the sample subdirectory
-#'
-#' @description
-#' Attempts to read a trees object from an RDS file in the specified directory.
-#' Returns NULL if the file doesn't exist.
-#'
-#' @param dir The directory that contains the tree info.
-#'
-#' @returns A trees object if the file exists, NULL otherwise.
-read_trees <- function(dir) {
-  file_path <- file.path(dir, "trees_object.RDS")
-
-  if (file.exists(file_path)) readRDS(file_path)
-  else NULL
-}
-```
-
-### Reduce a Seurat object
-
-This is especially useful if you are making a Shiny app and want it to load/run
-faster. When run, this has been shown to reduce objects from several gigabytes
-down to a few hundred megabytes (this greatly depends on the input data).
-
-The main function is not specific to the data type (as long as the Seurat object
-has gone through "standard" processing.
-
-```{r func-reduce-object}
-#' Significantly shrinks a given Seurat object by removing the counts matrices and just keeping the UMAP reduction.
-#'
-#' @details
-#'  Modify this as needed if your object is built differently (e.g. with tSNE).
-#'  You can also change what is being removed e.g. the scaled data instead.
-#'  Be careful - what you remove could affect visualizations e.g. dot plots.
-#'   Make sure that the Idents of the object are properly set if you are going to be adding in annotations e.g. `Idents(combined) <- "seurat_clusters"`.
-#'   The main function is not specific to the data type (as long as the Seurat object has gone through "standard" processing.
-#'
-#' @param seurat_obj The Seurat object to be reduced.
-#' @param dim_reducs List of dimensionality reductions to keep.
-#' @param print_size Print info about how much the object was reduced.
-#' @param load_annotations Set to FALSE since it isn't necessary to have the clusters be annotated or your object might already have cell types assigned.
-#' @param annotations_file File path to the csv file containing columns for thecluster (be sure to match clusters_col) and cell type e.g. `file.path(path_tables, "annotations.csv")`.
-#' @param clusters_col The current column in the Seurat object that you want to annotate on e.g. seurat_clusters or seurat_subclusters.
-#' @param annotations_col The column in the Seurat object that you want to save the annotations to e.g. annotated_clusters or annotated_subclusters.
-#'
-#' @returns A smaller Seurat object.
-reduce_object <- function(seurat_obj, dim_reducs = "umap", print_size = TRUE,
-                          load_annotations = FALSE, annotations_file,
-                          clusters_col = "seurat_clusters",
-                          annotations_col = "annotated_clusters") {
-  print(paste("Currently reducing:", deparse(substitute(seurat_obj))))
-
-  # modify this as desired
-  obj_reduced <- DietSeurat(seurat_obj,
-                            counts = FALSE, dimreducs = dim_reducs)
-
-  # print the before and after sizes
-  if (print_size) {
-    print(paste("Original object size:",
-                format(object.size(seurat_obj), units = "auto")))
-    print(paste("Reduced object size:",
-                format(object.size(obj_reduced), units = "auto")))
-  }
-
-  # add in the annotations (which should be in cluster order already) if desired
-  # you could also use add_annotations
-  if (load_annotations) {
-    # read in the data - you only need the cell type information
-    annotations <- read_csv(annotations_file,
-                            col_types = cols(.default = "c"))$CellType # change col name if needed
-
-    # add the annotations to the object
-    Idents(obj_reduced) <- clusters_col
-    names(annotations) <- levels(obj_reduced)
-    obj_reduced <- RenameIdents(obj_reduced, annotations)
-    Idents(obj_reduced) <- factor(Idents(obj_reduced),
-                                  levels = sort(levels(obj_reduced))) # alphabetize the cell types
-    obj_reduced[[annotations_col]] <- Idents(obj_reduced) # useful metadata
-  }
-
-  # saving the output as a separate object is recommended
-  return(obj_reduced)
-}
-```
-
 ### DESeq2 heatmaps
 
 Modified from Hailong's code.
@@ -4233,7 +3023,6 @@ Modified from Hailong's code.
 #' If you decide to rotate the heatmap (e.g. for display on a PowerPoint slide),
 #' note that the asterisk will now be on the right side and you'll have to move
 #' the legends
-#'
 #'
 #' @param DESeq2_out
 #' @param gene_list
@@ -4385,15 +3174,10 @@ heatmap_DESeq2 <- function(DESeq2_out, gene_list, FDR_cutoff = 0.05,
 
   hm <-
     ComplexHeatmap::Heatmap(matrix = as.matrix(de_m),
-                            # col = circlize::colorRamp2(c(min_break, 0, max_break),
-                            #                  c("#2166AC", "white", "#B2182B")),
                             col = circlize::colorRamp2(breaks = breaks,
                                                        colors = clrs_plot(length(breaks))),
                             na_col = clr_na,
                             rect_gp = gpar(col = "black"),
-                            # layer_fun = function(j, i, x, y, w, h, f) {
-                            #   	grid.text(pindex(de_p, i, j), x, y)
-                            #   },
                             cell_fun = function(j, i, x, y, width, height, fill) {
                                 grid.text(de_p[i, j], x, y,
                                           gp = gpar(fontsize = number_size,
@@ -4437,3 +3221,73 @@ heatmap_DESeq2 <- function(DESeq2_out, gene_list, FDR_cutoff = 0.05,
   }
 }
 ```
+
+## Supplemental
+
+### Reduce a Seurat object
+
+This is especially useful if you are making a Shiny app and want it to load/run
+faster. When run, this has been shown to reduce objects from several gigabytes
+down to a few hundred megabytes (this greatly depends on the input data).
+
+The main function is not specific to the data type (as long as the Seurat object
+has gone through "standard" processing.
+
+```{r func-reduce-object}
+#' Significantly shrinks a given Seurat object by removing the counts matrices and just keeping the UMAP reduction.
+#'
+#' @details
+#'  Modify this as needed if your object is built differently (e.g. with tSNE).
+#'  You can also change what is being removed e.g. the scaled data instead.
+#'  Be careful - what you remove could affect visualizations e.g. dot plots.
+#'   Make sure that the Idents of the object are properly set if you are going to be adding in annotations e.g. `Idents(combined) <- "seurat_clusters"`.
+#'   The main function is not specific to the data type (as long as the Seurat object has gone through "standard" processing.
+#'
+#' @param seurat_obj The Seurat object to be reduced.
+#' @param dim_reducs List of dimensionality reductions to keep.
+#' @param print_size Print info about how much the object was reduced.
+#' @param load_annotations Set to FALSE since it isn't necessary to have the clusters be annotated or your object might already have cell types assigned.
+#' @param annotations_file File path to the csv file containing columns for thecluster (be sure to match clusters_col) and cell type e.g. `file.path(path_tables, "annotations.csv")`.
+#' @param clusters_col The current column in the Seurat object that you want to annotate on e.g. seurat_clusters or seurat_subclusters.
+#' @param annotations_col The column in the Seurat object that you want to save the annotations to e.g. annotated_clusters or annotated_subclusters.
+#'
+#' @returns A smaller Seurat object.
+reduce_object <- function(seurat_obj, dim_reducs = "umap", print_size = TRUE,
+                          load_annotations = FALSE, annotations_file,
+                          clusters_col = "seurat_clusters",
+                          annotations_col = "annotated_clusters") {
+  print(paste("Currently reducing:", deparse(substitute(seurat_obj))))
+
+  # modify this as desired
+  obj_reduced <- DietSeurat(seurat_obj,
+                            counts = FALSE, dimreducs = dim_reducs)
+
+  # print the before and after sizes
+  if (print_size) {
+    print(paste("Original object size:",
+                format(object.size(seurat_obj), units = "auto")))
+    print(paste("Reduced object size:",
+                format(object.size(obj_reduced), units = "auto")))
+  }
+
+  # add in the annotations (which should be in cluster order already) if desired
+  # you could also use add_annotations
+  if (load_annotations) {
+    # read in the data - you only need the cell type information
+    annotations <- read_csv(annotations_file,
+                            col_types = cols(.default = "c"))$CellType # change col name if needed
+
+    # add the annotations to the object
+    Idents(obj_reduced) <- clusters_col
+    names(annotations) <- levels(obj_reduced)
+    obj_reduced <- RenameIdents(obj_reduced, annotations)
+    Idents(obj_reduced) <- factor(Idents(obj_reduced),
+                                  levels = sort(levels(obj_reduced))) # alphabetize the cell types
+    obj_reduced[[annotations_col]] <- Idents(obj_reduced) # useful metadata
+  }
+
+  # saving the output as a separate object is recommended
+  return(obj_reduced)
+}
+```
+
