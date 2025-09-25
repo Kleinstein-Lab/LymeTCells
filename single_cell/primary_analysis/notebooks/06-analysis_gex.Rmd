@@ -1,0 +1,1940 @@
+---
+title: "GEX Analysis"
+output:
+  html_document:
+    code_download: yes
+    code_folding: hide
+    css: ../"style.css"
+    dev: "png"
+    df_print: kable
+    fig_caption: yes
+    keep_md: no
+    self_contained: true
+    theme: yeti
+    toc: yes
+    toc_depth: 3
+    toc_float:
+        collapsed: false
+        smooth_scroll: false
+editor_options: 
+  chunk_output_type: console
+---
+
+------------------------------------------------------------------------
+
+# Overview and setup
+
+```{r setup-options, include = FALSE}
+knitr::opts_chunk$set(comment = NA, dpi = 200, fig.align = "center",
+                      out.width = "100%", warning = FALSE, error = TRUE,
+                      message = FALSE,
+                      fig.path = here::here("primary_analysis", "figures",
+                                            "analysis", "gex", "gex-"))
+
+# will mess with chunk labels
+options(knitr.duplicate.label = "allow")
+```
+
+**Author(s):** Edel Aron<br>
+**Date Created:** 2022-11-03<br>
+**Last Updated:** `r Sys.Date()`
+
+**R version:** `r R.Version()$version.string`<br>
+**Platform:** `r R.Version()$platform`<br>
+**Running under:** `r sessionInfo()$running`
+
+```{r, include = FALSE}
+# load packages, colors and themes and functions (R code only)
+code_setup <-
+  knitr::purl(here::here("single_cell", "primary_analysis", "notebooks",
+                         "01-setup.Rmd"),
+              output = tempfile(), documentation = 0)
+code_functions <-
+  knitr::purl(here::here("single_cell", "primary_analysis", "notebooks",
+                         "02-functions.Rmd"),
+              output = tempfile(), documentation = 0)
+code_meta <- 
+  knitr::purl(here::here("single_cell", "primary_analysis", "notebooks",
+                         "03-meta.Rmd"),
+              output = tempfile(), documentation = 0)
+
+# read in the code, then remove the temp files
+source(code_setup)
+source(code_functions)
+source(code_meta)
+unlink(c(code_setup, code_functions, code_meta))
+```
+
+```{r}
+include_graphics(path = here::here("single_cell", "primary_analysis", "images",
+                                   "single_cell_gex_pipeline.png"))
+```
+
+------------------------------------------------------------------------
+
+# Read in the data
+
+## Markers
+
+```{r setup-markers}
+markers_all <- read_csv(file.path(path_resources, "marker_genes_all.csv"),
+                        show_col_types = FALSE) %>%
+                 dplyr::filter(Species == "Human")
+```
+
+## Objects
+
+Load in the unprocessed, post-QC objects (if you are running the Seurat pipelines for the first time):
+
+```{r}
+#| eval = FALSE
+
+combined_blood <-
+  readRDS(file.path(path_objs, "raw", "combined_blood_unprocessed.rds"))
+combined_skin <-
+  readRDS(file.path(path_objs, "raw", "combined_skin_unprocessed.rds"))
+```
+
+You can load in the processed objects instead of running the pipeline if it was
+previously run with the same settings. It is recommended that you save the
+objects after an initial (or new) analysis since rerunning the previous steps
+is time-intensive (and liable to sometimes crash the session depending on the
+configuration).
+
+```{r setup-load-objects-processed}
+combined_blood <-
+  readRDS(file.path(path_objs, "doublets", "with_doublets", "combined_blood.rds"))
+combined_skin <-
+  readRDS(file.path(path_objs, "doublets", "with_doublets", "combined_skin.rds"))
+```
+
+Reset to the unannotated clusters:
+
+```{r setup-labels}
+# since later I save the objects with their annotations
+Idents(combined_blood) <- "seurat_clusters"
+Idents(combined_skin) <- "seurat_clusters"
+```
+
+The filtration in the pipeline is based on the previous QC
+(`nFeatures_RNA > 200`, `percent.mt < 15`). We want to use the same cutoffs for
+both sample types (blood and skin).
+
+This is an example of what the Lyme Seurat metadata looks like:
+
+```{r setup-objects-metadata}
+# examples of Seurat meta data
+print_kable(bind_rows(slice_sample(combined_blood[[]], n = 4),
+                      slice_sample(combined_skin[[]], n = 8)),
+            kable_height = NULL)
+```
+
+------------------------------------------------------------------------
+
+# Marker genes
+
+For the feature plots down below, you can set `order = TRUE` in order for the expressing cells to be plotted "on top" instead of potentially being buried.
+
+```{r read-markers-all}
+# alphanumeric, human-readable lists
+cat(paste("Contributors to the markers database:",
+          str_c(str_replace_all(sort(unique(markers_all$Source)),
+                            pattern = "_", replacement = " "),
+                collapse = ", ")), "\n")
+
+cat(str_c("There are", n_distinct(markers_all$Tissue_Type), "tissue types",
+          str_c("(", str_to_lower(markers_all$Tissue_Type) %>%
+                       str_split(pattern = ", ") %>%
+                       unlist() %>%
+                       unique() %>%
+                       sort() %>%
+                       str_c(collapse = ", "), ")"),
+          "with", n_distinct(markers_all$Cell_Type), "cell types represented by",
+          length(markers_all$Marker), "(not necessarily unique) marker genes.",
+      sep = " "))
+
+print_dt(markers_all)
+```
+
+------------------------------------------------------------------------
+
+# Blood
+
+## Standard Seurat pipeline
+
+### Run the standard pipeline
+
+```{r blood-seurat-pipeline-run}
+#| class.source = "fold-show",
+#| eval = FALSE
+
+combined_blood <- seurat_pipeline(seurat_obj = combined_blood,
+                                  nfeatures_RNA = 200, perc_mt = 15,
+                                  num_features = 2000, num_dims = 20,
+                                  cluster_res = 0.4)
+
+# save the object
+saveRDS(combined_blood,
+        file.path(path_objs, "doublets", "with_doublets", "combined_blood.rds"))
+```
+
+### Examine results
+
+```{r blood-seurat-pipeline-results-elbow-bar}
+#| fig.dim = c(12, 10)
+
+# plot variable features with labels for the top 10
+p1 <- LabelPoints(VariableFeaturePlot(combined_blood),
+                  points = head(VariableFeatures(combined_blood), 10),
+                  xnudge = 0, ynudge = 0, size = 3) +
+        labels_standard + legend_bottom
+
+p2 <- ElbowPlot(combined_blood, ndims = 25) + labels_standard
+
+p3 <- plot_counts_cluster(clusters = combined_blood$seurat_clusters,
+                          tissue_type = "Blood", x_axis = "Cluster")
+
+((p1 + p2 + plot_layout(widths = c(1, 3)) ) / p3) +
+  plot_layout(heights = c(1, 2))
+```
+
+## Dimensionality reduction
+
+### Clusters by Samples
+
+```{r blood-clusters-samples-bar}
+#| fig.dim = c(16, 10)
+
+# percentage of clusters per sample
+p1 <- plot_pcts(pcts = calc_pcts(data = combined_blood[[]],
+                                 meta_group_by = c("SampleName", "Dataset"),
+                                 focus_group = "seurat_clusters"),
+                tissue_type = "Blood", plot_value = "Clusters",
+                x_axis = "SampleName", x_axis_label = "Sample",
+                fill_type = "seurat_clusters", fill_label = "Cluster",
+                plot_type = "All") %>%
+        add_info_bar(info_type = "Dataset")
+
+# see which samples are going into each cluster
+p2 <- plot_tile(seurat_obj = combined_blood, tissue_type = "Blood",
+                clrs_specific = colors_sample_blood,
+                x_axis = "seurat_clusters", x_axis_label = "Seurat Cluster") %>%
+        add_info_bar(info_type = "Dataset", top_side = FALSE)
+
+# percentage of samples per cluster
+p3 <- plot_pcts(pcts = calc_pcts(data = combined_blood[[]],
+                                 meta_group_by = "seurat_clusters",
+                                 focus_group = "SampleName"),
+                tissue_type = "Blood", clrs_specific = colors_sample_blood,
+                plot_type = "All", plot_value = "Samples",
+                x_axis = "seurat_clusters", x_axis_label = "Cluster",
+                fill_type = "SampleName", fill_label = "Sample")
+
+# combine all plots
+((p1 | ((p2 / p3) & plot_layout(guides = "collect"))) &
+  guides(fill = guide_legend(ncol = 1)))
+```
+
+### Samples
+
+```{r blood-samples-bar}
+#| fig.dim = c(12, 7)
+
+plot_pcts(calc_pcts(data = combined_blood[[]] %>% mutate(Type = "Sample"),
+                    meta_group_by = "Type",
+                    focus_group = "SampleName"),
+          tissue_type = "Blood", clrs_specific = colors_sample_blood,
+          plot_value = "Sample", x_axis = "Type", x_axis_label = "Total",
+          fill_type = "SampleName", fill_label = "Sample",
+          perc_min = 2, label_size = 3, label_fill = TRUE,
+          include_counts = FALSE) +
+  coord_flip() +
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+        panel.grid.minor = element_blank()) +
+  guides(fill = guide_legend(ncol = 1))
+```
+
+### UMAPs
+
+All:
+
+```{r blood-umap-all}
+#| fig.dim = c(24, 8)
+
+# by cluster
+p1 <- plot_umap(seurat_obj = combined_blood, tissue_type = "Blood",
+                use_hues = TRUE, plot_by = "cluster_all")
+
+# by sample
+p2 <- plot_umap(seurat_obj = combined_blood, tissue_type = "Blood",
+                clrs_specific = colors_sample_blood,
+                plot_by = "all", plot_label = FALSE)
+
+# by dataset
+p3 <- plot_umap(seurat_obj = combined_blood, tissue_type = "Blood",
+                clrs_specific = colors_dataset,
+                plot_by = "dataset", plot_label = FALSE)
+
+p1 | p2 | p3
+```
+
+By Sample:
+
+```{r blood-umap-cluster-sample}
+#| fig.dim = c(16, 8)
+
+plot_umap(seurat_obj = combined_blood, tissue_type = "Blood",
+          use_hues = TRUE, plot_by = "cluster_sample", ncol = 4)
+```
+
+## Marker overlays
+
+### Setup
+
+As an example, we can look at Ira Fleming's markers:
+
+```{r blood-marker-overlays-choice}
+# choose blood marker sources
+markers_blood_sources <- "Ira_Fleming"
+
+get_features_from_all(markers_df = markers_all,
+                      sources = markers_blood_sources)
+```
+
+### Dot plot
+
+```{r blood-marker-overlays-dot-ira}
+#| fig.dim = c(16, 8)
+
+# blood markers
+DotPlot(combined_blood,
+        features = get_features_from_all(markers_df = markers_all,
+                                         sources = "Ira_Fleming",
+                                         alphabetize_all = FALSE),
+        cols = colors_dot, dot.scale = 3, cluster.idents = TRUE) %>%
+  add_info_bar(method = "join", info_type = "Cell_Type_Full",
+               info = get_cell_types(markers_all %>%
+                                       dplyr::filter(Source == "Ira_Fleming")),
+               text_size = 8, label = FALSE) +
+  labs(title = "Blood (Ira Fleming)") +
+  RotatedAxis() + labels_standard
+```
+
+### Feature plots {.tabset}
+
+#### B Cells
+
+```{r blood-marker-overlays-feature-b}
+#| fig.dim = c(24, 18)
+
+FeaturePlot(combined_blood,
+            features = get_features_from_all(markers_df = markers_all,
+                                             sources = markers_blood_sources,
+                                             cell_types = "B"),
+            min.cutoff = 0, label = TRUE, label.size = 2, ncol = 4) +
+  plot_annotation(title = "Blood - B cell markers") &
+  labels_standard & clean_umap
+```
+
+#### Dendritic Cells
+
+Could be split into mDC and pDC
+
+```{r blood-marker-overlays-feature-dc}
+#| fig.dim = c(24, 18)
+
+FeaturePlot(combined_blood,
+            features = get_features_from_all(markers_df = markers_all,
+                                             sources = markers_blood_sources,
+                                             cell_types = c("DC", "mDC", "pDC")),
+            min.cutoff = 0, label = TRUE, label.size = 2, ncol = 4) +
+  plot_annotation(title = "Blood - Dendritic cell markers") &
+  labels_standard & clean_umap
+```
+
+#### Neutrophils
+
+```{r blood-marker-overlays-feature-neutrophil}
+#| fig.dim = c(24, 6)
+
+FeaturePlot(combined_blood,
+            features = get_features_from_all(markers_df = markers_all,
+                                             sources = markers_blood_sources,
+                                             cell_types = "Neutrophils"),
+            min.cutoff = 0, label = TRUE, label.size = 2, ncol = 4) +
+  plot_annotation(title = "Blood - Neutrophil markers") &
+  labels_standard & clean_umap
+```
+
+#### Natural Killer Cells
+
+```{r blood-marker-overlays-feature-nk}
+#| fig.dim = c(24, 6)
+
+FeaturePlot(combined_blood,
+            features = get_features_from_all(markers_df = markers_all,
+                                             sources = markers_blood_sources,
+                                             tissue_types = "Blood",
+                                             cell_types = "NK"),
+            min.cutoff = 0, label = TRUE, label.size = 2, ncol = 4) +
+  plot_annotation(title = "Blood - Natural killer cell markers") &
+  labels_standard & clean_umap
+```
+
+#### Plasma Cells
+
+```{r blood-marker-overlays-feature-plasma}
+#| fig.dim = c(24, 12)
+
+FeaturePlot(combined_blood,
+            features = get_features_from_all(markers_df = markers_all,
+                                             sources = markers_blood_sources,
+                                             cell_types = "Plasma"),
+            min.cutoff = 0, label = TRUE, label.size = 2, ncol = 4) +
+  plot_annotation(title = "Blood - Plasma cell markers") &
+  labels_standard & clean_umap
+```
+
+#### Platelets
+
+```{r blood-marker-overlays-feature-platelet}
+#| fig.dim = c(24, 6)
+
+FeaturePlot(combined_blood,
+            features = get_features_from_all(markers_df = markers_all,
+                                             sources = markers_blood_sources,
+                                             cell_types = "Platelets"),
+            min.cutoff = 0, label = TRUE, label.size = 2, ncol = 4) +
+  plot_annotation(title = "Blood - Platelet markers") &
+  labels_standard & clean_umap
+```
+
+#### T Cells
+
+```{r blood-marker-overlays-feature-t}
+#| fig.dim = c(24, 12)
+
+FeaturePlot(combined_blood,
+            features = get_features_from_all(markers_df = markers_all,
+                                             sources = markers_blood_sources,
+                                             cell_types = c("T_CD4", "T_CD8", "T")),
+            min.cutoff = 0, label = TRUE, label.size = 2, ncol = 4) +
+  plot_annotation(title = "Blood - T cell markers") &
+  labels_standard & clean_umap
+```
+
+### Violin plots {.tabset}
+
+For the T cells:
+
+#### With points
+
+```{r blood-marker-overlays-vln-t-points}
+#| fig.dim = c(24, 12)
+
+VlnPlot(combined_blood,
+        features = get_features_from_all(markers_df = markers_all,
+                                         sources = markers_blood_sources,
+                                         cell_types = "T"),
+        cols = iwanthue(n_distinct(combined_blood$seurat_clusters)),
+        ncol = 4, raster = FALSE) +
+  plot_annotation(title = "Blood - T cell markers") &
+  labels_standard_vln_rotate
+```
+
+#### Without points
+
+```{r blood-marker-overlays-vln-t-no-points}
+#| fig.dim = c(24, 12)
+
+VlnPlot(combined_blood,
+        features = get_features_from_all(markers_df = markers_all,
+                                         sources = markers_blood_sources,
+                                         cell_types = "T"),
+        cols = iwanthue(n_distinct(combined_blood$seurat_clusters)),
+        pt.size = 0, ncol = 4, raster = FALSE) +
+  plot_annotation(title = "Blood - T cell markers") &
+  labels_standard_vln_rotate
+```
+
+## Annotate cell clusters
+
+During the annotation step (regardless of manual or automatic), you can create a csv file to store the annotations (so that they can be easily shared outside of code or used in other scripts such as "reduce_seurat_obj_size.R").
+
+### Manually
+
+Upon more careful examination, we noticed that the plasma cells had some T cell markers and decided to subcluster cluster 15:
+
+```{r}
+Idents(combined_blood) <- "seurat_clusters"
+
+combined_blood <-
+  FindSubCluster(combined_blood, cluster = "15", graph.name = "RNA_snn",
+                 resolution = 0.3)
+
+combined_blood$seurat_clusters <- combined_blood$sub.cluster
+combined_blood$seurat_clusters <-
+  factor(combined_blood$seurat_clusters,
+         str_sort(unique(combined_blood$seurat_clusters), numeric = TRUE))
+combined_blood$sub.cluster <- c()
+Idents(combined_blood) <- "seurat_clusters"
+```
+
+Annotate the clusters:
+
+```{r blood-annotations-manual-set}
+# annotate the clusters for the blood data
+combined_blood_annotations <- rbind(c("0", "T Cells"),
+                                    c("1", "T Cells"),
+                                    c("2", "Dendritic Cells"),
+                                    c("3", "T Cells"),
+                                    c("4", "B Cells"),
+                                    c("5", "Natural Killers"),
+                                    c("6", "T Cells"),
+                                    c("7", "T Cells"),
+                                    c("8", "Dendritic Cells"),
+                                    c("9", "Natural Killers"),
+                                    c("10", "Dendritic Cells"),
+                                    c("11", "Monocytes"), # very faint
+                                    c("12", "T Cells"),
+                                    c("13", "Platelets"),
+                                    c("14", "Dendritic Cells"),
+                                    c("15_0", "T Cells"),
+                                    c("15_1", "T Cells"),
+                                    c("15_2", "Plasma Cells"),
+                                    c("15_3", "Natural Killers"),
+                                    c("16", "B Cells"))
+colnames(combined_blood_annotations) <- c("Cluster", "CellType")
+combined_blood_annotations <- data.frame(combined_blood_annotations)
+
+# save the annotations as a csv
+write_csv(combined_blood_annotations,
+          file = file.path(path_tables, "annotations_blood.csv"))
+```
+
+Add the annotations to the Seurat object and examine them:
+
+```{r blood-annotations-manual-add}
+# read in and show the annotations
+annotations_blood <-
+  read_csv(file.path(path_tables, "annotations_blood.csv"), col_types = "c")
+
+# add the annotations to the object
+combined_blood <- add_annotations(seurat_obj = combined_blood,
+                                  annotations_df = annotations_blood)
+
+# clusters by annotation
+print_kable(annotations_blood %>%
+              group_by(CellType) %>%
+              transmute(Clusters = paste0(Cluster, collapse = ", ")) %>%
+              distinct() %>% arrange(CellType),
+            kable_height = NULL)
+```
+
+Choose the color scheme:
+
+```{r blood-annotations-color-scheme}
+# these RColorBrewer palettes can have up to 9 or 11 colors
+# excludes light colors (hard to see on plots)
+# colors_annotated_blood <-
+#   setNames(brewer.pal(n_distinct(combined_blood$annotated_clusters) + 2,
+#                       name = "Reds")
+#            [3:(n_distinct(combined_blood$annotated_clusters) + 2)],
+#            sort(unique(combined_blood$annotated_clusters)))
+
+# chosen to resemble the skin where possible (except the natural killers)
+colors_annotated_blood <-
+  setNames(c("#CC6666", "#6F0C33", "#41BBE8", "#FF8C00", "#005198", "#28CE0E",
+             "#7537BF"),
+           sort(unique(combined_blood$annotated_clusters)))
+
+# save the colors to the miscellaneous slot for easy access
+Misc(combined_blood, slot = "colors_annotated") <- colors_annotated_blood
+```
+
+Save the annotated object:
+
+```{r blood-annotations-manual-save}
+#| eval = FALSE
+
+# save the object with annotations (watch out for reproducibility)
+saveRDS(combined_blood,
+        file.path(path_objs, "doublets", "with_doublets", "combined_blood.rds"))
+```
+
+### FindAllMarkers
+
+```{r blood-findallmarkers-save}
+#| eval = FALSE
+
+# find markers for every cluster compared to all remaining cells, report only the positive ones
+combined_blood_findallmarkers <- FindAllMarkers(combined_blood,
+                                                only.pos = TRUE, min.pct = 0.25,
+                                                logfc.threshold = 0.25)
+
+# save the markers as a csv
+write_csv(combined_blood_findallmarkers,
+          file = file.path(path_tables, "findmarkers", "annotations_blood_findallmarkers.csv"))
+```
+
+```{r blood-findallmarkers-load}
+# load markers
+combined_blood_findallmarkers <- read_csv(file.path(path_tables, "findmarkers",
+                                                    "annotations_blood_findallmarkers.csv"),
+                                          show_col_types = FALSE)
+
+print_kable(combined_blood_findallmarkers %>%
+              group_by(cluster) %>%
+              slice_max(n = 5, order_by = desc(p_val_adj),
+                        with_ties = FALSE) %>%
+              relocate(c("cluster", "gene", "p_val_adj"), .before = "p_val"))
+```
+
+Expression heatmap of the top 10 features:
+
+```{r blood-findallmarkers-heatmap}
+#| eval = FALSE
+
+# expression heatmap
+top10_blood <- combined_blood_findallmarkers %>%
+                 group_by(cluster) %>%
+                 slice_max(n = 10, order_by = desc(p_val_adj))
+
+DoHeatmap(combined_blood, features = top10_blood$gene) +
+  labs(title = "Blood Heatmap - Top 10 Features") + labels_standard
+```
+
+### Final annotations
+
+```{r blood-annotations-manual-cluster-all-umap}
+#| fig.dim = c(16, 8)
+
+# these use the default "annotated_clusters" column
+
+p1 <- plot_umap(seurat_obj = combined_blood, tissue_type = "Blood",
+                plot_by = "cluster_all") # for comparison
+p2 <- plot_umap(seurat_obj = combined_blood, tissue_type = "Blood",
+                clrs_specific = colors_annotated_blood,
+                plot_by = "cluster_all", annotated = TRUE)
+
+p1 | p2
+```
+
+```{r blood-annotations-manual-cluster-sample-umap}
+#| fig.dim = c(24, 12)
+
+plot_umap(seurat_obj = combined_blood, tissue_type = "Blood",
+          clrs_specific = colors_annotated_blood,
+          plot_by = "cluster_sample", ncol = 4, annotated = TRUE)
+```
+
+## Check the annotations
+
+### Cell counts per cluster
+
+```{r blood-check-annotations-cell-type-counts-bar}
+#| fig.dim = c(12, 8)
+
+plot_counts_cluster(clusters = combined_blood$annotated_clusters,
+                    tissue_type = "Blood",
+                    clrs_specific = colors_annotated_blood,
+                    x_axis = "Cell Type")
+```
+
+```{r blood-check-annotations-cell-type-counts-stacked-bar}
+#| fig.dim = c(15, 5)
+
+plot_pcts(calc_pcts(data = combined_blood[[]] %>% mutate(Type = "Sample"),
+                    meta_group_by = "Type",
+                    focus_group = "annotated_clusters"),
+          tissue_type = "Blood",
+          clrs_specific = colors_annotated_blood,
+          plot_value = "Cell Types", x_axis = "Type", x_axis_label = "Total",
+          fill_type = "annotated_clusters", fill_label = "Cell Type",
+          perc_min = 1.5, label_size = 3, label_fill = TRUE,
+          include_counts = FALSE, reverse_order = TRUE) +
+  coord_flip() +
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+        panel.grid.minor = element_blank()) +
+  guides(fill = guide_legend(ncol = 1))
+```
+
+### Cell Types by Samples
+
+```{r blood-check-annotations-clusters-samples-bar}
+#| fig.dim = c(16, 10)
+
+# cell counts per sample
+p1 <- plot_counts_cluster(clusters = combined_blood$SampleName,
+                          tissue_type = "Blood",
+                          clrs_specific = colors_sample_blood,
+                          x_axis = "SampleName") %>%
+        add_info_bar(method = "add",
+                     info = meta %>%
+                              dplyr::filter(TissueType == "Blood") %>%
+                              select(SampleName, Dataset) %>%
+                              distinct(),
+                     info_type = "Dataset") +
+        labels_rotate_x
+
+# percentage of cell types per sample
+p2 <- plot_pcts(pcts = calc_pcts(data = combined_blood[[]],
+                                 meta_group_by = c("SampleName", "Dataset"),
+                                 focus_group = "annotated_clusters"),
+                tissue_type = "Blood", clrs_specific = colors_annotated_blood,
+                plot_type = "All", plot_value = "Cell Type",
+                x_axis = "SampleName", x_axis_label = "Sample",
+                fill_type = "annotated_clusters", fill_label = "Cell Type") %>%
+        add_info_bar(info_type = "Dataset") +
+        theme(axis.text.x = element_text(angle = 0, hjust = 0.5))
+
+# see which samples are going into each cell type
+p3 <- plot_tile(seurat_obj = combined_blood, tissue_type = "Blood",
+                clrs_specific = colors_sample_blood,
+                x_axis = "annotated_clusters", x_axis_label = "Cell Type") %>%
+        add_info_bar(info_type = "Dataset", top_side = FALSE)
+
+# percentage of samples per cell type
+p4 <- plot_pcts(pcts = calc_pcts(data = combined_blood[[]],
+                                 meta_group_by = "annotated_clusters",
+                                 focus_group = "SampleName"),
+                tissue_type = "Blood", plot_value = "Samples",
+                x_axis = "annotated_clusters", x_axis_label = "Cell Type",
+                fill_type = "SampleName", fill_label = "Sample",
+                clrs_specific = colors_sample_blood,
+                plot_type = "All")
+
+# combine all plots
+((p1 / p2 | ((p3 / p4) & plot_layout(guides = "collect"))) &
+  guides(fill = guide_legend(ncol = 1)))
+```
+
+```{r blood-check-annotations-cell-type-samples-heatmap}
+#| fig.dim = c(8, 8)
+
+groups_cell_type <- levels(combined_blood$annotated_clusters)
+groups_sample <- sort(unique(combined_blood$SampleName))
+
+overlap_matrix <- matrix(0, nrow = length(groups_sample),
+                         ncol = length(groups_cell_type),
+                         dimnames = list(groups_sample, groups_cell_type))
+
+for (group_sample in groups_sample) {
+  for (group_cell_type in groups_cell_type) {
+    cells_cell_type <- combined_blood[[]] %>%
+                         filter(annotated_clusters == group_cell_type) %>%
+                         pull(Cell_ID_Unique)
+    cells_sample <- combined_blood[[]] %>%
+                      filter(SampleName == group_sample) %>%
+                      pull(Cell_ID_Unique)
+    
+    overlap_count <- length(intersect(cells_cell_type, cells_sample))
+    # set zeroes to NAs for plotting purposes
+    if (overlap_count == 0) overlap_count <- NA
+    
+    overlap_matrix[group_sample, group_cell_type] <- overlap_count
+  }
+}
+
+# to make it easier visually
+sample_datasets <- meta %>% select(Dataset, SampleName) %>%
+                    filter(SampleName %in% rownames(overlap_matrix)) %>%
+                    distinct() %>% pull(Dataset)
+
+ComplexHeatmap::Heatmap(
+  matrix = overlap_matrix,
+  col = brewer.reds(10)[1:7], # exclude darkest colors
+  na_col = "grey75",
+  rect_gp = gpar(col = "black"),
+  cell_fun = function(j, i, x, y, width, height, fill) {
+    if (!is.na(overlap_matrix[i, j])) {
+      grid.text(overlap_matrix[i, j], x, y,
+                gp = gpar(fontsize = 10, col = "black"))
+      }
+    },
+  row_title = "Sample",
+  row_title_side = "right",
+  row_title_gp = gpar(fontsize = 12, fontface = "italic"),
+  column_title = "Cell Type",
+  column_title_side = "bottom",
+  column_title_gp = gpar(fontsize = 12, fontface = "italic"),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_names_gp = gpar(fontsize = 9),
+  column_names_gp = gpar(fontsize = 9),
+  left_annotation =
+    rowAnnotation(Dataset = sample_datasets,
+                      col = list("Dataset" = colors_dataset),
+                      annotation_legend_param =
+                        list(title_gp = gpar(fontsize = 10),
+                             labels_gp = gpar(fontsize = 8)),
+                      show_annotation_name = FALSE),
+  heatmap_legend_param = list(title = "Overlap",
+                              title_gp = gpar(fontsize = 10),
+                              labels_gp = gpar(fontsize = 8)),
+  use_raster = TRUE) %>%
+draw(column_title = "Blood Cell ID Overlaps by Cell Type and Sample")
+```
+
+### Dot plot
+
+Recheck Ira Fleming's markers:
+
+```{r blood-check-annotations-dot-ira}
+#| fig.dim = c(16, 5)
+
+# blood markers
+DotPlot(combined_blood,
+        features = get_features_from_all(markers_df = markers_all,
+                                         sources = "Ira_Fleming",
+                                         alphabetize_all = FALSE),
+        cols = colors_dot, dot.scale = 3) %>%
+  add_info_bar(method = "join", info_type = "Cell_Type_Full",
+               info = get_cell_types(markers_all %>%
+                                       dplyr::filter(Source == "Ira_Fleming")),
+               text_size = 8, label = FALSE) +
+  labs(title = "Blood (Ira Fleming)") +
+  RotatedAxis() + labels_standard
+```
+
+### Violin plots {.tabset}
+
+For the T cells:
+
+```{r blood-check-annotations-flip}
+#| eval = FALSE
+
+# undo reversing the levels for the dot plots
+combined_blood$annotated_clusters <-
+  mutate(combined_blood[[]], annotated_clusters = fct_rev(annotated_clusters))
+```
+
+#### With points
+
+```{r blood-check-annotations-vln-t-points}
+#| fig.dim = c(24, 12)
+
+VlnPlot(combined_blood,
+        features = get_features_from_all(markers_df = markers_all,
+                                         sources = markers_blood_sources,
+                                         cell_types = "T"),
+        cols = colors_annotated_blood, ncol = 4) &
+  labels_standard_vln
+```
+
+#### Without points
+
+```{r blood-check-annotations-vln-t-no-points}
+#| fig.dim = c(24, 12)
+
+VlnPlot(combined_blood,
+        features = get_features_from_all(markers_df = markers_all,
+                                         sources = markers_blood_sources,
+                                         cell_types = "T"),
+        cols = colors_annotated_blood, pt.size = 0, ncol = 4) &
+  labels_standard_vln
+```
+
+------------------------------------------------------------------------
+
+# Skin
+
+## Standard Seurat pipeline
+
+### Run the standard pipeline
+
+Using the original resolution of 0.4 and an increased resolution based on the <a href="./notebooks/other/resolution_choices.html" target="_blank">clustree</a> in order to (hopefully) better separate out the B cell cluster.
+
+```{r skin-seurat-pipeline-run}
+#| class.source = "fold-show",
+#| eval = FALSE
+
+combined_skin <- seurat_pipeline(seurat_obj = combined_skin,
+                                 nfeatures_RNA = 200, perc_mt = 15,
+                                 num_features = 2000, num_dims = 20,
+                                 cluster_res = c(0.4, 1, 1.5))
+
+# choose a resolution
+Idents(combined_skin) <- combined_skin$RNA_snn_res.1
+combined_skin$seurat_clusters <- combined_skin$RNA_snn_res.1
+
+# save the object
+saveRDS(combined_skin,
+        file.path(path_objs, "doublets", "with_doublets", "combined_skin.rds"))
+```
+
+### Examine results
+
+```{r skin-seurat-pipeline-results-elbow-bar}
+#| fig.dim = c(12, 10)
+
+# plot variable features with labels for the top 10
+p1 <- LabelPoints(VariableFeaturePlot(combined_skin),
+                  points = head(VariableFeatures(combined_skin), 10),
+                  xnudge = 0, ynudge = 0, size = 3) +
+        labels_standard + legend_bottom
+
+p2 <- ElbowPlot(combined_skin, ndims = 25) + labels_standard
+
+p3 <- plot_counts_cluster(clusters = combined_skin$seurat_clusters,
+                          tissue_type = "Skin", x_axis = "Cluster")
+
+((p1 + p2 + plot_layout(widths = c(1, 3)) ) / p3) +
+  plot_layout(heights = c(1, 2))
+```
+
+## Dimensionality reduction
+
+### Clusters by Samples
+
+```{r skin-clusters-samples-bar}
+#| fig.dim = c(22, 12)
+
+# percentage of clusters per sample
+p1 <- plot_pcts(pcts = calc_pcts(data = combined_skin[[]],
+                                 meta_group_by = c("SampleName", "Dataset"),
+                                 focus_group = "seurat_clusters"),
+                tissue_type = "Skin", plot_value = "Clusters",
+                x_axis = "SampleName", x_axis_label = "Sample",
+                fill_type = "seurat_clusters", fill_label = "Cluster",
+                plot_type = "All") %>%
+        add_info_bar(info_type = "Dataset")
+
+# see which samples are going into each cluster
+p2 <- plot_tile(seurat_obj = combined_skin, tissue_type = "Skin",
+                clrs_specific = colors_sample_skin,
+                x_axis = "seurat_clusters", x_axis_label = "Seurat Cluster") %>%
+        add_info_bar(info_type = "Dataset", top_side = FALSE)
+
+# percentage of samples per cluster
+p3 <- plot_pcts(pcts = calc_pcts(data = combined_skin[[]],
+                                 meta_group_by = "seurat_clusters",
+                                 focus_group = "SampleName"),
+                tissue_type = "Skin", clrs_specific = colors_sample_skin,
+                plot_type = "All", plot_value = "Samples",
+                x_axis = "seurat_clusters", x_axis_label = "Cluster",
+                fill_type = "SampleName", fill_label = "Sample",
+                label_size = 2)
+
+# combine all plots
+((p1 | ((p2 / p3) & plot_layout(guides = "collect"))) &
+  guides(fill = guide_legend(ncol = 1)))
+```
+
+### Samples
+
+```{r skin-samples-bar}
+#| fig.dim = c(12, 7)
+
+plot_pcts(calc_pcts(data = combined_skin[[]] %>% mutate(Type = "Sample"),
+                    meta_group_by = "Type",
+                    focus_group = "SampleName"),
+          tissue_type = "Skin", clrs_specific = colors_sample_skin,
+          plot_value = "Sample", x_axis = "Type", x_axis_label = "Total",
+          fill_type = "SampleName", fill_label = "Sample",
+          perc_min = 2, label_size = 3, label_fill = TRUE,
+          include_counts = FALSE) +
+  coord_flip() +
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+        panel.grid.minor = element_blank()) +
+  guides(fill = guide_legend(ncol = 1))
+```
+
+### UMAPs
+
+All:
+
+```{r skin-umap-all}
+#| fig.dim = c(24, 8)
+
+# by cluster
+p1 <- plot_umap(seurat_obj = combined_skin, tissue_type = "Skin",
+                use_hues = TRUE, plot_by = "cluster_all")
+
+# by sample
+p2 <- plot_umap(seurat_obj = combined_skin, tissue_type = "Skin",
+                clrs_specific = colors_sample_skin,
+                plot_by = "all", plot_label = FALSE)
+
+# by dataset
+p3 <- plot_umap(seurat_obj = combined_skin, tissue_type = "Skin",
+                clrs_specific = colors_dataset,
+                plot_by = "dataset", plot_label = FALSE)
+
+p1 | p2 | p3
+```
+
+By Sample:
+
+```{r skin-umap-cluster-sample}
+#| fig.dim = c(12, 18)
+
+plot_umap(seurat_obj = combined_skin, tissue_type = "Skin",
+          use_hues = TRUE, plot_by = "cluster_sample", ncol = 4)
+```
+
+## Marker overlays
+
+### Setup
+
+As an example, we can look at Mary Tomayko's markers:
+
+Use markers from Mary Tomayko, Roy Jiang, and the Hughes paper:
+
+```{r skin-marker-overlays-choice}
+# choose skin marker sources
+markers_skin_sources <- "Mary_Tomayko"
+
+get_features_from_all(markers_df = markers_all,
+                      sources = markers_skin_sources)
+```
+
+### Dot plot
+
+```{r skin-marker-overlays-dot-mary}
+#| fig.dim = c(16, 8)
+
+# skin markers from Mary Tomayko
+DotPlot(combined_skin,
+        features = get_features_from_all(markers_df = markers_all,
+                                         sources = "Mary_Tomayko",
+                                         tissue_types = "Skin",
+                                         alphabetize_all = FALSE),
+        cols = colors_dot, dot.scale = 3, cluster.idents = TRUE) %>%
+  add_info_bar(method = "join", info_type = "Cell_Type_Full",
+               info = get_cell_types(markers_all %>%
+                                       dplyr::filter(Source == "Mary_Tomayko",
+                                                     Tissue_Type == "Skin")),
+               text_size = 8, label = FALSE) +
+  labs(title = "Skin (Mary Tomayko)") +
+  RotatedAxis() + labels_standard
+```
+
+### Feature plots {.tabset}
+
+#### B Cells
+
+```{r skin-marker-overlays-feature-b}
+#| fig.dim = c(24, 12)
+
+FeaturePlot(combined_skin,
+            features = get_features_from_all(markers_df = markers_all,
+                                             sources = markers_skin_sources,
+                                             cell_types = "B"),
+            min.cutoff = 0, label = TRUE, label.size = 2,
+            ncol = 4, raster = FALSE) +
+  plot_annotation(title = "Skin - B cell markers") &
+  labels_standard & clean_umap
+```
+
+#### Dendritic Cells
+
+```{r skin-marker-overlays-feature-dc}
+#| fig.dim = c(24, 6)
+
+FeaturePlot(combined_skin,
+            features = get_features_from_all(markers_df = markers_all,
+                                             sources = markers_skin_sources,
+                                             cell_types = "DC"),
+            min.cutoff = 0, label = TRUE, label.size = 2,
+            ncol = 4, raster = FALSE) +
+  plot_annotation(title = "Skin - Dendritic cell markers") &
+  labels_standard & clean_umap
+```
+
+#### Endothelial Cells
+
+```{r skin-marker-overlays-feature-endothelial}
+#| fig.dim = c(24, 12)
+
+FeaturePlot(combined_skin,
+            features = get_features_from_all(markers_df = markers_all,
+                                             sources = markers_skin_sources,
+                                             cell_types = "Endothelial"),
+            min.cutoff = 0, label = TRUE, label.size = 2,
+            ncol = 4, raster = FALSE) +
+  plot_annotation(title = "Skin - Endothelial cell markers") &
+  labels_standard & clean_umap
+```
+
+#### Erythrocytes
+
+```{r skin-marker-overlays-feature-erythrocytes}
+#| fig.dim = c(24, 6)
+
+FeaturePlot(combined_skin,
+            features = get_features_from_all(markers_df = markers_all,
+                                             sources = markers_skin_sources,
+                                             cell_types = "Erythrocytes"),
+            min.cutoff = 0, label = TRUE, label.size = 2,
+            ncol = 4, raster = FALSE) +
+  plot_annotation(title = "Skin - Erythrocyte markers") &
+  labels_standard & clean_umap
+```
+
+#### Fibroblasts
+
+```{r skin-marker-overlays-feature-fibroblasts}
+#| fig.dim = c(24, 12)
+
+FeaturePlot(combined_skin,
+            features = get_features_from_all(markers_df = markers_all,
+                                             sources = markers_skin_sources,
+                                             cell_types = "Fibroblasts"),
+            min.cutoff = 0, label = TRUE, label.size = 2,
+            ncol = 4, raster = FALSE) +
+  plot_annotation(title = "Skin - Fibroblast markers") &
+  labels_standard & clean_umap
+```
+
+#### Hair Cells
+
+```{r skin-marker-overlays-feature-hair}
+#| fig.dim = c(24, 6)
+
+FeaturePlot(combined_skin,
+            features = get_features_from_all(markers_df = markers_all,
+                                             sources = markers_skin_sources,
+                                             cell_types = "Hair"),
+            min.cutoff = 0, label = TRUE, label.size = 2,
+            ncol = 4, raster = FALSE) +
+  plot_annotation(title = "Skin - Hair cell markers") &
+  labels_standard & clean_umap
+```
+
+#### Keratinocytes
+
+```{r skin-marker-overlays-feature-keratinocytes}
+#| fig.dim = c(24, 12)
+
+FeaturePlot(combined_skin,
+            features = get_features_from_all(markers_df = markers_all,
+                                             sources = markers_skin_sources,
+                                             cell_types = "Keratinocytes"),
+            min.cutoff = 0, label = TRUE, label.size = 2,
+            ncol = 4, raster = FALSE) +
+  plot_annotation(title = "Skin - Keratinocyte markers") &
+  labels_standard & clean_umap
+```
+
+#### Langerhans Cells
+
+Langerhans cells are tissue-resident macrophages.
+
+```{r skin-marker-overlays-feature-langerhans}
+#| fig.dim = c(24, 6)
+
+FeaturePlot(combined_skin,
+            features = get_features_from_all(markers_df = markers_all,
+                                             sources = markers_skin_sources,
+                                             cell_types = "Langerhans"),
+            min.cutoff = 0, label = TRUE, label.size = 2,
+            ncol = 4, raster = FALSE) +
+  plot_annotation(title = "Skin - Langerhans cell markers") &
+  labels_standard & clean_umap
+```
+
+#### Macrophages
+
+```{r skin-marker-overlays-feature-macrophages}
+#| fig.dim = c(24, 12)
+
+FeaturePlot(combined_skin,
+            features = get_features_from_all(markers_df = markers_all,
+                                             sources = markers_skin_sources,
+                                             cell_types = "Macrophages"),
+            min.cutoff = 0, label = TRUE, label.size = 2,
+            ncol = 4, raster = FALSE) +
+  plot_annotation(title = "Skin - Macrophage cell markers") &
+  labels_standard & clean_umap
+```
+
+#### Mast Cells
+
+```{r skin-marker-overlays-feature-mast}
+#| fig.dim = c(24, 6)
+
+FeaturePlot(combined_skin,
+            features = get_features_from_all(markers_df = markers_all,
+                                             sources = markers_skin_sources,
+                                             cell_types = "Mast"),
+            min.cutoff = 0, label = TRUE, label.size = 2,
+            ncol = 4, raster = FALSE) +
+  plot_annotation(title = "Skin - Mast cell markers") &
+  labels_standard & clean_umap
+```
+
+#### Melanocytes
+
+```{r skin-marker-overlays-feature-melanocytes}
+#| fig.dim = c(24, 6)
+
+FeaturePlot(combined_skin,
+            features = get_features_from_all(markers_df = markers_all,
+                                             sources = markers_skin_sources,
+                                             cell_types = "Melanocytes"),
+            min.cutoff = 0, label = TRUE, label.size = 2,
+            ncol = 4, raster = FALSE) +
+  plot_annotation(title = "Skin - Melanocyte markers") &
+  labels_standard & clean_umap
+```
+
+#### Muscle Cells
+
+```{r skin-marker-overlays-feature-muscle}
+#| fig.dim = c(24, 6)
+
+FeaturePlot(combined_skin,
+            features = get_features_from_all(markers_df = markers_all,
+                                             sources = markers_skin_sources,
+                                             cell_types = "Muscle"),
+            min.cutoff = 0, label = TRUE, label.size = 2,
+            ncol = 4, raster = FALSE) +
+  plot_annotation(title = "Skin - Muscle cell markers") &
+  labels_standard & clean_umap
+```
+
+#### Myocytes
+
+```{r skin-marker-overlays-feature-myocyte}
+#| fig.dim = c(24, 6)
+
+FeaturePlot(combined_skin,
+            features = get_features_from_all(markers_df = markers_all,
+                                             sources = markers_skin_sources,
+                                             cell_types = "Myocytes"),
+            min.cutoff = 0, label = TRUE, label.size = 2,
+            ncol = 4, raster = FALSE) +
+  plot_annotation(title = "Skin - Myocyte markers") &
+  labels_standard & clean_umap
+```
+
+#### Natural Killers
+
+```{r skin-marker-overlays-feature-natural-killers}
+#| fig.dim = c(24, 30)
+
+FeaturePlot(combined_skin,
+            features = get_features_from_all(markers_df = markers_all,
+                                             cell_types = "NK"),
+            min.cutoff = 0, label = TRUE, label.size = 2,
+            ncol = 4, raster = FALSE) +
+  plot_annotation(title = "Skin - Natural Killer markers") &
+  labels_standard & clean_umap
+```
+
+#### Neutrophils
+
+Takes all neutrophil markers regardless of source
+
+```{r skin-marker-overlays-feature-neutrophil}
+#| fig.dim = c(24, 12)
+
+FeaturePlot(combined_skin,
+            features = get_features_from_all(markers_df = markers_all,
+                                             cell_types = "Neutrophils"),
+            min.cutoff = 0, label = TRUE, label.size = 2,
+            ncol = 4, raster = FALSE) +
+  plot_annotation(title = "Skin - Neutrophil markers") &
+  labels_standard & clean_umap
+```
+
+#### NK Cells
+
+Includes Ira's NK markers too
+
+```{r skin-marker-overlays-feature-nk}
+#| fig.dim = c(24, 12)
+
+FeaturePlot(combined_skin,
+            features = get_features_from_all(markers_df = markers_all,
+                                             sources = c(markers_skin_sources, "Ira_Fleming"),
+                                             cell_types = "NK"),
+            min.cutoff = 0, label = TRUE, label.size = 2,
+            ncol = 4, raster = FALSE) +
+  plot_annotation(title = "Skin - NK cell markers") &
+  labels_standard & clean_umap
+```
+
+#### Plasma Cells
+
+```{r skin-marker-overlays-feature-plasma}
+#| fig.dim = c(24, 6)
+
+FeaturePlot(combined_skin,
+            features = get_features_from_all(markers_df = markers_all,
+                                             sources = markers_skin_sources,
+                                             cell_types = "Plasma"),
+            min.cutoff = 0, label = TRUE, label.size = 2,
+            ncol = 4, raster = FALSE) +
+  plot_annotation(title = "Skin - Plasma cell markers") &
+  labels_standard & clean_umap
+```
+
+#### Schwann Cells
+
+Associated with the nervous system.
+
+```{r skin-marker-overlays-feature-schwann}
+#| fig.dim = c(24, 6)
+
+FeaturePlot(combined_skin,
+            features = get_features_from_all(markers_df = markers_all,
+                                             sources = markers_skin_sources,
+                                             cell_types = "Schwann"),
+            min.cutoff = 0, label = TRUE, label.size = 2,
+            ncol = 4, raster = FALSE) +
+  plot_annotation(title = "Skin - Schwann cell markers") &
+  labels_standard & clean_umap
+```
+
+#### T Cells
+
+```{r skin-marker-overlays-feature-t-shorter}
+#| fig.dim = c(24, 24)
+
+# shorter list of T cell markers
+FeaturePlot(combined_skin,
+            features = get_features_from_all(markers_df = markers_all,
+                                             sources = markers_skin_sources,
+                                             cell_types = c("T", "Tregs")),
+            min.cutoff = 0, label = TRUE, label.size = 2,
+            ncol = 4, raster = FALSE) +
+  plot_annotation(title = "Skin - T cell markers (T and T regs)") &
+  labels_standard & clean_umap
+```
+
+### Violin plots {.tabset}
+
+For the T cells:
+
+#### With points
+
+```{r skin-marker-overlays-vln-t-points}
+#| fig.dim = c(28, 18)
+
+VlnPlot(combined_skin,
+        features = get_features_from_all(markers_df = markers_all,
+                                         sources = markers_skin_sources,
+                                         cell_types = "T"),
+        cols = iwanthue(n_distinct(combined_skin$seurat_clusters)),
+        ncol = 4, raster = FALSE)  +
+  plot_annotation(title = "Skin - T cell markers") &
+  labels_standard_vln_rotate
+```
+
+#### Without points
+
+```{r skin-marker-overlays-vln-t-no-points}
+#| fig.dim = c(28, 18)
+
+VlnPlot(combined_skin,
+        features = get_features_from_all(markers_df = markers_all,
+                                         sources = markers_skin_sources,
+                                         cell_types = "T"),
+        cols = iwanthue(n_distinct(combined_skin$seurat_clusters)),
+        pt.size = 0, ncol = 4, raster = FALSE)  +
+  plot_annotation(title = "Skin - T cell markers") &
+  labels_standard_vln_rotate
+```
+
+### Nebulosa
+
+Note that:
+
+* CD11b = ITGAM
+* CD169 = SIGLEC1
+* CD206 = MRC1
+
+#### Individual markers
+
+* [Tissue-specific macrophages: how they develop and choreograph tissue biology](https://www.nature.com/articles/s41577-023-00848-y)
+  * "Although tissue-resident macrophages can be identified by a combination of a few pan-macrophage markers in every tissue (for example, CD11b, F4/80, MERTK and CD64)"
+
+```{r skin-marker-overlays-nebulosa-individual-umap-setup}
+plots_skin <- list()
+skin_markers <- c("CD19", "CD3D", "IFNL1", "NKG7",
+                  # macrophages 
+                  "ITGAM", "ADGRE1", "MERTK", "FCGR1A")
+# skin_markers <- c("IFNA1", "IFNA10", "IFNA13", "IFNA14", "IFNA16", "IFNA17",
+#                   "IFNA2", "IFNA21", "IFNA4", "IFNA5", "IFNA6", "IFNA7",
+#                   "IFNA8", "IFNAR1", "IFNAR2", "IFNB1", "IFNG-AS1", "IFNG",
+#                   "IFNGR1", "IFNGR2", "IFNL1", "IFNL2", "IFNL3", "IFNLR1")
+skin_markers <- sort(skin_markers)
+
+# to see the cell types
+plots_skin[["base"]] <-
+  plot_umap(seurat_obj = combined_skin, tissue_type = "Skin",
+            include_legend = FALSE)
+
+for (marker in skin_markers) {
+  tryCatch({
+    plots_skin[[marker]] <-
+      plot_density(combined_skin, features = marker, size = 0.2) +
+      labels_standard + clean_umap
+    },
+    error = function(e){}
+  )
+}
+```
+
+```{r skin-marker-overlays-nebulosa-individual-umap}
+#| fig.dim = c(24, 6 * ceiling(length(plots_skin) / 4))
+
+wrap_plots(plots_skin, ncol = min(length(plots_skin), 4))
+```
+
+#### Joint markers
+
+* Paris suggested plotting pan-myeloid markers to help identify actual mast cells
+  * [The Emerging Understanding of Myeloid Cells as Partners and Targets in Tumor Rejection](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4391275/)
+    * "Critically, for full myeloid population delineation, 9 conventional surface markers are required: CD45, CD11b, CD11c, Ly6C, CD24, CD90.2/1, MHCII, F4/80, and CD103."
+* What are the Langerhans-like cells?
+  * [Langerhans cell markers CD1a and CD207 are the most rapidly responding genes in lesional psoriatic skin following adalimumab treatment](https://pubmed.ncbi.nlm.nih.gov/28109175/)
+  * [Distinct human Langerhans cell subsets orchestrate reciprocal functions and require different developmental regulation](https://www.sciencedirect.com/science/article/pii/S1074761321003447)
+    * "The one major LC population ... was sub-clustered into four discrete LC subsets...: LC1 (CD207hi, CD1A), LC2 (CD207lo, CD1C, CD1B), activated LCs (aLC) (CD83, CCR7lo), and migratory LCs (migLC) (CCR7hi). "
+* Macrophages
+  * [The markers to delineate different phenotypes of macrophages related to metabolic disorders](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9940311/)
+    * "F4/80, CCR2, CD169, CX3CR1, CD206, CD163, Lyve1, CD9, TREM2, and MHCII are macrophage markers located on the cell membrane."
+
+```{r skin-marker-overlays-nebulosa-joint-umap-setup}
+plots_skin <- list()
+skin_markers <- list("Myeloid Cells" = c("CD68", "ITGAM", "MRC1"),
+                     "Macrophages" = c("SIGLEC1", "MRC1"),
+                     "Langerhans" = c("CD1A", "CD207"),
+                     "Langerhans (LC2)" = c("CD1B", "CD1C"),
+                     "Langerhans (Activated)" = c("CCR7", "CD83"),
+                     "Langerhans (Migratory)" = c("CCR7"))
+
+# to see the clusters 
+plots_skin[["base"]] <-
+  plot_umap(seurat_obj = combined_skin, tissue_type = "Skin",
+            plot_by = "cluster_all", include_legend = FALSE)
+
+for (type in names(skin_markers)) {
+  markers <- skin_markers[[type]]
+  
+  # just the combined one
+  tryCatch({
+    plots_skin[[str_c(markers, collapse = ", ")]] <-
+      plot_density(combined_skin, features = markers, joint = TRUE,
+                   size = 0.2)[[length(markers) + 1]] +
+      labs(subtitle = type) +
+      labels_standard + clean_umap
+    },
+    error = function(e){}
+  )
+}
+```
+
+```{r skin-marker-overlays-nebulosa-joint-umap}
+#| fig.dim = c(24, 6 * ceiling(length(plots_skin) / 4))
+
+wrap_plots(plots_skin, ncol = min(length(plots_skin), 4))
+```
+
+## Annotate cell clusters
+
+During the annotation step (regardless of manual or automatic), you can create a csv file to store the annotations (so that they can be easily shared outside of code or used in other scripts such as "reduce_seurat_obj_size.R").
+
+### Manually
+
+Annotate the clusters (for `cluster_res = 1`):
+
+```{r skin-annotations-manual-set}
+# annotate the clusters for the skin data
+combined_skin_annotations <- rbind(c("0", "T Cells"), # CD4 T Cells
+                                   c("1", "T Cells"), # CD8 T Cells
+                                   c("2", "Fibroblasts"),
+                                   c("3", "Fibroblasts"),
+                                   c("4", "Keratinocytes"),
+                                   c("5", "Macrophages"),
+                                   c("6", "Endothelial Cells"),
+                                   c("7", "Macrophages"),
+                                   c("8", "Fibroblasts"),
+                                   c("9", "Fibroblasts"),
+                                   c("10", "Keratinocytes"),
+                                   c("11", "Langerhans"), # cDCs/Langerhans
+                                   c("12", "Fibroblasts"),
+                                   c("13", "Macrophages"),
+                                   c("14", "Pericytes"),
+                                   c("15", "Natural Killers"),
+                                   c("16", "Keratinocytes"),
+                                   c("17", "Fibroblasts"),
+                                   c("18", "Fibroblasts"),
+                                   c("19", "Fibroblasts"),
+                                   c("20", "B Cells"),
+                                   c("21", "Keratinocytes"),
+                                   c("22", "Melanocytes"),
+                                   c("23", "T Cells"), # CD4 T Cells
+                                   c("24", "Pericytes"),
+                                   c("25", "Fibroblasts"),
+                                   c("26", "Endothelial Cells"),
+                                   c("27", "Fibroblasts"),
+                                   c("28", "Endothelial Cells"),
+                                   c("29", "Endothelial Cells"), # Lymphatic
+                                   c("30", "Fibroblasts"),
+                                   c("31", "Keratinocytes"),
+                                   c("32", "T Cells"), # Tregs? # Cycling
+                                   c("33", "Keratinocytes"),
+                                   c("34", "Nerves"),
+                                   c("35", "Fibroblasts"), # Cycling
+                                   c("36", "Cycling Dendritic Cells"), # Cycling cDC/Langerhans
+                                   c("37", "Keratinocytes"),
+                                   c("38", "Mast Cells"),
+                                   c("39", "Endothelial Cells"), # Cycling Vascular
+                                   c("40", "Keratinocytes"),
+                                   c("41", "Endothelial Cells"))
+
+colnames(combined_skin_annotations) <- c("Cluster", "CellType")
+combined_skin_annotations <- data.frame(combined_skin_annotations)
+
+# save the annotations as a csv
+write_csv(combined_skin_annotations,
+          file = file.path(path_tables, "annotations_skin.csv"))
+```
+
+Add the annotations to the Seurat object and examine them:
+
+**These are now different from the previous cell because of the Shiny app usage**
+
+```{r skin-annotations-manual-add}
+# read in and show the annotations
+annotations_skin <-
+  read_csv(file.path(path_tables, "annotations_skin.csv"), col_types = "c")
+
+# add the annotations to the object
+combined_skin <- add_annotations(seurat_obj = combined_skin,
+                                 annotations_df = annotations_skin)
+
+# clusters by annotation
+print_kable(annotations_skin %>%
+              group_by(CellType) %>%
+              transmute(Clusters = paste0(Cluster, collapse = ", ")) %>%
+              distinct() %>% arrange(CellType),
+            kable_height = NULL)
+```
+
+Choose the color scheme:
+
+```{r skin-annotations-color-scheme}
+# iwanthue + custom choices
+colors_annotated_skin <-
+  setNames(c("#C34D6E", "#520624", "#AD4C22", "#D69724", "#A2CE3B", "#2D8E27",
+             "#6A8BD6", "#1CC38B", "#344AC7", "#D879C1", "#441E7D", "#9658D3",
+             "#86275E"),
+           sort(unique(combined_skin$annotated_clusters)))
+# color blindness check: https://davidmathlogic.com/colorblind/#%23C34D6E-%23520624-%23AD4C22-%23D69724-%23A2CE3B-%232D8E27-%236A8BD6-%231CC38C-%23344AC7-%23D879C1-%23441E7D-%239658D3-%2386275E
+
+# save the colors to the miscellaneous slot for easy access
+Misc(combined_skin, slot = "colors_annotated") <- colors_annotated_skin
+```
+
+Save the annotated object:
+
+```{r skin-annotations-manual-save}
+#| eval = FALSE
+
+# save the object with annotations (watch out for reproducibility)
+saveRDS(combined_skin,
+        file.path(path_objs, "doublets", "with_doublets", "combined_skin.rds"))
+```
+
+### FindAllMarkers
+
+Uses `limma` for "a more efficient implementation of the Wilcoxon Rank Sum Test".
+
+#### All clusters
+
+```{r skin-findallmarkers-save}
+#| eval = FALSE
+
+# find markers for every cluster compared to all remaining cells, report only the positive ones
+combined_skin_findallmarkers <- FindAllMarkers(combined_skin,
+                                               only.pos = TRUE, min.pct = 0.25,
+                                               logfc.threshold = 0.25)
+
+# save the markers as a csv
+write_csv(combined_skin_findallmarkers,
+          file = file.path(path_tables, "findmarkers", "annotations_skin_findallmarkers.csv"))
+```
+
+```{r skin-findallmarkers-load}
+# load markers
+combined_skin_findallmarkers <- read_csv(file.path(path_tables, "findmarkers",
+                                                   "annotations_skin_findallmarkers.csv"),
+                                         show_col_types = FALSE)
+
+print_kable(combined_skin_findallmarkers %>%
+              group_by(cluster) %>%
+              slice_max(n = 5, order_by = desc(p_val_adj),
+                        with_ties = FALSE) %>%
+              relocate(c("cluster", "gene", "p_val_adj", "p_val_adj"),
+                       .before = "p_val"))
+```
+
+Expression heatmap of the top 10 features:
+
+```{r skin-findallmarkers-heatmap}
+#| eval = FALSE
+
+top10_skin <- combined_skin_findallmarkers %>%
+                group_by(cluster) %>%
+                slice_max(n = 10, order_by = desc(p_val_adj))
+
+# expression heatmap
+DoHeatmap(combined_skin, features = top10_skin$gene) +
+  labs(title = "Skin Heatmap - Top 10 Features") + labels_standard
+```
+
+#### Specific clusters {.tabset}
+
+In order to run `FindMarkers`, you need to have the original idents (the cluster ids) set as active. Perhaps I should only include the positives?
+
+##### Cluster 10
+
+```{r skin-findmarkers-skin-cluster10-save}
+#| eval = FALSE
+
+combined_skin_findmarkers_cluster10 <- FindMarkers(combined_skin, ident.1 = 10,
+                                                   min.pct = 0.25) %>%
+                                         rownames_to_column(var = "gene")
+
+# save the markers as a csv
+write_csv(combined_skin_findmarkers_cluster10,
+          file = file.path(path_tables, "findmarkers", "annotations_skin_findmarkers_cluster10.csv"))
+```
+
+```{r skin-findmarkers-skin-cluster10-load}
+# load and show markers
+print_kable(read_csv(file.path(path_tables, "findmarkers",
+                               "annotations_skin_findmarkers_cluster10.csv"),
+                     show_col_types = FALSE) %>% head(10),
+            kable_height = NULL)
+```
+
+##### Cluster 13
+
+```{r skin-findmarkers-skin-cluster13-save}
+#| eval = FALSE
+
+combined_skin_findmarkers_cluster13 <- FindMarkers(combined_skin, ident.1 = 13,
+                                                   min.pct = 0.25) %>%
+                                         rownames_to_column(var = "gene")
+
+# save the markers as a csv
+write_csv(combined_skin_findmarkers_cluster13,
+          file = file.path(path_tables, "findmarkers", "annotations_skin_findmarkers_cluster13.csv"))
+```
+
+```{r skin-findmarkers-skin-cluster13-load}
+# load and show markers
+print_kable(read_csv(file.path(path_tables, "findmarkers",
+                               "annotations_skin_findmarkers_cluster13.csv"),
+                     show_col_types = FALSE) %>% head(10),
+            kable_height = NULL)
+```
+
+##### Cluster 20
+
+```{r skin-findmarkers-skin-cluster20-save}
+#| eval = FALSE
+
+combined_skin_findmarkers_cluster20 <- FindMarkers(combined_skin, ident.1 = 20,
+                                                   min.pct = 0.25) %>%
+                                         rownames_to_column(var = "gene")
+
+# save the markers as a csv
+write_csv(combined_skin_findmarkers_cluster20,
+          file = file.path(path_tables, "findmarkers",
+                           "annotations_skin_findmarkers_cluster20.csv"))
+```
+
+```{r skin-findmarkers-skin-cluster20-load}
+# load and show markers
+print_kable(read_csv(file.path(path_tables, "findmarkers",
+                               "annotations_skin_findmarkers_cluster20.csv"),
+                     show_col_types = FALSE) %>% head(10),
+            kable_height = NULL)
+```
+
+##### Cluster 36
+
+```{r skin-findmarkers-skin-cluster36-save}
+#| eval = FALSE
+
+combined_skin_findmarkers_cluster36 <- FindMarkers(combined_skin, ident.1 = 36,
+                                                   min.pct = 0.25) %>%
+                                         rownames_to_column(var = "gene")
+
+# save the markers as a csv
+write_csv(combined_skin_findmarkers_cluster36,
+          file = file.path(path_tables, "findmarkers",
+                           "annotations_skin_findmarkers_cluster36.csv"))
+```
+
+```{r skin-findmarkers-skin-cluster36-load}
+# load and show markers
+print_kable(read_csv(file.path(path_tables, "findmarkers",
+                               "annotations_skin_findmarkers_cluster36.csv"),
+                     show_col_types = FALSE) %>% head(10),
+            kable_height = NULL)
+```
+
+### Final annotations
+
+```{r skin-annotations-manual-umap-cluster-all}
+#| fig.dim = c(16, 8)
+
+# these use the default "annotated_clusters" column
+p1 <- plot_umap(seurat_obj = combined_skin, tissue_type = "Skin",
+                plot_by = "cluster_all") # for comparison
+p2 <- plot_umap(seurat_obj = combined_skin, tissue_type = "Skin",
+                clrs_specific = colors_annotated_skin,
+                plot_by = "cluster_all", annotated = TRUE)
+
+p1 | p2
+```
+
+```{r skin-annotations-manual-umap-cluster-sample}
+#| fig.dim = c(12, 18)
+
+plot_umap(seurat_obj = combined_skin, tissue_type = "Skin",
+          clrs_specific = colors_annotated_skin,
+          plot_by = "cluster_sample", ncol = 4, annotated = TRUE)
+```
+
+```{r skin-annotations-manual-umap-sample-type-split}
+#| fig.dim = c(16, 8)
+
+plot_umap(seurat_obj = combined_skin, tissue_type = "Skin",
+          clrs_specific = colors_annotated_skin,
+          plot_by = "sample_type_split", annotated = TRUE)
+```
+
+## Check the annotations
+
+### Cell counts per cluster
+
+```{r skin-check-annotations-cell-type-counts-bar}
+#| fig.dim = c(12, 8)
+
+plot_counts_cluster(clusters = combined_skin$annotated_clusters,
+                    clrs_specific = colors_annotated_skin,
+                    tissue_type = "Skin", x_axis = "Cell Type") +
+  labels_rotate_x
+```
+
+```{r skin-check-annotations-cell-type-counts-stacked-bar}
+#| fig.dim = c(15, 5)
+
+plot_pcts(calc_pcts(data = combined_skin[[]] %>% mutate(Type = "Sample"),
+                    meta_group_by = "Type",
+                    focus_group = "annotated_clusters"),
+          tissue_type = "Skin",
+          clrs_specific = colors_annotated_skin,
+          plot_value = "Cell Types", x_axis = "Type", x_axis_label = "Total",
+          fill_type = "annotated_clusters", fill_label = "Cell Type",
+          perc_min = 1.5, label_size = 2.5, label_fill = TRUE,
+          include_counts = FALSE, reverse_order = TRUE) +
+  coord_flip() +
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+        panel.grid.minor = element_blank()) +
+  guides(fill = guide_legend(ncol = 1))
+```
+
+### Cell Types by Samples
+
+```{r skin-check-annotations-clusters-samples-bar}
+#| fig.dim = c(21, 14)
+
+# cell counts per sample
+p1 <- plot_counts_cluster(clusters = combined_skin$SampleName,
+                          clrs_specific = colors_sample_skin,
+                          tissue_type = "Skin", x_axis = "SampleName") %>%
+        add_info_bar(method = "add",
+                     info = meta %>%
+                              dplyr::filter(TissueType == "Skin") %>%
+                              select(SampleName, Dataset) %>%
+                              distinct(),
+                     info_type = "Dataset") +
+        labels_rotate_x
+
+# percentage of cell types per sample
+p2 <- plot_pcts(pcts = calc_pcts(data = combined_skin[[]],
+                                 meta_group_by = c("SampleName", "Dataset"),
+                                 focus_group = "annotated_clusters"),
+                tissue_type = "Skin", clrs_specific = colors_annotated_skin,
+                plot_type = "All", plot_value = "Cell Type",
+                x_axis = "SampleName", x_axis_label = "Sample",
+                fill_type = "annotated_clusters", fill_label = "Cell Type") %>%
+        add_info_bar(info_type = "Dataset")
+
+# see which samples are going into each cell type
+# p3 <- plot_tile(seurat_obj = combined_skin, tissue_type = "Skin",
+#                 clrs_specific = colors_sample_skin,
+#                 x_axis = "annotated_clusters", x_axis_label = "Cell Type") +
+#         labels_rotate_x
+
+p3 <- ggplot(combined_skin[[]] %>%
+               group_by(annotated_clusters, SampleName, Dataset) %>%
+               summarize(n = n()),
+             aes(x = annotated_clusters, y = SampleName)) +
+        geom_tile(aes(fill = n), color = "white", linewidth = 0.2) +
+        labs(title = "Skin Samples in each Cell Type",
+             x = "Cell Type", y = "Sample") +
+        scale_y_discrete(limits = rev) +
+        scale_fill_gradient(low = "white", high = "#0052FF", guide = "legend") +
+        facet_grid(rows = vars(Dataset),
+                          scales = "free", space = "free",
+                          labeller = purrr::partial(label_both, sep = " ")) +
+        theme_bw + labels_standard + labels_rotate_x +
+        theme(panel.grid.major.y = element_blank(),
+              panel.background = element_rect(fill = "grey75"))
+
+# percentage of samples per cell type
+p4 <- plot_pcts(pcts = calc_pcts(data = combined_skin[[]],
+                                 meta_group_by = "annotated_clusters",
+                                 focus_group = "SampleName"),
+                tissue_type = "Skin", plot_value = "Samples",
+                x_axis = "annotated_clusters", x_axis_label = "Cell Type",
+                fill_type = "SampleName", fill_label = "Sample",
+                clrs_specific = colors_sample_skin,
+                plot_type = "All") +
+        labels_rotate_x
+
+# combine all plots
+((p1 / p2 | ((p3 / p4) & plot_layout(guides = "collect"))) &
+  guides(fill = guide_legend(ncol = 1)))
+```
+
+```{r skin-check-annotations-cell-type-samples-heatmap}
+#| fig.dim = c(8, 10)
+
+groups_cell_type <- levels(combined_skin$annotated_clusters)
+groups_sample <- sort(unique(combined_skin$SampleName))
+
+overlap_matrix <- matrix(0, nrow = length(groups_sample),
+                         ncol = length(groups_cell_type),
+                         dimnames = list(groups_sample, groups_cell_type))
+
+for (group_sample in groups_sample) {
+  for (group_cell_type in groups_cell_type) {
+    cells_cell_type <- combined_skin[[]] %>%
+                         filter(annotated_clusters == group_cell_type) %>%
+                         pull(Cell_ID_Unique)
+    cells_sample <- combined_skin[[]] %>%
+                      filter(SampleName == group_sample) %>%
+                      pull(Cell_ID_Unique)
+    
+    overlap_count <- length(intersect(cells_cell_type, cells_sample))
+    # set zeroes to NAs for plotting purposes
+    if (overlap_count == 0) overlap_count <- NA
+    
+    overlap_matrix[group_sample, group_cell_type] <- overlap_count
+  }
+}
+
+# to make it easier visually
+sample_datasets <- meta %>% select(Dataset, SampleName) %>%
+                    filter(SampleName %in% rownames(overlap_matrix)) %>%
+                    distinct() %>% pull(Dataset)
+
+ComplexHeatmap::Heatmap(
+  matrix = overlap_matrix,
+  col = brewer.orrd(10)[1:7], # exclude darkest colors
+  na_col = "grey75",
+  rect_gp = gpar(col = "black"),
+  cell_fun = function(j, i, x, y, width, height, fill) {
+    if (!is.na(overlap_matrix[i, j])) {
+      grid.text(overlap_matrix[i, j], x, y,
+                gp = gpar(fontsize = 10, col = "black"))
+      }
+    },
+  row_title = "Sample",
+  row_title_side = "right",
+  row_title_gp = gpar(fontsize = 12, fontface = "italic"),
+  column_title = "Cell Type",
+  column_title_side = "bottom",
+  column_title_gp = gpar(fontsize = 12, fontface = "italic"),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_names_gp = gpar(fontsize = 9),
+  column_names_gp = gpar(fontsize = 9),
+  left_annotation =
+    rowAnnotation(Dataset = sample_datasets,
+                      col = list("Dataset" = colors_dataset),
+                      annotation_legend_param =
+                        list(title_gp = gpar(fontsize = 10),
+                             labels_gp = gpar(fontsize = 8)),
+                      show_annotation_name = FALSE),
+  heatmap_legend_param = list(title = "Overlap",
+                              title_gp = gpar(fontsize = 10),
+                              labels_gp = gpar(fontsize = 8)),
+  use_raster = TRUE) %>%
+draw(column_title = "Skin Cell ID Overlaps by Cell Type and Sample")
+```
+
+### Dot plot
+
+Recheck Mary Tomayko's markers:
+
+```{r skin-check-annotations-dot-mary}
+#| fig.dim = c(16, 5)
+
+# skin markers from Mary Tomayko
+DotPlot(combined_skin,
+        features = get_features_from_all(markers_df = markers_all,
+                                         sources = "Mary_Tomayko",
+                                         tissue_types = "Skin",
+                                         alphabetize_all = FALSE),
+        cols = colors_dot, dot.scale = 3) %>%
+  add_info_bar(method = "join", info_type = "Cell_Type_Full",
+               info = get_cell_types(markers_all %>%
+                                       dplyr::filter(Source == "Mary_Tomayko",
+                                                     Tissue_Type == "Skin")),
+               text_size = 8, label = FALSE) %>%
+  plot_dot_side(seurat_obj = combined_skin,
+                row_identity = "annotated_clusters",
+                facet_col = "Cell_Type_Full") +
+  labs(title = "Skin (Mary Tomayko)") +
+  RotatedAxis() + labels_standard
+```
+
+### Violin plots {.tabset}
+
+For the T cells:
+
+```{r skin-check-annotations-flip}
+#| eval = FALSE
+
+# undo reversing the levels for the dot plots
+combined_skin$annotated_clusters <-
+  mutate(combined_skin[[]], annotated_clusters = fct_rev(annotated_clusters))
+```
+
+#### With points
+
+```{r skin-check-annotations-vln-t-points}
+#| fig.dim = c(24, 18)
+
+VlnPlot(combined_skin,
+        features = get_features_from_all(markers_df = markers_all,
+                                         sources = markers_skin_sources,
+                                         cell_types = "T"),
+        cols = colors_annotated_skin, ncol = 4, raster = FALSE) &
+  labels_standard_vln
+```
+
+#### Without points
+
+```{r skin-check-annotations-vln-t-no-points}
+#| fig.dim = c(24, 18)
+
+VlnPlot(combined_skin,
+        features = get_features_from_all(markers_df = markers_all,
+                                         sources = markers_skin_sources,
+                                         cell_types = "T"),
+        cols = colors_annotated_skin, pt.size = 0, ncol = 4, raster = FALSE) &
+  labels_standard_vln
+```
