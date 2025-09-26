@@ -78,8 +78,7 @@ include_graphics(path = here::here("single_cell", "primary_analysis", "images",
 
 ```{r setup-markers}
 markers_all <- read_csv(file.path(path_resources, "marker_genes_all.csv"),
-                        show_col_types = FALSE) %>%
-                 dplyr::filter(Species == "Human")
+                        show_col_types = FALSE)
 ```
 
 ## Objects
@@ -1522,7 +1521,8 @@ Uses `limma` for "a more efficient implementation of the Wilcoxon Rank Sum Test"
 ```{r skin-findallmarkers-save}
 #| eval = FALSE
 
-# find markers for every cluster compared to all remaining cells, report only the positive ones
+# find markers for every cluster compared to all remaining cells
+# report only the positive ones
 combined_skin_findallmarkers <- FindAllMarkers(combined_skin,
                                                only.pos = TRUE, min.pct = 0.25,
                                                logfc.threshold = 0.25)

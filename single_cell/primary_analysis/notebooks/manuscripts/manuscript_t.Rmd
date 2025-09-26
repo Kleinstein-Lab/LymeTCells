@@ -217,10 +217,6 @@ de_genes_skin_t_em_ifng <- enframe(de_skin_t_em_ifng) %>%
 ## Other
 
 ```{r setup-other}
-markers_all <- read_csv(file.path(path_resources, "marker_genes_all.csv"),
-                        show_col_types = FALSE) %>%
-                 dplyr::filter(Species == "Human")
-
 # for the supported data values spreadsheet later
 sdv <- list()
 ```
