@@ -1,5 +1,5 @@
 ---
-title: "Subclustering"
+title: "Subclustering (Refined)"
 output:
   html_document:
     code_download: yes
@@ -29,15 +29,15 @@ knitr::opts_chunk$set(comment = NA, dpi = 200, fig.align = "center",
                       out.width = "100%", warning = FALSE, error = TRUE,
                       message = FALSE,
                       fig.path = here::here("primary_analysis", "figures",
-                                            "analysis", "subclustering",
-                                            "subclustering-"))
+                                            "analysis", "subclustering_refined",
+                                            "subclustering-refined-"))
 
 # will mess with chunk labels
 options(knitr.duplicate.label = "allow")
 ```
 
 **Author(s):** Edel Aron<br>
-**Date Created:** 2023-02-22<br>
+**Date Created:** 2023-05-11<br>
 **Last Updated:** `r Sys.Date()`
 
 **R version:** `r R.Version()$version.string`<br>
@@ -98,32 +98,52 @@ colors_annotated_blood <- combined_blood@misc$colors_annotated
 colors_annotated_skin <- combined_skin@misc$colors_annotated
 ```
 
-Just like in the GEX analysis section, you can load in the processed objects instead of running the pipeline if it was previously run with the same settings. It is recommended that you save the objects after an initial (or new) analysis since rerunning the previous steps is time-intensive (and liable to sometimes crash the session depending on the configuration).
+#### Subclustered (round 1)
 
-```{r setup-gex-subclustered}
+Rename the current subclustered objects:
+
+```{r setup-gex-round-1}
 # objects
-combined_blood_t <- readRDS(file.path(path_objs, "combined_blood_t.rds"))
-combined_skin_t <- readRDS(file.path(path_objs, "combined_skin_t.rds"))
+combined_blood_t_full <- readRDS(file.path(path_objs, "combined_blood_t.rds"))
+combined_skin_t_full <- readRDS(file.path(path_objs, "combined_skin_t.rds"))
+
+# colors
+colors_annotated_blood_t_full <- combined_blood_t_full@misc$colors_annotated
+colors_annotated_skin_t_full <- combined_skin_t_full@misc$colors_annotated
+```
+
+#### Subclustered (round 2)
+
+Load the refined subclustered objects:
+
+```{r setup-gex-round-2}
+# objects
+combined_blood_t <- readRDS(file.path(path_objs, "combined_blood_t_ref.rds"))
+combined_skin_t <- readRDS(file.path(path_objs, "combined_skin_t_ref.rds"))
 
 # colors
 colors_annotated_blood_t <- combined_blood_t@misc$colors_annotated
 colors_annotated_skin_t <- combined_skin_t@misc$colors_annotated
 ```
 
-```{r setup-gex-subclustered-overview}
+```{r setup-gex-round-2-overview}
 subcluster_overview(seurat_obj = combined_blood,
                     seurat_obj_sub = combined_blood_t,
-                    tissue_type = "Blood", airr_type = "TCR",
-                    cell_types = t_cell_types)
+                    tissue_type = "Blood",
+                    airr_type = "TCR", cell_types = t_cell_types)
 subcluster_overview(seurat_obj = combined_skin,
                     seurat_obj_sub = combined_skin_t,
-                    tissue_type = "Skin", airr_type = "TCR",
-                    cell_types = t_cell_types)
+                    tissue_type = "Skin",
+                    airr_type = "TCR", cell_types = t_cell_types)
 ```
 
 Reset to the unannotated clusters:
 
-```{r setup-gex-subclustered-labels}
+```{r setup-gex-round-2-labels}
+# for subsetting
+Idents(combined_blood_t_full) <- "seurat_subclusters"
+Idents(combined_skin_t_full) <- "seurat_subclusters"
+
 # since later I save the objects with their annotations
 Idents(combined_blood_t) <- "seurat_subclusters"
 Idents(combined_skin_t) <- "seurat_subclusters"
@@ -136,27 +156,178 @@ combined_tcr <-
   readRDS(file.path(path_objs, "airr", "combined_airrflow_bulk_tcr.rds"))
 ```
 
+Overview of how many cells get filtered out in the end:
+
+```{r setup-load-objects-processed-summary}
+refined_summary_df <-
+  data.frame("TissueType" = c("Blood", "Skin"),
+             "DataType" = c("TCR", "TCR"),
+             "Full" = c(ncol(combined_blood), ncol(combined_skin)),
+             "Subclustered" = c(ncol(combined_blood_t_full),
+                                ncol(combined_skin_t_full)),
+             "Refined" = c(ncol(combined_blood_t), ncol(combined_skin_t)))
+
+print_kable(refined_summary_df, kable_height = NULL)
+```
+
 ------------------------------------------------------------------------
 
 # Blood
+
+```{r}
+tissue_type_spec <- "Refined Subclustered Blood T Cells"
+```
+
+## Filter non-T cells
+
+### Percentage checks
+
+Check each subcluster for what percentage TCRs or "`r t_cell_types_str`" it has:
+
+```{r blood-t-filter-checks}
+# base dataframe
+combined_blood_t_checks <-
+  clusters_gex_airr(seurat_obj = combined_blood_t_full,
+                    clusters_col = "seurat_subclusters",
+                    annotations_col = "annotated_clusters",
+                    airr_type = "TCR", cell_types = t_cell_types)
+
+# add in cell type annotations and cell counts
+combined_blood_t_checks <-
+  merge(combined_blood_t_checks,
+        as.data.frame(table(combined_blood_t_full[[c("seurat_subclusters",
+                                                     "annotated_subclusters")]])) %>%
+          dplyr::filter(Freq > 0) %>%
+          rename(Count = Freq)) %>%
+  relocate(annotated_subclusters, .after = seurat_subclusters) %>%
+  arrange(seurat_subclusters)
+
+print_dt(combined_blood_t_checks)
+```
+
+<br> With a minimum of **20%** for each:
+
+```{r blood-t-filter-checks-cutoffs}
+combined_blood_t_checks <- dplyr::filter(combined_blood_t_checks,
+                                         Has_TCR > 20, Has_T_Cells > 20)
+combined_blood_t_checks <- arrange(combined_blood_t_checks, seurat_subclusters)
+
+print_kable(combined_blood_t_checks, kable_height = NULL)
+```
+
+### Marker genes and TCR info
+
+The clusters that pass the cutoffs from before are highlighted:
+
+```{r blood-t-filter-annotations-umap}
+#| fig.dim = c(16, 16)
+
+# set up plotting details
+Idents(combined_blood_t_full) <- "seurat_subclusters"
+combined_blood_t_clusters_keep <- combined_blood_t_checks$seurat_subclusters
+combined_blood_t_cell_types_keep <-
+  combined_blood_t_full[[]] %>%
+    dplyr::filter(!str_detect(annotated_subclusters, "Non")) %>%
+    pull(annotated_subclusters) %>%
+    unique() %>%
+    as.character()
+
+# gex info
+p1 <- plot_umap(seurat_obj = combined_blood_t_full,
+                tissue_type = "Blood T Cells",
+                clrs_specific = colors_annotated_blood,
+                plot_by = "cluster_specific",
+                specific_clusters =
+                  intersect(t_cell_types,
+                            levels(combined_blood_t_full$annotated_clusters)),
+                plot_label = FALSE,
+                annotated = TRUE, annotations_col = "annotated_clusters",
+                details = "Blood Cell Type")
+
+# airr info
+p2 <- plot_immune_overlay(seurat_obj = combined_blood_t_full, tissue_type = "Blood",
+                          airr_type = "TCR", clrs_specific = colors_datatype,
+                          plot_by = "all")
+
+# cutoff clusters
+p3 <- plot_umap(seurat_obj = combined_blood_t_full,
+                tissue_type = "Blood T Cells",
+                plot_by = "cluster_specific",
+                specific_clusters = combined_blood_t_clusters_keep,
+                plot_label = TRUE,
+                clusters_col = "seurat_subclusters",
+                details = "Has_TCR > 20%, Has_T_Cells > 20%")
+
+# subclustered annotations
+p4 <- plot_umap(seurat_obj = combined_blood_t_full,
+                tissue_type = "Blood T Cells",
+                clrs_specific = colors_annotated_blood_t_full,
+                plot_by = "cluster_specific",
+                specific_clusters = combined_blood_t_cell_types_keep,
+                plot_label = FALSE,
+                annotated = TRUE, annotations_col = "annotated_subclusters",
+                details = "`Unselected` = `Non T Cells`")
+
+# all of the plots
+p1 + p2 + p3 + p4 + plot_layout(nrow = 2, byrow = FALSE) + plot_anno
+```
 
 ## Object setup
 
 ### Select the clusters
 
-```{r blood-t-setup-select}
-#| eval = FALSE
+After reviewing the previous UMAPs (and dot plots), we will keep the following clusters as "real" T cells:
 
-combined_blood_t <- subset(combined_blood,
-                             Has_TCR == TRUE | # AIRR info
-                             annotated_clusters %in% t_cell_types) # GEX info
+```{r blood-t-setup-subset-clusters}
+combined_blood_t_clusters_keep <- as.character(0:17)
+
+print(combined_blood_t_clusters_keep)
 ```
 
-```{r blood-t-setup-overview}
+```{r blood-t-setup-subset}
+combined_blood_t_ref <- subset(combined_blood_t_full,
+                               idents = combined_blood_t_clusters_keep)
+
 subcluster_overview(seurat_obj = combined_blood,
-                    seurat_obj_sub = combined_blood_t,
+                    seurat_obj_sub = combined_blood_t_ref,
                     tissue_type = "Blood", airr_type = "TCR",
                     cell_types = t_cell_types)
+```
+
+Examine the chosen clusters and the previous annotations:
+
+```{r blood-t-setup-subset-umap}
+#| fig.dim = c(16, 8)
+
+p1 <- plot_umap(seurat_obj = combined_blood_t_ref,
+                tissue_type = "Blood T Cells (Refined)",
+                plot_by = "cluster_all", plot_label = TRUE,
+                clusters_col = "seurat_subclusters", include_legend = FALSE,
+                details = "Selected Clusters")
+
+p2 <- plot_umap(seurat_obj = combined_blood_t_ref,
+                tissue_type = "Blood T Cells (Refined)",
+                clrs_specific = colors_annotated_blood_t_full,
+                plot_by = "cluster_all", plot_label = TRUE,
+                annotated = TRUE, annotations_col = "annotated_subclusters",
+                include_legend = FALSE, details = "Prior to reclustering")
+
+# compare the UMAPs
+(p1 | p2) + plot_anno
+```
+
+Reset the objects:
+
+```{r blood-t-setup-subset-reset}
+Idents(combined_blood_t_full) <- "annotated_subclusters"
+
+# keep the round 1 annotations
+combined_blood_t_ref$annotated_subclusters_full <-
+  combined_blood_t_ref$annotated_subclusters
+combined_blood_t_ref@meta.data <- combined_blood_t_ref[[]] %>%
+                                    select(-seurat_subclusters,
+                                           -annotated_subclusters,
+                                           -contains("RNA_snn_sub"))
 ```
 
 ### Rerun the standard pipeline
@@ -164,27 +335,27 @@ subcluster_overview(seurat_obj = combined_blood,
 Choose a resolution:
 
 ```{r blood-t-seurat-pipeline-res}
-blood_t_res <- 0.6
+blood_t_ref_res <- 1.5
 ```
 
-With the chosen resolution (with help from `clustree`) of `r blood_t_res`:
+With the chosen resolution (with help from `clustree`) of `r blood_t_ref_res`:
 
 ```{r blood-t-seurat-pipeline-save}
 #| eval = FALSE
 
-# resolution picked from the clustering tree, plus an extra one
+# resolution picked from the clustering tree
 combined_blood_t <-
-  seurat_pipeline(seurat_obj = combined_blood_t, subcluster = TRUE,
-                  num_features = 2000, num_pcs = 30, num_dims = 20, 
-                  cluster_res = c(blood_t_res, 1.1))
+  seurat_pipeline(seurat_obj = combined_blood_t_ref, subcluster = TRUE,
+                  num_features = 2000, num_pcs = 30, num_dims = 20,
+                  cluster_res = c(0.6, 1, blood_t_ref_res))
 
 # choose a resolution
-Idents(combined_blood_t) <- paste0("RNA_snn_sub_res.", blood_t_res)
+Idents(combined_blood_t) <- paste0("RNA_snn_sub_res.", blood_t_ref_res)
 combined_blood_t$seurat_subclusters <-
-  combined_blood_t[[paste0("RNA_snn_sub_res.", blood_t_res)]]
+  combined_blood_t[[paste0("RNA_snn_sub_res.", blood_t_ref_res)]]
 
 # save the object
-saveRDS(combined_blood_t, file.path(path_objs, "combined_blood_t.rds"))
+saveRDS(combined_blood_t, file.path(path_objs, "combined_blood_t_ref.rds"))
 ```
 
 ### Examine results
@@ -201,8 +372,7 @@ p1 <- LabelPoints(VariableFeaturePlot(combined_blood_t),
 p2 <- ElbowPlot(combined_blood_t, ndims = 25) + labels_standard
 
 p3 <- plot_counts_cluster(clusters = combined_blood_t$seurat_subclusters,
-                          tissue_type = "Blood",
-                          details = "Subclustered T Cells",
+                          tissue_type = tissue_type_spec,
                           x_axis = "Cluster")
 
 ((p1 | p2) / p3) + plot_layout(heights = c(2, 3))
@@ -222,8 +392,7 @@ p1 <- plot_pcts(pcts = calc_pcts(data = combined_blood_t[[]],
                 tissue_type = "Blood", plot_value = "Clusters",
                 x_axis = "SampleName", x_axis_label = "Sample",
                 fill_type = "seurat_subclusters", fill_label = "Cluster",
-                plot_type = "All",
-                details = t_cell_types_str) %>%
+                plot_type = "All", details = t_cell_types_str) %>%
         add_info_bar(method = "contains", info_type = "Dataset")
 
 # see which samples are going into each cluster
@@ -274,11 +443,9 @@ p5 <- plot_pcts(pcts = calc_pcts(data = combined_blood_t[[]],
 #| fig.dim = c(12, 8)
 
 plot_counts_cluster(clusters = combined_blood_t$SampleName,
-                    tissue_type = "Skin",
-                    details = "Subclustered T Cells",
+                    tissue_type = tissue_type_spec,
                     x_axis = "Cell Type",
-                    clrs_specific = colors_samples) +
-  labels_rotate_x
+                    clrs_specific = colors_samples)
 ```
 
 ### Cell Types by Samples
@@ -287,11 +454,9 @@ plot_counts_cluster(clusters = combined_blood_t$SampleName,
 #| fig.dim = c(12, 8)
 
 plot_counts_cluster(clusters = combined_blood_t$annotated_clusters,
-                    tissue_type = "Skin",
-                    details = "Subclustered T Cells",
+                    tissue_type = tissue_type_spec,
                     x_axis = "Cell Type",
-                    clrs_specific = colors_annotated_blood) +
-  labels_rotate_x
+                    clrs_specific = colors_annotated_blood)
 ```
 
 ### Samples
@@ -299,8 +464,7 @@ plot_counts_cluster(clusters = combined_blood_t$annotated_clusters,
 ```{r blood-t-samples-bar}
 #| fig.dim = c(12, 7)
 
-plot_pcts(calc_pcts(data = combined_blood_t[[]] %>%
-                      mutate(Type = "Sample"),
+plot_pcts(calc_pcts(data = combined_blood_t[[]] %>% mutate(Type = "Sample"),
                     meta_group_by = "Type",
                     focus_group = "SampleName"),
           tissue_type = "Subclustered Blood T Cells",
@@ -315,24 +479,24 @@ plot_pcts(calc_pcts(data = combined_blood_t[[]] %>%
   guides(fill = guide_legend(ncol = 1))
 ```
 
-### UMAPs
+### UMAPs {.active}
 
 All:
 
 ```{r blood-t-umaps}
-#| fig.dim = c(24, 8)
+#| fig.dim = c(14, 6)
 
 p1 <- plot_umap(seurat_obj = combined_blood_t,
-                tissue_type = "Subclustered Blood T Cells",
+                tissue_type = tissue_type_spec,
                 use_hues = TRUE, plot_by = "cluster_all",
                 clusters_col = "seurat_subclusters")
 p2 <- plot_umap(seurat_obj = combined_blood_t,
-                tissue_type = "Subclustered Blood T Cells",
+                tissue_type = tissue_type_spec,
                 clrs_specific = colors_sample_blood,
                 plot_by = "all", plot_label = FALSE,
                 clusters_col = "seurat_subclusters")
 p3 <- plot_umap(seurat_obj = combined_blood_t,
-                tissue_type = "Subclustered Blood T Cells",
+                tissue_type = tissue_type_spec,
                 clrs_specific = colors_dataset,
                 plot_by = "dataset", plot_label = FALSE,
                 clusters_col = "seurat_subclusters")
@@ -343,12 +507,11 @@ p1 | p2 | p3
 By Sample:
 
 ```{r blood-t-umap-cluster-sample}
-#| fig.dim = c(16, 8)
+#| fig.dim = c(12, 8)
 
 plot_umap(seurat_obj = combined_blood_t,
-          tissue_type = "Subclustered Blood T Cells",
-          use_hues = TRUE, plot_by = "cluster_sample",
-          clusters_col = "seurat_subclusters")
+          tissue_type = tissue_type_spec, use_hues = TRUE,
+          plot_by = "cluster_sample", clusters_col = "seurat_subclusters")
 ```
 
 ## Marker overlays
@@ -358,10 +521,10 @@ plot_umap(seurat_obj = combined_blood_t,
 ```{r blood-t-marker-overlays-setup}
 #| class.source = "fold-show"
 
-# all T cell markers
-blood_t_marker_types <- c("NK", "T_CD4", "T_CD4RM", "T_CD8", "T_CD8RM",
-                          "T_Dividing", "T_FH", "T_Reg", "TCM",
-                          "TCR", "TEM", "TRM")
+# all T cell markers ("T" is too broad)
+blood_t_marker_types <- c("NK", "T", "T_CD4", "T_CD4RM", "T_CD8", "T_CD8RM",
+                         "T_Dividing", "T_FH", "T_Reg", "TCM", "TCR",
+                         "TEM", "TRM", "TteK")
 
 get_features_from_all(markers_df = markers_all, cell_types = blood_t_marker_types)
 ```
@@ -369,7 +532,7 @@ get_features_from_all(markers_df = markers_all, cell_types = blood_t_marker_type
 ### Dot plot
 
 ```{r blood-t-marker-overlays-dot}
-#| fig.dim = c(18, 6)
+#| fig.dim = c(22, 12)
 
 DotPlot(combined_blood_t,
         features = get_features_from_all(markers_df = markers_all,
@@ -384,157 +547,126 @@ DotPlot(combined_blood_t,
                 row_identity = "seurat_subclusters",
                 facet_col = "Cell_Type_Full",
                 info_to_add = c("cluster_size", "percent_TCR")) +
-  labs(title = "Subclustered Blood T Cells") +
+  labs(title = tissue_type_spec) +
   RotatedAxis() + labels_standard
 ```
 
-### Feature plots {.tabset}
+### Feature plots
 
-#### CD4 T Cells
-
-```{r blood-t-marker-overlays-feature-cd4}
-#| fig.dim = c(16, 16)
+```{r blood-t-marker-overlays-feature}
+#| fig.dim = c(16, 52)
 
 FeaturePlot(combined_blood_t,
             features = get_features_from_all(markers_df = markers_all,
-                                             cell_types = c("T_CD4", "T_CD4RM")),
+                                             cell_types = blood_t_marker_types),
             min.cutoff = 0,
             label = TRUE, label.size = 2, ncol = 4, raster = FALSE) +
-  plot_annotation(title = "Subclustered Blood - CD4 T Cells") &
+  plot_annotation(title = tissue_type_spec) &
   labels_standard & clean_umap
 ```
 
-#### CD8 T Cells
+### Violin plots
 
-```{r blood-t-marker-overlays-feature-cd8}
-#| fig.dim = c(16, 16)
+```{r blood-t-marker-overlays-violin}
+#| fig.dim = c(12, 16)
 
-FeaturePlot(combined_blood_t,
-            features = get_features_from_all(markers_df = markers_all,
-                                             cell_types = c("T_CD8", "T_CD8RM")),
-            min.cutoff = 0,
-            label = TRUE, label.size = 2, ncol = 4, raster = FALSE) +
-  plot_annotation(title = "Subclustered Blood - CD8 T Cells") &
-  labels_standard & clean_umap
+VlnPlot(combined_blood_t,
+        features = get_features_from_all(markers_df = markers_all,
+                                         cell_types = "T"),
+        ncol = 4) +
+  plot_annotation(title = tissue_type_spec) &
+  labels_standard_vln_rotate
 ```
 
-#### Other T Cells
+### Nebulosa
 
-```{r blood-t-marker-overlays-feature-other}
-#| fig.dim = c(16, 32)
+Note that:
 
-FeaturePlot(combined_blood_t,
-            features = get_features_from_all(markers_df = markers_all,
-                                             cell_types = c("T_Dividing", "T_FH",
-                                                            "T_Reg", "TCM",
-                                                            "TEM", "TRM")),
-            min.cutoff = 0,
-            label = TRUE, label.size = 2, ncol = 4, raster = FALSE) +
-  plot_annotation(title = "Subclustered Blood - Other T Cells") &
-  labels_standard & clean_umap
+* CD16 = FCGR3A
+* CD45RA = PTPRC
+* CD56 = NCAM1
+* CD62L = SELL
+* CD127 = IL7R
+
+#### Individual markers
+
+```{r blood-t-marker-overlays-nebulosa-individual-umap-setup}
+plots_blood_t <- list()
+blood_t_markers <- c("CD3D", "CD4", "CD8A", "GZMK", "HSPA1A", "IFNG", "TRGV1")
+blood_t_markers <- sort(blood_t_markers)
+
+# to see the clusters 
+plots_blood_t[["base"]] <-
+  plot_umap(seurat_obj = combined_blood_t, tissue_type = tissue_type_spec,
+            plot_by = "cluster_all", clusters_col = "seurat_subclusters",
+            include_legend = FALSE)
+
+for (marker in blood_t_markers) {
+  tryCatch({
+    plots_blood_t[[marker]] <-
+      plot_density(combined_blood_t, features = marker, size = 0.2) +
+      labels_standard + clean_umap
+    },
+    error = function(e){}
+  )
+}
 ```
 
-#### TCRs
+```{r blood-t-marker-overlays-nebulosa-individual-umap}
+#| fig.dim = c(24, 6 * ceiling(length(plots_blood_t) / 4))
 
-```{r blood-t-marker-overlays-feature-tcr}
-#| fig.dim = c(16, 8)
+wrap_plots(plots_blood_t, ncol = min(length(plots_blood_t), 4))
+```
 
-FeaturePlot(combined_blood_t,
-            features = get_features_from_all(markers_df = markers_all,
-                                             cell_types = "TCR"),
-            min.cutoff = 0,
-            label = TRUE, label.size = 2, ncol = 4, raster = FALSE) +
-  plot_annotation(title = "Subclustered Blood - TCRs") &
-  labels_standard & clean_umap
+#### Joint markers
+
+* [Biocompare: Naive T Cells](https://www.biocompare.com/Editorial-Articles/597618-A-Guide-to-Naive-T-Cell-Markers/)
+  * "Naïve CD4 and CD8 T cells have also been identified using the combinations of CD45RA+/CD127+/CD25-/CD45RO- and CD45RA+/CD62L+/CCR7+/CD45RO-, respectively."
+* [Biocompare: NK T Cells](https://www.biocompare.com/Editorial-Articles/593500-A-Guide-to-Natural-Killer-T-Cell-Markers/)
+* [Biocompare: Regulatory T Cells](https://www.biocompare.com/Editorial-Articles/582914-A-Guide-to-Regulatory-T-Cell-Markers/)
+* [Biocompare: T Cells](https://www.biocompare.com/Editorial-Articles/569888-A-Guide-to-T-Cell-Markers/)
+  * "Th2 cells are known for the defense against extracellular parasites and in promoting differentiation of plasma B cells and dendritic cells. This subset secretes IL-4, IL-5, IL-9, and IL-10."
+  * "The natural killer T cell (NKT) comprises about 1% of T cells in the peripheral blood and are defined by their selective recognition of the antigen-presenting CD1d molecule (as opposed to MHC molecules). NKT cell markers include NCAM1 (CD56) and CD16."
+
+```{r blood-t-marker-overlays-nebulosa-joint-umap-setup}
+plots_blood_t <- list()
+blood_t_markers <- list("T Cells" = c("CD4", "CD8A"),
+                        "CD8+ GZMK+ T Cells" = c("CD8A", "GZMK"),
+                        "GZMK+ IFNG+ T Cells" = c("GZMK", "IFNG"),
+                        "Naive CD4 T Cells" = c("PTPRC", "IL7R"),
+                        "Naive CD8 T Cells" = c("PTPRC", "SELL", "CCR7"),
+                        "NK T Cells" = c("NCAM1", "FCGR3A"),
+                        "Th2 T Cells" = c("IL4", "IL5", "IL9", "IL10"))
+
+# to see the clusters 
+plots_blood_t[["base"]] <-
+  plot_umap(seurat_obj = combined_blood_t, tissue_type = tissue_type_spec,
+            plot_by = "cluster_all", clusters_col = "seurat_subclusters",
+            include_legend = FALSE)
+
+for (type in names(blood_t_markers)) {
+  markers <- blood_t_markers[[type]]
+  
+  # just the combined one
+  tryCatch({
+    plots_blood_t[[str_c(markers, collapse = ", ")]] <-
+      plot_density(combined_blood_t, features = markers, joint = TRUE,
+                   size = 0.2)[[length(markers) + 1]] +
+      labs(subtitle = type) +
+      labels_standard + clean_umap
+    },
+    error = function(e){}
+  )
+}
+```
+
+```{r blood-t-marker-overlays-nebulosa-joint-umap}
+#| fig.dim = c(24, 6 * ceiling(length(plots_blood_t) / 4))
+
+wrap_plots(plots_blood_t, ncol = min(length(plots_blood_t), 4))
 ```
 
 ## Annotate cell clusters
-
-### Manually
-
-```{r blood-t-annotations-manual}
-#| eval = FALSE
-
-combined_blood_t_annotations <- rbind(c("0", "TBD T Cells"),
-                                      c("1", "TBD T Cells"),
-                                      c("2", "TBD T Cells"),
-                                      c("3", "TBD T Cells"),
-                                      c("4", "TBD T Cells"), # NK T cells?
-                                      c("5", "TBD T Cells"),
-                                      c("6", "CD8+ T Cells"),
-                                      c("7", "CD4+ T Cells"), # CD4
-                                      c("8", "CD4+ T Cells"), # CD4, regulatory?
-                                      c("9", "TBD T Cells"),
-                                      c("10", "CD8+ T Cells"), # CD8, NK T cells?
-                                      c("11", "TBD T Cells"),
-                                      c("12", "CD8+ T Cells"), # CD8
-                                      c("13", "TBD T Cells"),
-                                      c("14", "CD8+ T Cells"), # CD8
-                                      c("15", "CD8+ T Cells"), # CD8
-                                      c("16", "TBD T Cells"),
-                                      c("17", "Cycling T Cells"), # MKI67, TOP2A
-                                      c("18", "Non T Cells")) # monocytes
-colnames(combined_blood_t_annotations) <- c("Cluster", "CellType")
-combined_blood_t_annotations <- data.frame(combined_blood_t_annotations)
-
-# save the annotations as a csv
-write_csv(combined_blood_t_annotations,
-          file.path(path_tables, "annotations_blood_t.csv"))
-```
-
-Add the annotations to the Seurat object and examine them:
-
-```{r blood-t-annotations-manual-add}
-# read in and show the annotations
-annotations_blood_t <- read_csv(file.path(path_tables,
-                                          "annotations_blood_t.csv"),
-                                col_types = "c")
-
-# add the annotations to the object
-combined_blood_t <- add_annotations(seurat_obj = combined_blood_t,
-                                    annotations_df = annotations_blood_t,
-                                    clusters_col = "seurat_subclusters",
-                                    annotations_col = "annotated_subclusters")
-
-# clusters by annotation
-print_kable(annotations_blood_t %>%
-              group_by(CellType) %>%
-              transmute(Clusters = paste0(Cluster, collapse = ", ")) %>%
-              distinct() %>%
-              arrange(CellType),
-            kable_height = NULL)
-```
-
-Choose the color scheme:
-
-```{r blood-t-annotations-color-schemes}
-# only want the non T cells to be black
-blood_t_cell_types_num <- n_distinct(combined_blood_t$annotated_subclusters)
-blood_t_cell_types <- sort(unique(combined_blood_t$annotated_subclusters))
-
-colors_annotated_blood_t <-
-    setNames(rep("#000000", blood_t_cell_types_num),
-             nm = blood_t_cell_types)
-colors_annotated_blood_t[str_subset(blood_t_cell_types, "Non", negate = TRUE)] <-
-  iwanthue(n = blood_t_cell_types_num - 1, hmin = 250, hmax = 360)
-
-# save the colors to the miscellaneous slot for easy access
-Misc(combined_blood_t, slot = "colors_annotated") <- colors_annotated_blood_t
-```
-
-Save the annotated object:
-
-```{r blood-t-annotations-manual-save}
-#| eval = FALSE
-
-# remove unneeded columns from the metadata
-for (col in c("sequence_id_unique", "v_call_family_TRA", "j_call_family_TRA")) {
-  combined_blood_t[[col]] <- c()
-}
-
-# save the object with annotations (watch out for reproducibility)
-saveRDS(combined_blood_t, file.path(path_objs, "combined_blood_t.rds"))
-```
 
 ### FindMarkers
 
@@ -556,14 +688,14 @@ Idents(combined_blood_t) <- "annotated_subclusters"
 # save the markers as a csv
 write_csv(combined_blood_t_findallmarkers,
           file.path(path_tables, "findmarkers",
-                    "annotations_blood_t_findallmarkers.csv"))
+                    "annotations_blood_t_ref_findallmarkers.csv"))
 ```
 
 ```{r blood-t-annotations-findallmarkers-load}
 # load markers
 combined_blood_t_findallmarkers <-
   read_csv(file.path(path_tables, "findmarkers",
-                     "annotations_blood_t_findallmarkers.csv"),
+                     "annotations_blood_t_ref_findallmarkers.csv"),
            show_col_types = FALSE)
 
 print_kable(combined_blood_t_findallmarkers %>%
@@ -572,35 +704,151 @@ print_kable(combined_blood_t_findallmarkers %>%
               relocate(c("cluster", "gene", "p_val_adj"), .before = c("p_val")))
 ```
 
+### Manually
+
+```{r blood-t-annotations-manual}
+combined_blood_t_annotations <-
+  rbind(c("0", "CD4+ T Cells"),
+        c("1", "CD4+ T Cells"),
+        c("2", "CD4+ T Cells"),
+        c("3", "CD4+ T Cells"),
+        c("4", "CD8+ T Cells"), # CD8A, CD8B, KLRB1/CD161
+        c("5", "CD4+ T Cells"),
+        c("6", "CD4+ T Cells"),
+        c("7", "CD4+ T Cells"),
+        c("8", "CD4+ T Cells"),
+        c("9", "CD4+ T Cells"),
+        c("10", "Gamma Delta T Cells"), # GZMK, TRDV2, TRGV9, KLRB1/CD161, 10% TCRs
+        c("11", "CD8+ T Cells"), # CD8A, CD8B
+        c("12", "CD4+ T Cells"), # a little FOXP3
+        c("13", "MAIT Cells"), # CD8A, GZMK, KLRB1/CD161, CCR6
+        c("14", "CD8+ T Cells"), # CD8A, CD8B, GZMK
+        c("15", "CD4+ T Cells"), # KLRB1/CD161
+        c("16", "CD8+ T Cells"), # FCGR3A/CD16, CD8B
+        c("17", "CD8+ T Cells"), # CD8+ Naive (CD8A, CD8B)
+        c("18", "CD4+ T Cells"),
+        c("19", "CD8+ T Cells"), # CD8+ Naive (CD8A, CD8B)
+        c("20", "MAIT Cells"), # CD8A, GZMK, KLRB1/CD161, CCR6
+        c("21", "CD4+ T Cells"), # KLRB1/CD161
+        c("22", "CD8+ T Cells"), # CD8A, CD8B, GZMK
+        c("23", "CD4+ T Cells"), # not much CD3D
+        c("24", "CD8+ T Cells"), # CD8A, KLRB1/CD161
+        c("25", "CD8+ T Cells")) # CD8+ Proliferating (CD8A, CD8B, MKI67, CDK1)
+colnames(combined_blood_t_annotations) <- c("Cluster", "CellType")
+combined_blood_t_annotations <- data.frame(combined_blood_t_annotations)
+
+# save the annotations as a csv
+write_csv(combined_blood_t_annotations,
+          file.path(path_tables, "annotations_blood_t_ref.csv"))
+```
+
+Add the annotations to the Seurat object and examine them:
+
+```{r blood-t-annotations-manual-add}
+# read in and show the annotations
+annotations_blood_t <-
+  read_csv(file.path(path_tables, "annotations_blood_t_ref.csv"),
+           col_types = "c")
+
+# add the annotations to the object
+combined_blood_t <- add_annotations(seurat_obj = combined_blood_t,
+                                    annotations_df = annotations_blood_t,
+                                    clusters_col = "seurat_subclusters",
+                                    annotations_col = "annotated_subclusters")
+
+# clusters by annotation
+print_kable(annotations_blood_t %>%
+              group_by(CellType) %>%
+              transmute(Clusters = paste0(Cluster, collapse = ", ")) %>%
+              distinct() %>% arrange(CellType),
+            kable_height = NULL)
+```
+
+Choose the color scheme:
+
+```{r blood-t-annotations-color-schemes}
+# some of the colors came out too similar and not good for color blindness, so
+# I tweaked them (and arranged them to look separate on the UMAP but keep
+# thematic if possible e.g. the undefineds are pale)
+# I also tried to match them with the skin T cells when possible or mix colors
+# e.g. the two types of IFNG for the CD8+ GZMK+ T cells
+colors_annotated_blood_t <-
+  setNames(c("#5A16A7", "#B80071", "#FF5328", "#AA54EB"),
+           nm = sort(unique(combined_blood_t$annotated_subclusters)))
+
+# save the colors to the miscellaneous slot for easy access
+Misc(combined_blood_t, slot = "colors_annotated") <- colors_annotated_blood_t
+```
+
+Save the annotated object:
+
+```{r blood-t-annotations-manual-save}
+#| eval = FALSE
+
+# save the object with annotations (watch out for reproducibility)
+saveRDS(combined_blood_t, file.path(path_objs, "combined_blood_t_ref.rds"))
+```
+
 ### Final annotations
 
+How were the cells renamed?
+
+```{r}
+# this is a little messy
+blood_t_subclustered_cell_types <-
+  left_join(combined_blood_t[[]] %>%
+              select(Cell_ID_Unique, annotated_subclusters) %>%
+              rename(annotated_subclusters_refined = annotated_subclusters), 
+            combined_blood_t_full[[]] %>%
+              select(Cell_ID_Unique, annotated_subclusters),
+            by = join_by(Cell_ID_Unique))
+
+table(blood_t_subclustered_cell_types$annotated_subclusters_refined,
+      blood_t_subclustered_cell_types$annotated_subclusters)
+```
+
 ```{r blood-t-annotations-manual-cluster-all-umap}
-#| fig.dim = c(24, 8)
+#| fig.dim = c(12, 12)
 
 p1 <- plot_umap(seurat_obj = combined_blood_t,
-                tissue_type = "Subclustered Blood T Cells",
+                tissue_type = tissue_type_spec,
                 plot_by = "cluster_all",
                 clusters_col = "seurat_subclusters") # for comparison
 p2 <- plot_umap(seurat_obj = combined_blood_t,
-                tissue_type = "Subclustered Blood T Cells",
-                clrs_specific = colors_annotated_blood,
+                tissue_type = tissue_type_spec,
+                clrs_specific = colors_annotated_blood, plot_label = FALSE,
                 plot_by = "cluster_all",
                 annotated = TRUE, annotations_col = "annotated_clusters",
                 details = "Blood Cell Type")
 p3 <- plot_umap(seurat_obj = combined_blood_t,
-                tissue_type = "Subclustered Blood T Cells",
+                tissue_type = tissue_type_spec,
+                clrs_specific = colors_annotated_blood_t_full,
+                plot_by = "cluster_all",
+                annotated = TRUE, annotations_col = "annotated_subclusters_full",
+                details = "by Subclustered Cell Type (Round 1)")
+p4 <- plot_umap(seurat_obj = combined_blood_t,
+                tissue_type = tissue_type_spec,
                 clrs_specific = colors_annotated_blood_t,
                 plot_by = "cluster_all",
-                annotated = TRUE, annotations_col = "annotated_subclusters")
+                annotated = TRUE, annotations_col = "annotated_subclusters",
+                details = "by Subclustered Cell Type (Round 2)")
 
-p1 | p2 | p3
+(p1 | p2) / (p3 | p4)
+```
+
+Just the UMAP:
+
+```{r blood-t-annotations-manual-umap}
+#| fig.dim = c(8, 8)
+
+p4
 ```
 
 ```{r blood-t-annotations-manual-cluster-sample-umap}
-#| fig.dim = c(16, 8)
+#| fig.dim = c(12, 8)
 
 plot_umap(seurat_obj = combined_blood_t,
-          tissue_type = "Subclustered Blood T Cells",
+          tissue_type = tissue_type_spec,
           clrs_specific = colors_annotated_blood_t,
           plot_by = "cluster_sample",
           annotated = TRUE, annotations_col = "annotated_subclusters")
@@ -611,10 +859,10 @@ plot_umap(seurat_obj = combined_blood_t,
 ### Cell counts per cluster
 
 ```{r blood-t-check-annotations-cell-type-counts-bar}
-#| fig.dim = c(12, 8)
+#| fig.dim = c(10, 6)
 
 plot_counts_cluster(clusters = combined_blood_t$annotated_subclusters,
-                    tissue_type = "Blood", details = "Subclustered T Cells",
+                    tissue_type = tissue_type_spec,
                     x_axis = "Cell Type",
                     clrs_specific = colors_annotated_blood_t)
 ```
@@ -674,7 +922,7 @@ p3 <- plot_pcts(pcts = calc_pcts(data = combined_blood_t[[]],
 p4 <- plot_pcts(pcts = calc_pcts(data = combined_blood_t[[]],
                                  meta_group_by = "Dataset",
                                  focus_group = "annotated_subclusters"),
-                tissue_type = "Blood", plot_value = "Cell Type",
+                tissue_type = "Blood", plot_value = "Cell Types",
                 x_axis = "Dataset", x_axis_label = "Dataset",
                 fill_type = "annotated_subclusters", fill_label = "Cell Type",
                 clrs_specific = colors_annotated_blood_t,
@@ -768,7 +1016,7 @@ draw(column_title = "Blood T Cells Cell ID Overlaps by Cell Type and Sample")
 Subclustered labels:
 
 ```{r blood-t-check-annotations-dot-sub}
-#| fig.dim = c(18, 4)
+#| fig.dim = c(16, 6)
 
 DotPlot(combined_blood_t,
         features = get_features_from_all(markers_df = markers_all,
@@ -783,14 +1031,14 @@ DotPlot(combined_blood_t,
                 row_identity = "annotated_subclusters",
                 facet_col = "Cell_Type_Full",
                 info_to_add = c("cluster_size", "percent_TCR")) +
-  labs(title = "Subclustered Blood T Cells") +
+  labs(title = tissue_type_spec) +
   RotatedAxis() + labels_standard
 ```
 
 Blood labels:
 
 ```{r blood-t-check-annotations-dot}
-#| fig.dim = c(18, 6)
+#| fig.dim = c(16, 6)
 
 Idents(combined_blood_t) <- "annotated_clusters"
 
@@ -807,7 +1055,7 @@ DotPlot(combined_blood_t,
                 row_identity = "annotated_clusters",
                 facet_col = "Cell_Type_Full",
                 info_to_add = c("cluster_size", "percent_TCR")) +
-  labs(title = "Subclustered Blood T Cells") +
+  labs(title = tissue_type_spec) +
   RotatedAxis() + labels_standard
 
 Idents(combined_blood_t) <- "annotated_subclusters"
@@ -825,7 +1073,8 @@ ggplot(combined_blood_t[[]] %>%
          mutate(Has_TCR = as.character(Has_TCR)),
        aes(x = seurat_subclusters, fill = Has_TCR)) +
   geom_bar(position = "stack", color = "black", linewidth = 0.2) +
-  labs(title = "Blood T Cells by Cluster", x = "Cluster", y = "Count") +
+  labs(title = paste(tissue_type_spec, "by Cluster"),
+       x = "Cluster", y = "Count") +
   scale_y_continuous(breaks = breaks_pretty()) +
   scale_fill_manual(values = colors_binary) +
   theme_bw + labels_standard
@@ -857,7 +1106,7 @@ plot_pcts(pcts = calc_pcts(data = combined_blood_t[[]],
 #| fig.dim = c(12, 8)
 
 plot_pcts(pcts = calc_pcts(data = filter(combined_blood_t[[]],
-                                         annotated_clusters %in% t_cell_types),
+                                           annotated_clusters %in% t_cell_types),
                            meta_group_by = c("SampleName", "Dataset",
                                              "SampleType"),
                            focus_group = "Has_TCR"),
@@ -870,7 +1119,7 @@ plot_pcts(pcts = calc_pcts(data = filter(combined_blood_t[[]],
   add_info_bar(method = "contains", info_type = "Dataset")
 ```
 
-#### TCRs per Cell Type
+#### TCRs per Blood Cell Type
 
 *Sanity check*
 
@@ -882,6 +1131,22 @@ plot_pcts(pcts = calc_pcts(data = combined_blood_t[[]],
                            focus_group = "Has_TCR"),
           tissue_type = "Subclustered Blood", plot_value = "TCRs",
           x_axis = "annotated_clusters", x_axis_label = "Cell Type",
+          fill_type = "Has_TCR",
+          clrs_specific = colors_binary,
+          plot_type = "Binary", perc_min = 2,
+          details = t_cell_types_str)
+```
+
+#### TCRs per Subclustered Cell Type
+
+```{r blood-t-airr-subclustered-cell-types-tcrs-bar}
+#| fig.dim = c(12, 8)
+
+plot_pcts(pcts = calc_pcts(data = combined_blood_t[[]],
+                           meta_group_by = "annotated_subclusters",
+                           focus_group = "Has_TCR"),
+          tissue_type = "Subclustered Blood", plot_value = "TCRs",
+          x_axis = "annotated_subclusters", x_axis_label = "Cell Type",
           fill_type = "Has_TCR",
           clrs_specific = colors_binary,
           plot_type = "Binary", perc_min = 2,
@@ -914,14 +1179,16 @@ All:
 
 # plot the UMAP overlays for all samples
 p1 <- plot_umap(seurat_obj = combined_blood_t,
-                tissue_type = "Blood",
+                tissue_type = tissue_type_spec,
                 clrs_specific = colors_annotated_blood_t,
-                plot_by = "cluster_all", plot_label = FALSE,
+                plot_by = "cluster_all",
                 annotated = TRUE, annotations_col = "annotated_subclusters")
-p2 <- plot_immune_overlay(seurat_obj = combined_blood_t, tissue_type = "Blood",
+p2 <- plot_immune_overlay(seurat_obj = combined_blood_t,
+                          tissue_type = tissue_type_spec,
                           airr_type = "TCR", clrs_specific = colors_datatype,
                           plot_by = "all")
-p3 <- plot_immune_overlay(seurat_obj = combined_blood_t, tissue_type = "Blood",
+p3 <- plot_immune_overlay(seurat_obj = combined_blood_t,
+                          tissue_type = tissue_type_spec,
                           airr_type = "TCR", clrs_specific = colors_dataset,
                           plot_by = "dataset")
 
@@ -933,7 +1200,8 @@ By Sample:
 ```{r blood-t-airr-overlays-tcr-sample}
 #| fig.dim = c(16, 8)
 
-plot_immune_overlay(seurat_obj = combined_blood_t, tissue_type = "Blood",
+plot_immune_overlay(seurat_obj = combined_blood_t,
+                    tissue_type = tissue_type_spec,
                     airr_type = "TCR", clrs_specific = colors_dataset,
                     plot_by = "sample", ncol_sample = 4)
 ```
@@ -944,7 +1212,7 @@ plot_immune_overlay(seurat_obj = combined_blood_t, tissue_type = "Blood",
 #| fig.dim = c(14, 6)
 
 p1 <- plot_umap(seurat_obj = combined_blood_t,
-                tissue_type = "Blood",
+                tissue_type = tissue_type_spec,
                 clrs_specific = colors_annotated_blood,
                 plot_by = "cluster_specific",
                 specific_clusters =
@@ -952,21 +1220,21 @@ p1 <- plot_umap(seurat_obj = combined_blood_t,
                             levels(combined_blood_t$annotated_clusters)),
                 plot_label = FALSE, annotated = TRUE)
 p2 <- plot_umap(seurat_obj = combined_blood_t,
-                tissue_type = "Subclustered Blood T Cells",
+                tissue_type = tissue_type_spec,
                 clrs_specific = colors_annotated_blood_t,
                 plot_by = "cluster_all", plot_label = FALSE,
                 annotated = TRUE, annotations_col = "annotated_subclusters") +
         labs(color = "")
-p3 <- plot_immune_overlay(seurat_obj = combined_blood_t, tissue_type = "Blood",
+p3 <- plot_immune_overlay(seurat_obj = combined_blood_t,
+                          tissue_type = tissue_type_spec,
                           airr_type = "TCR", clrs_specific = colors_datatype,
                           plot_by = "all")
-
 p1 | p2 | p3 & legend_bottom
 ```
 
 ### Venn diagram
 
-With the AIRR data filtered down to just the blood and the β chains:
+With the AIRR data filtered down to just the blood and β chains only:
 
 ```{r blood-t-airr-venn}
 #| fig.dim = c(9, 7)
@@ -976,8 +1244,9 @@ ggVennDiagram(
            TCR = (dplyr::filter(combined_tcr, locus == "TRB",
                                 TissueType == "Blood"))$Cell_ID_Unique),
   set_color = colors_datatype[c("GEX", "TCR")]) +
-  labs(title = "Subclustered Blood T Cells",
-       subtitle = "ID Overlaps across Assays", fill = "Cell Count") +
+  labs(title = tissue_type_spec,
+       subtitle = "ID Overlaps across Assays",
+       fill = "Cell Count") +
   scale_fill_distiller(palette = "Greys", direction = 1) +
   labels_standard_venn + coord_flip()
 ```
@@ -986,23 +1255,162 @@ ggVennDiagram(
 
 # Skin
 
+```{r}
+tissue_type_spec <- "Refined Subclustered Skin T Cells"
+```
+
+## Filter non-T cells
+
+### Percentage checks
+
+Check each subcluster for what percentage TCRs or "`r t_cell_types_str`" it has:
+
+```{r skin-t-filter-checks}
+# base dataframe
+combined_skin_t_checks <-
+  clusters_gex_airr(seurat_obj = combined_skin_t_full,
+                    clusters_col = "seurat_subclusters",
+                    annotations_col = "annotated_clusters",
+                    airr_type = "TCR", cell_types = t_cell_types)
+
+# add in cell type annotations and cell counts
+combined_skin_t_checks <-
+  merge(combined_skin_t_checks,
+        as.data.frame(table(combined_skin_t_full[[c("seurat_subclusters",
+                                                    "annotated_subclusters")]])) %>%
+          dplyr::filter(Freq > 0) %>%
+          rename(Count = Freq)) %>%
+  relocate(annotated_subclusters, .after = seurat_subclusters) %>%
+  arrange(seurat_subclusters)
+
+print_dt(combined_skin_t_checks)
+```
+
+<br> With a minimum of **25%** for each:
+
+```{r skin-t-filter-checks-cutoffs}
+combined_skin_t_checks <- dplyr::filter(combined_skin_t_checks,
+                                        Has_TCR > 25, Has_T_Cells > 25)
+combined_skin_t_checks <- arrange(combined_skin_t_checks, seurat_subclusters)
+
+print_kable(combined_skin_t_checks, kable_height = NULL)
+```
+
+### Marker genes and TCR info
+
+The clusters that pass the cutoffs from before are highlighted:
+
+```{r skin-t-filter-annotations-umap}
+#| fig.dim = c(16, 16)
+
+# set up plotting details
+Idents(combined_skin_t_full) <- "seurat_subclusters"
+combined_skin_t_clusters_keep <- combined_skin_t_checks$seurat_subclusters
+combined_skin_t_cell_types_keep <-
+  combined_skin_t_full[[]] %>%
+    dplyr::filter(!str_detect(annotated_subclusters, "Non")) %>%
+    pull(annotated_subclusters) %>%
+    unique() %>%
+    as.character()
+
+# gex info
+p1 <- plot_umap(seurat_obj = combined_skin_t_full,
+                tissue_type = "Skin T Cells",
+                clrs_specific = colors_annotated_skin,
+                plot_by = "cluster_specific",
+                specific_clusters =
+                  intersect(t_cell_types,
+                            levels(combined_skin_t_full$annotated_clusters)),
+                plot_label = FALSE,
+                annotated = TRUE, annotations_col = "annotated_clusters",
+                details = "Skin Cell Type")
+
+# airr info
+p2 <- plot_immune_overlay(seurat_obj = combined_skin_t_full, tissue_type = "Skin",
+                          airr_type = "TCR", clrs_specific = colors_datatype,
+                          plot_by = "all")
+
+# cutoff clusters
+p3 <- plot_umap(seurat_obj = combined_skin_t_full,
+                tissue_type = "Skin T Cells",
+                plot_by = "cluster_specific",
+                specific_clusters = combined_skin_t_clusters_keep,
+                plot_label = TRUE,
+                clusters_col = "seurat_subclusters",
+                details = "Has_TCR > 25%, Has_T_Cells > 25%")
+
+# subclustered annotations
+p4 <- plot_umap(seurat_obj = combined_skin_t_full,
+                tissue_type = "Skin T Cells",
+                clrs_specific = colors_annotated_skin_t_full,
+                plot_by = "cluster_specific",
+                specific_clusters = combined_skin_t_cell_types_keep,
+                plot_label = FALSE,
+                annotated = TRUE, annotations_col = "annotated_subclusters",
+                details = "`Unselected` = `Non T Cells`")
+
+# all of the plots
+p1 + p2 + p3 + p4 + plot_layout(nrow = 2, byrow = FALSE) + plot_anno
+```
+
 ## Object setup
 
 ### Select the clusters
 
-```{r skin-t-setup-subset}
-#| eval = FALSE
+After reviewing the previous UMAPs (and dot plots), we will keep the following clusters as "real" T cells:
 
-combined_skin_t <- subset(combined_skin,
-                            Has_TCR == TRUE | # AIRR info
-                            annotated_clusters %in% t_cell_types) # GEX info
+```{r skin-t-setup-subset-clusters}
+# leave out the "non" T cells
+combined_skin_t_clusters_keep <- c(str_c(0:9), 11, 13)
+# cluster 10 seems like NK cells (lots of NK markers and very low TCR percentage)
+
+print(combined_skin_t_clusters_keep)
 ```
 
-```{r skin-t-setup-overview}
+```{r skin-t-setup-subset}
+combined_skin_t_ref <- subset(combined_skin_t_full,
+                              idents = combined_skin_t_clusters_keep)
+
 subcluster_overview(seurat_obj = combined_skin,
-                    seurat_obj_sub = combined_skin_t,
+                    seurat_obj_sub = combined_skin_t_ref,
                     tissue_type = "Skin", airr_type = "TCR",
                     cell_types = t_cell_types)
+```
+
+Examine the chosen clusters and the previous annotations:
+
+```{r skin-t-setup-subset-umap}
+#| fig.dim = c(16, 8)
+
+p1 <- plot_umap(seurat_obj = combined_skin_t_ref,
+                tissue_type = "Skin T Cells (Refined)",
+                plot_by = "cluster_all", plot_label = TRUE,
+                clusters_col = "seurat_subclusters", include_legend = FALSE,
+                details = "Selected Clusters")
+
+p2 <- plot_umap(seurat_obj = combined_skin_t_ref,
+                tissue_type = "Skin T Cells (Refined)",
+                clrs_specific = colors_annotated_skin_t_full,
+                plot_by = "cluster_all", plot_label = TRUE,
+                annotated = TRUE, annotations_col = "annotated_subclusters",
+                include_legend = FALSE, details = "Prior to reclustering")
+
+# compare the UMAPs
+(p1 | p2) + plot_anno
+```
+
+Reset the objects:
+
+```{r skin-t-setup-subset-reset}
+Idents(combined_skin_t_full) <- "annotated_subclusters"
+
+# keep the round 1 annotations
+combined_skin_t_ref$annotated_subclusters_full <-
+  combined_skin_t_ref$annotated_subclusters
+combined_skin_t_ref@meta.data <- combined_skin_t_ref[[]] %>%
+                                   select(-seurat_subclusters,
+                                          -annotated_subclusters,
+                                          -contains("RNA_snn_sub"))
 ```
 
 ### Rerun the standard pipeline
@@ -1010,27 +1418,27 @@ subcluster_overview(seurat_obj = combined_skin,
 Choose a resolution:
 
 ```{r skin-t-seurat-pipeline-res}
-skin_t_res <- 0.9
+skin_t_ref_res <- 1.5
 ```
 
-With the chosen resolution (with help from `clustree`) of `r skin_t_res`:
+With the chosen resolution (with help from `clustree`) of `r skin_t_ref_res`:
 
 ```{r skin-t-seurat-pipeline-save}
 #| eval = FALSE
 
-# resolution picked from the clustering tree, plus an extra one
+# resolution picked from the clustering tree
 combined_skin_t <-
-  seurat_pipeline(seurat_obj = combined_skin_t, subcluster = TRUE,
-                  num_features = 2000, num_pcs = 30, num_dims = 20, 
-                  cluster_res = c(0.6, skin_t_res, 1.1))
+  seurat_pipeline(seurat_obj = combined_skin_t_ref, subcluster = TRUE,
+                  num_features = 2000, num_pcs = 30, num_dims = 20,
+                  cluster_res = c(0.6, 1, skin_t_ref_res))
 
 # choose a resolution
-Idents(combined_skin_t) <- paste0("RNA_snn_sub_res.", skin_t_res)
+Idents(combined_skin_t) <- paste0("RNA_snn_sub_res.", skin_t_ref_res)
 combined_skin_t$seurat_subclusters <-
-  combined_skin_t[[paste0("RNA_snn_sub_res.", skin_t_res)]]
+  combined_skin_t[[paste0("RNA_snn_sub_res.", skin_t_ref_res)]]
 
 # save the object
-saveRDS(combined_skin_t, file.path(path_objs, "combined_skin_t.rds"))
+saveRDS(combined_skin_t, file.path(path_objs, "combined_skin_t_ref.rds"))
 ```
 
 ### Examine results
@@ -1047,14 +1455,13 @@ p1 <- LabelPoints(VariableFeaturePlot(combined_skin_t),
 p2 <- ElbowPlot(combined_skin_t, ndims = 25) + labels_standard
 
 p3 <- plot_counts_cluster(clusters = combined_skin_t$seurat_subclusters,
-                          tissue_type = "Skin",
-                          details = "Subclustered T Cells",
+                          tissue_type = tissue_type_spec,
                           x_axis = "Cluster")
 
 ((p1 | p2) / p3) + plot_layout(heights = c(2, 3))
 ```
 
-## Dimensionality reduction {.tabset}
+## Dimensionality reduction
 
 ### Clusters by Samples
 
@@ -1119,11 +1526,9 @@ p5 <- plot_pcts(pcts = calc_pcts(data = combined_skin_t[[]],
 #| fig.dim = c(12, 8)
 
 plot_counts_cluster(clusters = combined_skin_t$SampleName,
-                    tissue_type = "Skin",
-                    details = "Subclustered T Cells",
+                    tissue_type = tissue_type_spec,
                     x_axis = "Cell Type",
-                    clrs_specific = colors_samples) +
-  labels_rotate_x
+                    clrs_specific = colors_samples)
 ```
 
 ### Cell Types by Samples
@@ -1132,11 +1537,9 @@ plot_counts_cluster(clusters = combined_skin_t$SampleName,
 #| fig.dim = c(12, 8)
 
 plot_counts_cluster(clusters = combined_skin_t$annotated_clusters,
-                    tissue_type = "Skin",
-                    details = "Subclustered T Cells",
+                    tissue_type = tissue_type_spec,
                     x_axis = "Cell Type",
-                    clrs_specific = colors_annotated_skin) +
-  labels_rotate_x
+                    clrs_specific = colors_annotated_skin)
 ```
 
 ### Samples
@@ -1159,24 +1562,24 @@ plot_pcts(calc_pcts(data = combined_skin_t[[]] %>% mutate(Type = "Sample"),
   guides(fill = guide_legend(ncol = 1))
 ```
 
-### UMAPs
+### UMAPs {.active}
 
 All:
 
 ```{r skin-t-umaps}
-#| fig.dim = c(24, 8)
+#| fig.dim = c(14, 6)
 
 p1 <- plot_umap(seurat_obj = combined_skin_t,
-                tissue_type = "Subclustered Skin T Cells",
+                tissue_type = tissue_type_spec,
                 use_hues = TRUE, plot_by = "cluster_all",
                 clusters_col = "seurat_subclusters")
 p2 <- plot_umap(seurat_obj = combined_skin_t,
-                tissue_type = "Subclustered Skin T Cells",
+                tissue_type = tissue_type_spec,
                 clrs_specific = colors_sample_skin,
                 plot_by = "all", plot_label = FALSE,
                 clusters_col = "seurat_subclusters")
 p3 <- plot_umap(seurat_obj = combined_skin_t,
-                tissue_type = "Subclustered Skin T Cells",
+                tissue_type = tissue_type_spec,
                 clrs_specific = colors_dataset,
                 plot_by = "dataset", plot_label = FALSE,
                 clusters_col = "seurat_subclusters")
@@ -1190,9 +1593,8 @@ By Sample:
 #| fig.dim = c(12, 18)
 
 plot_umap(seurat_obj = combined_skin_t,
-          tissue_type = "Subclustered Skin T Cells",
-          use_hues = TRUE, plot_by = "cluster_sample",
-          clusters_col = "seurat_subclusters")
+          tissue_type = tissue_type_spec, use_hues = TRUE,
+          plot_by = "cluster_sample", clusters_col = "seurat_subclusters")
 ```
 
 ## Marker overlays
@@ -1203,9 +1605,9 @@ plot_umap(seurat_obj = combined_skin_t,
 #| class.source = "fold-show"
 
 # all T cell markers ("T" is too broad)
-skin_t_marker_types <- c("NK", "T", "T_CD4", "T_CD4RM", "T_CD8", "T_CD8RM",
-                         "T_Dividing", "T_FH", "T_Reg", "TCM", "TCR",
-                         "TEM", "TRM", "TteK")
+skin_t_marker_types <- c("T_CD4", "T_CD4RM", "T_CD8", "T_CD8RM", "T_CD8_IFNG",
+                         "T_Dividing", "T_DN", "T_HSP", "T_Naive", "T_Reg",
+                         "TCM", "TCR", "TEM", "TRM", "TteK")
 
 get_features_from_all(markers_df = markers_all, cell_types = skin_t_marker_types)
 ```
@@ -1213,13 +1615,13 @@ get_features_from_all(markers_df = markers_all, cell_types = skin_t_marker_types
 ### Dot plot
 
 ```{r skin-t-marker-overlays-dot}
-#| fig.dim = c(20, 6)
+#| fig.dim = c(18, 10)
 
 DotPlot(combined_skin_t,
         features = get_features_from_all(markers_df = markers_all,
                                          cell_types = skin_t_marker_types,
                                          alphabetize_all = FALSE),
-        cols = colors_dot, dot.scale = 3, cluster.idents = TRUE) %>%
+        cols = colors_dot, dot.scale = 2, cluster.idents = TRUE) %>%
   add_info_bar(method = "join", info_type = "Cell_Type_Full",
                info = get_cell_types(markers_all %>%
                                        filter(Cell_Type %in% skin_t_marker_types)),
@@ -1228,7 +1630,7 @@ DotPlot(combined_skin_t,
                 row_identity = "seurat_subclusters",
                 facet_col = "Cell_Type_Full",
                 info_to_add = c("cluster_size", "percent_TCR")) +
-  labs(title = "Subclustered Skin T Cells") +
+  labs(title = tissue_type_spec) +
   RotatedAxis() + labels_standard
 ```
 
@@ -1237,101 +1639,131 @@ DotPlot(combined_skin_t,
 ```{r skin-t-marker-overlays-feature}
 #| fig.dim = c(16, 52)
 
-# this spits out a lot of plots
 FeaturePlot(combined_skin_t,
             features = get_features_from_all(markers_df = markers_all,
                                              cell_types = skin_t_marker_types),
             min.cutoff = 0,
             label = TRUE, label.size = 2, ncol = 4, raster = FALSE) +
-  plot_annotation(title = "Subclustered Skin T Cells") &
+  plot_annotation(title = tissue_type_spec) &
   labels_standard & clean_umap
 ```
 
-## Annotate cell clusters
+### Violin plots
 
-### Manually
+```{r skin-t-marker-overlays-violin}
+#| fig.dim = c(12, 16)
 
-```{r skin-t-annotations-manual}
-#| eval = FALSE
-
-combined_skin_t_annotations <- rbind(c("0", "CD8+ T Cells"),
-                                     c("1", "TBD T Cells"),
-                                     c("2", "TBD T Cells"),
-                                     c("3", "CD4+ T Cells"),
-                                     c("4", "Regulatory T Cells"), # FOXP3, CD25/IL2RA
-                                     c("5", "CD8+ T Cells"), # CD8
-                                     c("6", "Cytotoxic T Cells"), # NK T cells?
-                                     c("7", "CD4+ T Cells"), # CCR7
-                                     c("8", "TBD T Cells"), # CD3E
-                                     c("9", "TBD T Cells"),
-                                     c("10", "TBD T Cells"),
-                                     c("11", "Dividing T Cells"), # MKI67
-                                     c("12", "Non T Cells"), # monocytes
-                                     c("13", "CD8+ T Cells"),
-                                     c("14", "Non T Cells"), # fibroblasts
-                                     c("15", "Non T Cells"), # keratinocytes
-                                     c("16", "Non T Cells"), # B cells
-                                     c("17", "Non T Cells")) # endothelial
-colnames(combined_skin_t_annotations) <- c("Cluster", "CellType")
-combined_skin_t_annotations <- data.frame(combined_skin_t_annotations)
-
-# save the annotations as a csv
-write_csv(combined_skin_t_annotations,
-          file.path(path_tables, "annotations_skin_t.csv"))
+VlnPlot(combined_skin_t,
+        features = get_features_from_all(markers_df = markers_all,
+                                         cell_types = "T"),
+        ncol = 4) +
+  plot_annotation(title = tissue_type_spec) &
+  labels_standard_vln_rotate
 ```
 
-Add the annotations to the Seurat object and examine them:
+### Nebulosa
 
-```{r skin-t-annotations-manual-add}
-# read in and show the annotations
-annotations_skin_t <- read_csv(file.path(path_tables,
-                                         "annotations_skin_t.csv"),
-                               col_types = "c")
+Note that:
 
-# add the annotations to the object
-combined_skin_t <- add_annotations(seurat_obj = combined_skin_t,
-                                   annotations_df = annotations_skin_t,
-                                   clusters_col = "seurat_subclusters",
-                                   annotations_col = "annotated_subclusters")
+* CD16 = FCGR3A
+* CD45RA = PTPRC
+* CD56 = NCAM1
+* CD62L = SELL
+* CD127 = IL7R
 
-# clusters by annotation
-print_kable(annotations_skin_t %>%
-              group_by(CellType) %>%
-              transmute(Clusters = paste0(Cluster, collapse = ", ")) %>%
-              distinct() %>% arrange(CellType),
-            kable_height = NULL)
-```
+#### Individual markers
 
-Choose the color scheme:
+```{r skin-t-marker-overlays-nebulosa-individual-umap-setup}
+plots_skin_t <- list()
+# GATA3 is a CD4 marker and RUNX3 is a CD8 marker
+skin_t_markers <- c("AHR", "CCR7", "CD29", "CD3D", "CD4", "CD74", "CD8A",
+                    "CXCR4", "GATA3", "GNLY", "GZMA", "GZMK", "HSPA1A", "IFNG",
+                    "ITGB1", "NKG7", "RORC", "RUNX3", "TRGV1")
+skin_t_markers <- sort(skin_t_markers)
 
-```{r skin-t-annotations-color-schemes}
-# only want the non B cells to be black
-skin_t_cell_types_num <- n_distinct(combined_skin_t$annotated_subclusters)
-skin_t_cell_types <- sort(unique(combined_skin_t$annotated_subclusters))
+# to see the clusters 
+plots_skin_t[["base"]] <-
+  plot_umap(seurat_obj = combined_skin_t, tissue_type = tissue_type_spec,
+            plot_by = "cluster_all", clusters_col = "seurat_subclusters",
+            include_legend = FALSE)
 
-colors_annotated_skin_t <-
-    setNames(rep("#000000", skin_t_cell_types_num),
-             nm = skin_t_cell_types)
-colors_annotated_skin_t[str_subset(skin_t_cell_types, "Non", negate = TRUE)] <-
-  iwanthue(n = skin_t_cell_types_num - 1, hmin = 60, hmax = 190)
-
-# save the colors to the miscellaneous slot for easy access
-Misc(combined_skin_t, slot = "colors_annotated") <- colors_annotated_skin_t
-```
-
-Save the annotated object:
-
-```{r skin-t-annotations-manual-save}
-#| eval = FALSE
-
-# remove unneeded columns from the metadata
-for (col in c("sequence_id_unique", "v_call_family_TRA", "j_call_family_TRA")) {
-  combined_skin_t[[col]] <- c()
+for (marker in skin_t_markers) {
+  tryCatch({
+    plots_skin_t[[marker]] <-
+      plot_density(combined_skin_t, features = marker, size = 0.2) +
+      labels_standard + clean_umap
+    },
+    error = function(e){}
+  )
 }
-
-# save the object with annotations (watch out for reproducibility)
-saveRDS(combined_skin_t, file.path(path_objs, "combined_skin_t.rds"))
 ```
+
+```{r skin-t-marker-overlays-nebulosa-individual-umap}
+#| fig.dim = c(24, 6 * ceiling(length(plots_skin_t) / 4))
+
+wrap_plots(plots_skin_t, ncol = min(length(plots_skin_t), 4))
+```
+
+#### Joint markers
+
+* [Biocompare: Naive T Cells](https://www.biocompare.com/Editorial-Articles/597618-A-Guide-to-Naive-T-Cell-Markers/)
+  * "Naïve CD4 and CD8 T cells have also been identified using the combinations of CD45RA+/CD127+/CD25-/CD45RO- and CD45RA+/CD62L+/CCR7+/CD45RO-, respectively."
+* [Biocompare: NK T Cells](https://www.biocompare.com/Editorial-Articles/593500-A-Guide-to-Natural-Killer-T-Cell-Markers/)
+* [Biocompare: Regulatory T Cells](https://www.biocompare.com/Editorial-Articles/582914-A-Guide-to-Regulatory-T-Cell-Markers/)
+* [Biocompare: T Cells](https://www.biocompare.com/Editorial-Articles/569888-A-Guide-to-T-Cell-Markers/)
+  * "Th2 cells are known for the defense against extracellular parasites and in promoting differentiation of plasma B cells and dendritic cells. This subset secretes IL-4, IL-5, IL-9, and IL-10."
+  * "The natural killer T cell (NKT) comprises about 1% of T cells in the peripheral skin and are defined by their selective recognition of the antigen-presenting CD1d molecule (as opposed to MHC molecules). NKT cell markers include NCAM1 (CD56) and CD16."
+* [Nebulosa docs](https://bioconductor.org/packages/release/bioc/vignettes/Nebulosa/inst/doc/nebulosa_seurat.html#51_Identifying_Naive_CD8+_T_cells)
+  "Users familiarized with PBMC datasets may know that CD8+ CCR7+ cells usually cluster next to CD4+ CCR7+ and separate from the rest of CD8+ cells."
+
+```{r skin-t-marker-overlays-nebulosa-joint-umap-setup}
+plots_skin_t <- list()
+skin_t_markers <- list("T Cells" = c("CD4", "CD8A"),
+                       "CD8+ GZMK+ T Cells" = c("CD8A", "GZMK"),
+                       "GZMK+ IFNG+ T Cells" = c("GZMK", "IFNG"),
+                       "Naive CD4 T Cells" = c("PTPRC", "IL7R"),
+                       "Naive CD8 T Cells" = c("PTPRC", "SELL", "CCR7"),
+                       "NK T Cells" = c("NCAM1", "FCGR3A"),
+                       "Th2 T Cells" = c("IL4", "IL5", "IL9", "IL10"),
+                       "T Cells" = c("CD3D", "CD3E"),
+                       "CD4 T Cells" = c("CD4", "CD40LG"),
+                       "CD8 T Cells" = c("CD8A", "CD8B"),
+                       "Regulatory T Cells" = c("FOXP3", "CTLA4"),
+                       "Ttek" = c("GZMK", "GZMB"), # TteK (Granzyme K+ CD8 T cells)
+                       "HSPhi T Cells" = c("HSPA1A", "HSPA1B"),
+                       "Naive or Memory T Cells" = c("CCR7", "SELL", "FAS"),
+                       "Memory T Cells" = c("IL7R", "ITGA4", "CD44"),
+                       "Dividing T Cells" = c("MKI67", "CDK1"))
+
+# to see the clusters 
+plots_skin_t[["base"]] <-
+  plot_umap(seurat_obj = combined_skin_t, tissue_type = tissue_type_spec,
+            plot_by = "cluster_all", clusters_col = "seurat_subclusters",
+            include_legend = FALSE)
+
+for (type in names(skin_t_markers)) {
+  markers <- skin_t_markers[[type]]
+  
+  # just the combined one
+  tryCatch({
+    plots_skin_t[[str_c(markers, collapse = ", ")]] <-
+      plot_density(combined_skin_t, features = markers, joint = TRUE,
+                   size = 0.2)[[length(markers) + 1]] +
+      labs(subtitle = type) +
+      labels_standard + clean_umap
+    },
+    error = function(e){}
+  )
+}
+```
+
+```{r skin-t-marker-overlays-nebulosa-joint-umap}
+#| fig.dim = c(24, 6 * ceiling(length(plots_skin_t) / 4))
+
+wrap_plots(plots_skin_t, ncol = min(length(plots_skin_t), 4))
+```
+
+## Annotate cell clusters
 
 ### FindMarkers
 
@@ -1353,14 +1785,14 @@ Idents(combined_skin_t) <- "annotated_subclusters"
 # save the markers as a csv
 write_csv(combined_skin_t_findallmarkers,
           file.path(path_tables, "findmarkers",
-                    "annotations_skin_t_findallmarkers.csv"))
+                    "annotations_skin_t_ref_findallmarkers.csv"))
 ```
 
 ```{r skin-t-annotations-findallmarkers-load}
 # load markers
 combined_skin_t_findallmarkers <-
   read_csv(file.path(path_tables, "findmarkers",
-                     "annotations_skin_t_findallmarkers.csv"),
+                     "annotations_skin_t_ref_findallmarkers.csv"),
            show_col_types = FALSE)
 
 print_kable(combined_skin_t_findallmarkers %>%
@@ -1369,35 +1801,152 @@ print_kable(combined_skin_t_findallmarkers %>%
               relocate(c("cluster", "gene", "p_val_adj"), .before = c("p_val")))
 ```
 
+### Manually
+
+```{r skin-t-annotations-manual}
+# modified to use better names
+combined_skin_t_annotations <-
+  rbind(c("0", "CD8+ GZMK+ IFNGint T Cells"),
+        c("1", "CD4+ Undefined T Cells"), # AHR+
+        c("2", "Regulatory T Cells"),
+        c("3", "CD4+ Effector Memory T Cells"), # GZMA+ KLRB1+ PDCD1+ CTLA4+ CD4+ 
+        c("4", "CD8+ GZMK+ IFNGhi T Cells"),
+        c("5", "Naive T Cells"),
+        c("6", "CD8+ GZMK+ IFNGhi T Cells"),
+        c("7", "CD4- CD8- T Cells"),
+        c("8", "CD4+ Tissue-Resident Memory T Cells"), # GZMA+ KLRB1+ PDCD1+ CTLA4+ CD4+ 
+        c("9", "HSPhi T Cells"),
+        c("10", "CD8+ Undefined T Cells"), # AHR+
+        c("11", "CD4- CD8- T Cells"),
+        c("12", "CD8+ Undefined T Cells"),
+        c("13", "CD8+ GZMK+ IFNGint T Cells"),
+        c("14", "Regulatory T Cells"),
+        c("15", "CD8+ GZMK+ IFNGint T Cells"),
+        c("16", "CD4- CD8- T Cells"), # AHR+
+        c("17", "HSPhi T Cells"),
+        c("18", "Dividing T Cells"),
+        c("19", "CD4- CD8- T Cells"),
+        c("20", "CD8+ GZMK+ IFNGhi T Cells"),
+        c("21", "CD8+ GZMK+ IFNGint T Cells"),
+        c("22", "CD8+ GZMK+ IFNGint T Cells"),
+        c("23", "CD8+ GZMK+ IFNGhi T Cells"),
+        c("24", "HSPhi T Cells"),
+        c("25", "CD4- CD8- T Cells")) # CD25/IL2RA?, AHR+
+
+colnames(combined_skin_t_annotations) <- c("Cluster", "CellType")
+combined_skin_t_annotations <- data.frame(combined_skin_t_annotations)
+
+# save the annotations as a csv
+write_csv(combined_skin_t_annotations,
+          file.path(path_tables, "annotations_skin_t_ref.csv"))
+```
+
+Add the annotations to the Seurat object and examine them:
+
+```{r skin-t-annotations-manual-add}
+# read in and show the annotations
+annotations_skin_t <-
+  read_csv(file.path(path_tables, "annotations_skin_t_ref.csv"),
+           col_types = "c")
+
+# add the annotations to the object
+combined_skin_t <- add_annotations(seurat_obj = combined_skin_t,
+                                   annotations_df = annotations_skin_t,
+                                   clusters_col = "seurat_subclusters",
+                                   annotations_col = "annotated_subclusters")
+
+# clusters by annotation
+print_kable(annotations_skin_t %>%
+              group_by(CellType) %>%
+              transmute(Clusters = paste0(Cluster, collapse = ", ")) %>%
+              distinct() %>% arrange(CellType),
+            kable_height = NULL)
+```
+
+Choose the color scheme:
+
+```{r skin-t-annotations-color-schemes}
+# some of the colors came out too similar and not good for color blindness, so
+# I tweaked them (and arranged them to look separate on the UMAP but keep
+# thematic if possible e.g. the undefineds are pale, CD4+ is blue, CD8+ is pink)
+colors_annotated_skin_t <-
+  setNames(c("#EDCBB1", "#0C125A", "#1725B5", "#3E4CE6", "#691348", "#BE2382",
+             "#E364B2", "#920016", "#F06464", "#24B6FF", "#B38CF4"),
+           nm = sort(unique(combined_skin_t$annotated_subclusters)))
+
+# save the colors to the miscellaneous slot for easy access
+Misc(combined_skin_t, slot = "colors_annotated") <- colors_annotated_skin_t
+```
+
+Save the annotated object:
+
+```{r skin-t-annotations-manual-save}
+#| eval = FALSE
+
+# save the object with annotations (watch out for reproducibility)
+saveRDS(combined_skin_t, file.path(path_objs, "combined_skin_t_ref.rds"))
+```
+
 ### Final annotations
 
+How were the cells renamed?
+
+```{r}
+# this is a little messy
+skin_t_subclustered_cell_types <-
+  left_join(combined_skin_t[[]] %>%
+              select(Cell_ID_Unique, annotated_subclusters) %>%
+              rename(annotated_subclusters_refined = annotated_subclusters), 
+            combined_skin_t_full[[]] %>%
+              select(Cell_ID_Unique, annotated_subclusters),
+            by = join_by(Cell_ID_Unique))
+
+table(skin_t_subclustered_cell_types$annotated_subclusters_refined,
+      skin_t_subclustered_cell_types$annotated_subclusters)
+```
+
 ```{r skin-t-annotations-manual-cluster-all-umap}
-#| fig.dim = c(24, 8)
+#| fig.dim = c(12, 12)
 
 p1 <- plot_umap(seurat_obj = combined_skin_t,
-                tissue_type = "Subclustered Skin T Cells",
+                tissue_type = tissue_type_spec,
                 plot_by = "cluster_all",
                 clusters_col = "seurat_subclusters") # for comparison
 p2 <- plot_umap(seurat_obj = combined_skin_t,
-                tissue_type = "Subclustered Skin T Cells",
-                clrs_specific = colors_annotated_skin,
+                tissue_type = tissue_type_spec,
+                clrs_specific = colors_annotated_skin, plot_label = FALSE,
                 plot_by = "cluster_all",
                 annotated = TRUE, annotations_col = "annotated_clusters",
                 details = "Skin Cell Type")
 p3 <- plot_umap(seurat_obj = combined_skin_t,
-                tissue_type = "Subclustered Skin T Cells",
+                tissue_type = tissue_type_spec,
+                clrs_specific = colors_annotated_skin_t_full,
+                plot_by = "cluster_all",
+                annotated = TRUE, annotations_col = "annotated_subclusters_full",
+                details = "by Subclustered Cell Type (Round 1)")
+p4 <- plot_umap(seurat_obj = combined_skin_t,
+                tissue_type = tissue_type_spec,
                 clrs_specific = colors_annotated_skin_t,
                 plot_by = "cluster_all",
-                annotated = TRUE, annotations_col = "annotated_subclusters")
+                annotated = TRUE, annotations_col = "annotated_subclusters",
+                details = "by Subclustered Cell Type (Round 2)")
 
-p1 | p2 | p3
+(p1 | p2) / (p3 | p4)
+```
+
+Just the UMAP:
+
+```{r skin-t-annotations-manual-umap}
+#| fig.dim = c(8, 8)
+
+p4
 ```
 
 ```{r skin-t-annotations-manual-cluster-sample-umap}
 #| fig.dim = c(12, 18)
 
 plot_umap(seurat_obj = combined_skin_t,
-          tissue_type = "Subclustered Skin T Cells",
+          tissue_type = tissue_type_spec,
           clrs_specific = colors_annotated_skin_t,
           plot_by = "cluster_sample",
           annotated = TRUE, annotations_col = "annotated_subclusters")
@@ -1411,7 +1960,7 @@ plot_umap(seurat_obj = combined_skin_t,
 #| fig.dim = c(10, 6)
 
 plot_counts_cluster(clusters = combined_skin_t$annotated_subclusters,
-                    tissue_type = "Skin", details = "Subclustered T Cells",
+                    tissue_type = tissue_type_spec,
                     x_axis = "Cell Type",
                     clrs_specific = colors_annotated_skin_t)
 ```
@@ -1565,7 +2114,7 @@ draw(column_title = "Skin T Cells Cell ID Overlaps by Cell Type and Sample")
 Subclustered labels:
 
 ```{r skin-t-check-annotations-dot-sub}
-#| fig.dim = c(20, 4)
+#| fig.dim = c(16, 8)
 
 DotPlot(combined_skin_t,
         features = get_features_from_all(markers_df = markers_all,
@@ -1580,14 +2129,14 @@ DotPlot(combined_skin_t,
                 row_identity = "annotated_subclusters",
                 facet_col = "Cell_Type_Full",
                 info_to_add = c("cluster_size", "percent_TCR")) +
-  labs(title = "Subclustered Skin T Cells") +
+  labs(title = tissue_type_spec, x = NULL, y = NULL) +
   RotatedAxis() + labels_standard
 ```
 
 Skin labels:
 
 ```{r skin-t-check-annotations-dot}
-#| fig.dim = c(20, 6)
+#| fig.dim = c(16, 6)
 
 Idents(combined_skin_t) <- "annotated_clusters"
 
@@ -1604,7 +2153,7 @@ DotPlot(combined_skin_t,
                 row_identity = "annotated_clusters",
                 facet_col = "Cell_Type_Full",
                 info_to_add = c("cluster_size", "percent_TCR")) +
-  labs(title = "Subclustered Skin T Cells") +
+  labs(title = tissue_type_spec) +
   RotatedAxis() + labels_standard
 
 Idents(combined_skin_t) <- "annotated_subclusters"
@@ -1622,7 +2171,8 @@ ggplot(combined_skin_t[[]] %>%
          mutate(Has_TCR = as.character(Has_TCR)),
        aes(x = seurat_subclusters, fill = Has_TCR)) +
   geom_bar(position = "stack", color = "black", linewidth = 0.2) +
-  labs(title = "Skin T Cells by Cluster", x = "Cluster", y = "Count") +
+  labs(title = paste(tissue_type_spec, "by Cluster"),
+       x = "Cluster", y = "Count") +
   scale_y_continuous(breaks = breaks_pretty()) +
   scale_fill_manual(values = colors_binary) +
   theme_bw + labels_standard
@@ -1667,7 +2217,7 @@ plot_pcts(pcts = calc_pcts(data = filter(combined_skin_t[[]],
   add_info_bar(method = "contains", info_type = "Dataset")
 ```
 
-#### TCRs per Cell Type
+#### TCRs per Skin Cell Type
 
 *Sanity check*
 
@@ -1679,6 +2229,22 @@ plot_pcts(pcts = calc_pcts(data = combined_skin_t[[]],
                            focus_group = "Has_TCR"),
           tissue_type = "Subclustered Skin", plot_value = "TCRs",
           x_axis = "annotated_clusters", x_axis_label = "Cell Type",
+          fill_type = "Has_TCR",
+          clrs_specific = colors_binary,
+          plot_type = "Binary", perc_min = 2,
+          details = t_cell_types_str)
+```
+
+#### TCRs per Subclustered Cell Type
+
+```{r skin-t-airr-subclustered-cell-types-tcrs-bar}
+#| fig.dim = c(12, 8)
+
+plot_pcts(pcts = calc_pcts(data = combined_skin_t[[]],
+                           meta_group_by = "annotated_subclusters",
+                           focus_group = "Has_TCR"),
+          tissue_type = "Subclustered Skin", plot_value = "TCRs",
+          x_axis = "annotated_subclusters", x_axis_label = "Cell Type",
           fill_type = "Has_TCR",
           clrs_specific = colors_binary,
           plot_type = "Binary", perc_min = 2,
@@ -1711,13 +2277,16 @@ All:
 
 # plot the UMAP overlays for all samples
 p1 <- plot_umap(seurat_obj = combined_skin_t,
-                tissue_type = "Skin", clrs_specific = colors_annotated_skin_t,
+                tissue_type = tissue_type_spec,
+                clrs_specific = colors_annotated_skin_t,
                 plot_by = "cluster_all",
                 annotated = TRUE, annotations_col = "annotated_subclusters")
-p2 <- plot_immune_overlay(seurat_obj = combined_skin_t, tissue_type = "Skin",
+p2 <- plot_immune_overlay(seurat_obj = combined_skin_t,
+                          tissue_type = tissue_type_spec,
                           airr_type = "TCR", clrs_specific = colors_datatype,
                           plot_by = "all")
-p3 <- plot_immune_overlay(seurat_obj = combined_skin_t, tissue_type = "Skin",
+p3 <- plot_immune_overlay(seurat_obj = combined_skin_t,
+                          tissue_type = tissue_type_spec,
                           airr_type = "TCR", clrs_specific = colors_dataset,
                           plot_by = "dataset")
 
@@ -1729,7 +2298,8 @@ By Sample:
 ```{r skin-t-airr-overlays-tcr-sample}
 #| fig.dim = c(16, 24)
 
-plot_immune_overlay(seurat_obj = combined_skin_t, tissue_type = "Skin",
+plot_immune_overlay(seurat_obj = combined_skin_t,
+                    tissue_type = tissue_type_spec,
                     airr_type = "TCR", clrs_specific = colors_dataset,
                     plot_by = "sample", ncol_sample = 4)
 ```
@@ -1740,20 +2310,21 @@ plot_immune_overlay(seurat_obj = combined_skin_t, tissue_type = "Skin",
 #| fig.dim = c(14, 6)
 
 p1 <- plot_umap(seurat_obj = combined_skin_t,
-                tissue_type = "Skin",
+                tissue_type = tissue_type_spec,
                 clrs_specific = colors_annotated_skin,
-                plot_by = "cluster_specific", plot_label = FALSE,
+                plot_by = "cluster_specific",
                 specific_clusters =
                   intersect(t_cell_types,
                             levels(combined_skin_t$annotated_clusters)),
-                annotated = TRUE)
+                plot_label = FALSE, annotated = TRUE)
 p2 <- plot_umap(seurat_obj = combined_skin_t,
-                tissue_type = "Subclustered Skin T Cells",
+                tissue_type = tissue_type_spec,
                 clrs_specific = colors_annotated_skin_t,
                 plot_by = "cluster_all", plot_label = FALSE,
                 annotated = TRUE, annotations_col = "annotated_subclusters") +
         labs(color = "")
-p3 <- plot_immune_overlay(seurat_obj = combined_skin_t, tissue_type = "Skin",
+p3 <- plot_immune_overlay(seurat_obj = combined_skin_t,
+                          tissue_type = tissue_type_spec,
                           airr_type = "TCR", clrs_specific = colors_datatype,
                           plot_by = "all")
 p1 | p2 | p3 & legend_bottom
@@ -1761,7 +2332,7 @@ p1 | p2 | p3 & legend_bottom
 
 ### Venn diagram
 
-With the AIRR data filtered down to just the skin and the β chains:
+With the AIRR data filtered down to just the skin and β chains only:
 
 ```{r skin-t-airr-venn}
 #| fig.dim = c(9, 7)
@@ -1771,7 +2342,7 @@ ggVennDiagram(
            TCR = (dplyr::filter(combined_tcr, locus == "TRB",
                                 TissueType == "Skin"))$Cell_ID_Unique),
   set_color = colors_datatype[c("GEX", "TCR")]) +
-  labs(title = "Subclustered Skin T Cells",
+  labs(title = tissue_type_spec,
        subtitle = "ID Overlaps across Assays",
        fill = "Cell Count") +
   scale_fill_distiller(palette = "Greys", direction = 1) +
