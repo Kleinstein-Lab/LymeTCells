@@ -1,0 +1,385 @@
+---
+title: "Recombination"
+output:
+  html_document:
+    code_download: yes
+    code_folding: hide
+    css: ../"style.css"
+    dev: "png"
+    df_print: kable
+    fig_caption: yes
+    keep_md: no
+    self_contained: true
+    theme: yeti
+    toc: yes
+    toc_depth: 3
+    toc_float:
+        collapsed: false
+        smooth_scroll: false
+editor_options:
+  chunk_output_type: console
+---
+
+------------------------------------------------------------------------
+
+# Overview and setup
+
+```{r setup-options, include = FALSE}
+knitr::opts_chunk$set(comment = NA, dpi = 200, fig.align = "center",
+                      out.width = "100%", warning = FALSE, error = TRUE,
+                      message = FALSE,
+                      fig.path = here::here("primary_analysis", "figures",
+                                            "analysis", "recombination",
+                                            "recombination-"))
+
+# will mess with chunk labels
+options(knitr.duplicate.label = "allow")
+```
+
+**Author(s):** Edel Aron<br>
+**Date Created:** 2023-07-20<br>
+**Last Updated:** `r Sys.Date()`
+
+**R version:** `r R.Version()$version.string`<br>
+**Platform:** `r R.Version()$platform`<br>
+**Running under:** `r sessionInfo()$running`
+
+```{r, include = FALSE}
+# load packages, colors and themes and functions (R code only)
+code_setup <-
+  knitr::purl(here::here("single_cell", "primary_analysis", "notebooks",
+                         "01-setup.Rmd"),
+              output = tempfile(), documentation = 0)
+code_functions <-
+  knitr::purl(here::here("single_cell", "primary_analysis", "notebooks",
+                         "02-functions.Rmd"),
+              output = tempfile(), documentation = 0)
+code_meta <- 
+  knitr::purl(here::here("single_cell", "primary_analysis", "notebooks",
+                         "03-meta.Rmd"),
+              output = tempfile(), documentation = 0)
+
+# read in the code, then remove the temp files
+source(code_setup)
+source(code_functions)
+source(code_meta)
+unlink(c(code_setup, code_functions, code_meta))
+```
+
+To recombine the subclustered annotations with the full tissue data, we relabel everything in the full objects that matches (using unique cell ids) with the subclustered objects. Cells in the "T Cells" group that don't have a subclustered match are removed because we think that they aren't really T cells.
+
+------------------------------------------------------------------------
+
+# Read in the data
+
+```{r setup-gex}
+# objects
+combined_blood <-
+  readRDS(file.path(path_objs, "airr", "combined_blood_airr.rds"))
+combined_skin <-
+  readRDS(file.path(path_objs, "airr", "combined_skin_airr.rds"))
+
+# colors
+colors_annotated_blood <- combined_blood@misc$colors_annotated
+colors_annotated_skin <- combined_skin@misc$colors_annotated
+```
+
+Load the refined subclustered objects:
+
+```{r setup-gex-subclustered}
+# objects
+combined_blood_t <- readRDS(file.path(path_objs, "combined_blood_t_ref.rds"))
+combined_skin_t <- readRDS(file.path(path_objs, "combined_skin_t_ref.rds"))
+
+# colors
+colors_annotated_blood_t <- combined_blood_t@misc$colors_annotated
+colors_annotated_skin_t <- combined_skin_t@misc$colors_annotated
+```
+
+------------------------------------------------------------------------
+
+# Blood {.tabset}
+
+Define colors:
+
+```{r blood-color-schemes-all}
+# for comparison with the blood
+colors_annotated_blood_all <-
+  c(colors_annotated_blood, colors_annotated_blood_t)
+```
+
+Add in the subclustered labels:
+
+```{r blood-t-setup}
+# create a new metadata column called annotated_clusters_expanded
+combined_blood <- recombine_subclusters(seurat_obj = combined_blood,
+                                        seurat_obj_t = combined_blood_t)
+
+# the original blood Seurat clusters that the annotated subclusters match with
+blood_t_clusters <- match_sub_orig(seurat_obj = combined_blood,
+                                   seurat_obj_sub = combined_blood_t)
+
+# save the colors to the miscellaneous slot for easy access
+Misc(combined_blood, slot = "colors_annotated") <- colors_annotated_blood_all
+## Warning: Overwriting miscellanous data for colors_annotated
+
+# count the current number of T cells
+t_cells_pre <- table(combined_blood$annotated_clusters)[["T Cells"]]
+
+# remove all non-renamed T cells
+combined_blood <-
+  subset(combined_blood,
+         subset = annotated_clusters_expanded == "T Cells", invert = TRUE)
+combined_blood$annotated_clusters_expanded <-
+  droplevels(combined_blood$annotated_clusters_expanded)
+
+# how many were removed?
+t_cells_post <- table(combined_blood$annotated_clusters)[["T Cells"]]
+cat(paste(t_cells_pre - t_cells_post, "T cells were removed"))
+
+# save the object
+# saveRDS(combined_blood, file.path(path_objs, "combined_blood_recombined.rds"))
+```
+
+## Table
+
+Check the counts of what cells went where:
+
+```{r}
+table(combined_blood$annotated_clusters,
+      combined_blood$annotated_clusters_expanded)
+```
+
+## UMAPs {.active}
+
+```{r blood-t-expanded-umap}
+#| fig.dim = c(12, 12)
+
+# you can keep `plot_label = TRUE` if you want
+plot_umap(seurat_obj = combined_blood, tissue_type = "Blood",
+          clrs_specific = colors_annotated_blood_all,
+          plot_by = "cluster_all", plot_label = FALSE,
+          annotated = TRUE, annotations_col = "annotated_clusters_expanded") +
+  guides(color = guide_legend(ncol = 1, override.aes = list(size = 2)))
+```
+
+Look at the details:
+
+```{r blood-t-umap}
+#| fig.dim = c(20, 9)
+
+# blood with cell types
+p1 <- plot_umap(seurat_obj = combined_blood, tissue_type = "Blood",
+                clrs_specific = colors_annotated_blood,
+                plot_by = "cluster_specific",
+                specific_clusters =
+                  intersect(t_cell_types, levels(combined_blood$annotated_clusters)),
+                plot_label = FALSE, annotated = TRUE)
+
+# blood by annotated subcluster source
+p2 <- plot_umap(seurat_obj = combined_blood, tissue_type = "Blood",
+                plot_by = "cluster_specific",
+                specific_clusters = blood_t_clusters,
+                include_legend = FALSE,
+                details = "Annotated Subcluster Sources")
+
+# subclustered blood by blood cell types
+p3 <- plot_umap(seurat_obj = combined_blood_t,
+                tissue_type = "Subclustered Blood T Cells",
+                clrs_specific = colors_annotated_blood,
+                plot_by = "cluster_all", plot_label = FALSE,
+                clusters_col = "seurat_subclusters",
+                annotated = TRUE, annotations_col = "annotated_clusters",
+                include_legend = TRUE)
+
+# subclustered blood by subclustered blood cell types
+p4 <- plot_umap(seurat_obj = combined_blood_t,
+                tissue_type = "Subclustered Blood T Cells",
+                clrs_specific = colors_annotated_blood_t,
+                plot_by = "cluster_all", plot_label = FALSE,
+                clusters_col = "seurat_subclusters",
+                annotated = TRUE, annotations_col = "annotated_subclusters",
+                include_legend = TRUE)
+
+# blood with subclustered labels added
+p5 <- plot_umap(seurat_obj = combined_blood, tissue_type = "Blood",
+                clrs_specific = colors_annotated_blood_all,
+                plot_by = "cluster_all",
+                annotated = TRUE, annotations_col = "annotated_clusters_expanded") +
+        guides(color = guide_legend(ncol = 1, override.aes = list(size = 2)))
+
+# layout all of the plots
+(p5 | (p1 / p2) | (p3 / p4)) +
+  plot_layout(widths = c(2, 1, 1)) +
+  plot_annotation(title = "Blood and Subclustered Blood T Cells (All Labels)",
+                  tag_levels = "I",
+                  theme = theme(plot.title = element_text(size = 14,
+                                                          hjust = 0.5)))
+```
+
+## Bar plot
+
+```{r blood-t-bar}
+#| fig.dim = c(17, 8)
+
+plot_pcts(pcts = calc_pcts(data = combined_blood[[]],
+                           meta_group_by = c("seurat_clusters",
+                                             "annotated_clusters"),
+                           focus_group = "annotated_clusters_expanded") %>%
+                   dplyr::filter(seurat_clusters %in% blood_t_clusters),
+          tissue_type = "Blood", plot_value = "Cell Types",
+          x_axis = "seurat_clusters",
+          x_axis_label = "Blood Seurat Clusters",
+          fill_type = "annotated_clusters_expanded",
+          fill_label = "Subclustered Cell Type",
+          clrs_specific = colors_annotated_blood_all,
+          details = "Subclustered T Cells (All Labels)") %>%
+  add_info_bar(method = "contains", info_type = "annotated_clusters",
+               label = FALSE)
+```
+
+------------------------------------------------------------------------
+
+# Skin {.tabset}
+
+Define colors:
+
+```{r skin-color-schemes-all}
+# for comparison with the skin
+colors_annotated_skin_all <-
+  c(colors_annotated_skin, colors_annotated_skin_t)
+```
+
+Add in the subclustered labels:
+
+```{r skin-t-setup}
+# reload the object (since I already removed some cells beforehand)
+combined_skin <-
+  readRDS(file.path(path_objs, "airr", "combined_skin_airr.rds"))
+
+# create a new metadata column called annotated_clusters_expanded
+combined_skin <- recombine_subclusters(seurat_obj = combined_skin,
+                                       seurat_obj_t = combined_skin_t)
+
+# the original skin Seurat clusters that the annotated subclusters match with
+skin_t_clusters <- match_sub_orig(seurat_obj = combined_skin,
+                                  seurat_obj_sub = combined_skin_t)
+
+# save the colors to the miscellaneous slot for easy access
+Misc(combined_skin, slot = "colors_annotated") <- colors_annotated_skin_all
+## Warning: Overwriting miscellanous data for colors_annotated
+
+# count the current number of T cells
+t_cells_pre <- table(combined_skin$annotated_clusters)[["T Cells"]]
+
+# remove all non-renamed T cells
+combined_skin <-
+  subset(combined_skin,
+         subset = annotated_clusters_expanded == "T Cells", invert = TRUE)
+combined_skin$annotated_clusters_expanded <-
+  droplevels(combined_skin$annotated_clusters_expanded)
+
+# how many were removed?
+t_cells_post <- table(combined_skin$annotated_clusters)[["T Cells"]]
+cat(paste(t_cells_pre - t_cells_post, "T cells were removed"))
+
+# save the object
+# saveRDS(combined_skin, file.path(path_objs, "combined_skin_recombined.rds"))
+```
+
+## Table
+
+Check the counts of what cells went where:
+
+```{r}
+table(combined_skin$annotated_clusters,
+      combined_skin$annotated_clusters_expanded)
+```
+
+## UMAPs {.active}
+
+```{r skin-t-expanded-umap}
+#| fig.dim = c(12, 12)
+
+# you can keep `plot_label = TRUE` if you want
+plot_umap(seurat_obj = combined_skin, tissue_type = "Skin",
+          clrs_specific = colors_annotated_skin_all,
+          plot_by = "cluster_all", plot_label = FALSE,
+          annotated = TRUE, annotations_col = "annotated_clusters_expanded") +
+  guides(color = guide_legend(ncol = 1, override.aes = list(size = 2)))
+```
+
+Look at the details:
+
+```{r skin-t-umap}
+#| fig.dim = c(20, 9)
+
+# skin with cell types
+p1 <- plot_umap(seurat_obj = combined_skin, tissue_type = "Skin",
+                clrs_specific = colors_annotated_skin_all,
+                plot_by = "cluster_specific",
+                specific_clusters =
+                  intersect(t_cell_types, levels(combined_skin$annotated_clusters)),
+                plot_label = FALSE, annotated = TRUE)
+
+# skin by annotated subcluster source
+p2 <- plot_umap(seurat_obj = combined_skin, tissue_type = "Skin",
+                plot_by = "cluster_specific",
+                specific_clusters = skin_t_clusters,
+                include_legend = FALSE,
+                details = "Annotated Subcluster Sources")
+
+# subclustered skin by skin cell types
+p3 <- plot_umap(seurat_obj = combined_skin_t,
+                tissue_type = "Subclustered Skin T Cells",
+                clrs_specific = colors_annotated_skin,
+                plot_by = "cluster_all", plot_label = FALSE,
+                clusters_col = "seurat_subclusters",
+                annotated = TRUE, annotations_col = "annotated_clusters",
+                include_legend = TRUE)
+
+# subclustered skin by subclustered skin cell types
+p4 <- plot_umap(seurat_obj = combined_skin_t,
+                tissue_type = "Subclustered Skin T Cells",
+                clrs_specific = colors_annotated_skin_t,
+                plot_by = "cluster_all", plot_label = FALSE,
+                clusters_col = "seurat_subclusters",
+                annotated = TRUE, annotations_col = "annotated_subclusters",
+                include_legend = TRUE)
+
+# skin with subclustered labels added
+p5 <- plot_umap(seurat_obj = combined_skin, tissue_type = "Skin",
+                clrs_specific = colors_annotated_skin_all,
+                plot_by = "cluster_all",
+                annotated = TRUE, annotations_col = "annotated_clusters_expanded") +
+        guides(color = guide_legend(ncol = 1, override.aes = list(size = 2)))
+
+# layout all of the plots
+(p5 | (p1 / p2) | (p3 / p4)) +
+  plot_layout(widths = c(2, 1, 1)) +
+  plot_annotation(title = "Skin and Subclustered Skin T Cells (All Labels)",
+                  tag_levels = "I",
+                  theme = theme(plot.title = element_text(size = 14,
+                                                          hjust = 0.5)))
+```
+
+## Bar plot
+
+```{r skin-t-bar}
+#| fig.dim = c(17, 8)
+
+plot_pcts(pcts = calc_pcts(data = combined_skin[[]],
+                           meta_group_by = c("seurat_clusters",
+                                             "annotated_clusters"),
+                           focus_group = "annotated_clusters_expanded") %>%
+                   dplyr::filter(seurat_clusters %in% skin_t_clusters),
+          tissue_type = "Skin", plot_value = "Cell Types",
+          x_axis = "seurat_clusters",
+          x_axis_label = "Skin Seurat Clusters",
+          fill_type = "annotated_clusters_expanded",
+          fill_label = "Subclustered Cell Type", label_size = 2,
+          clrs_specific = colors_annotated_skin_all,
+          details = "Subclustered T Cells (All Labels)") %>%
+  add_info_bar(method = "contains", info_type = "annotated_clusters",
+               label = FALSE)
+```
