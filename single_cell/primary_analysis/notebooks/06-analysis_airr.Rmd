@@ -98,7 +98,8 @@ Read in the processed `airrflow` and AIRR objects:
 
 ```{r setup-combined-airrflow}
 combined_tcr <-
-  readRDS(file.path(path_airrflow_objs, "combined_tcr.rds"))
+  readRDS(file.path(path_objs_airrflow, "combined_tcr.rds"))
+# or combined_airrflow_bulk_tcr.rds directly
 
 # for plotting purpose
 combined_tcr <- factor_family_info(combined_tcr)
@@ -162,11 +163,10 @@ write_tsv(airrflow_tcr,
 
 # Run airrflow
 
-I ran `airrflow` with the following script. The clonal threshold was set to `0` since TCRs don't hypermutate.
+I ran `airrflow` with the following script. The clonal threshold was set to `0` since TCRs don't undergo somatic hypermutation.
 
 ```{r script-tcr}
-# from /media/edelaron/Midas/lyme/airrflow/tcr
-readLines(file.path(path_airrflow, paste0("tcr_", airrflow_version),
+readLines(file.path(path_base, "primary_analysis", "scripts",
                     "airrflow.sh")) %>%
   paste0(collapse = "\n") %>% cat
 ```
@@ -184,7 +184,7 @@ Read in the initial `airrflow` output:
 
 # there's only one file
 combined_tcr <-
-  plyr::ldply(list.files(file.path(path_airrflow,
+  plyr::ldply(list.files(file.path(path_data_root, "airrflow",
                                    paste0("tcr_", airrflow_version), "results",
                                    "repertoire_comparison", "repertoires"),
                          full.names = TRUE),
@@ -282,19 +282,18 @@ combined_bulk_select <- combined_bulk %>%
 combined_tcr_full <- bind_rows(combined_tcr, combined_bulk_select)
 ```
 
-Redo the clonal assignment:
+Redo the clonal assignment using identical sequences (since TCRs don't undergo somatic hypermutation like BCRs do):
 
 ```{r}
 #| eval = FALSE
-
-# "To identify TCR clones, clones were assigned if T cells shared the same full-length aligned V(D)J sequence." - Roy's paper
 
 # using TRB only is okay
 combined_tcr_full_clones <-
   combined_tcr_full %>% select(-clone_id, -clone_id_unique)
 combined_tcr_full_clones <-
-  scoper::identicalClones(test, method = "nt", fields = "Subject",
-                          only_heavy = TRUE, split_light = FALSE, nproc = 8,
+  scoper::identicalClones(combined_tcr_full_clones, method = "nt",
+                          fields = "Subject", only_heavy = TRUE,
+                          split_light = FALSE, nproc = 8,
                           summarize_clones = FALSE)
 ## Running defineClonesScoper in bulk mode and only keep heavy chains
 
@@ -316,9 +315,9 @@ combined_tcr_full <- combined_tcr_full %>%
 ```{r save-processing}
 #| eval = FALSE
 
-# takes up less space than a TSV file
+# takes up less space than a tsv file
 saveRDS(combined_tcr,
-        file.path(path_airrflow_objs, "combined_tcr.rds"))
+        file.path(path_objs_airrflow, "combined_tcr.rds"))
 saveRDS(combined_tcr_full,
         file.path(path_objs, "airr", "combined_airrflow_bulk_tcr.rds"))
 ```

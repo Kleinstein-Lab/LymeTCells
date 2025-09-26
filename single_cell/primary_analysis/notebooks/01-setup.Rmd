@@ -21,8 +21,7 @@ path_tables <- file.path(path_base, "primary_analysis", "tables")
 
 # nf-core/airrflow specific
 airrflow_version <- "4.1.0" # set the airrflow version that was run
-path_airrflow <- file.path(path_data_root, "airrflow")
-path_airrflow_objs <-
+path_objs_airrflow <-
   file.path(path_objs, "airr", paste0("airrflow_", airrflow_version))
 
 # list (and install if needed) CRAN packages

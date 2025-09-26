@@ -156,7 +156,7 @@ combined_blood_with_doublets <-
 combined_skin <-
   readRDS(file.path(path_objs, "final", "combined_skin_airr.rds"))
 combined_skin_recombined <-
-  readRDS(file.path(path_objs, "final", "combined_skin_recombined_t.rds"))
+  readRDS(file.path(path_objs, "final", "combined_skin_recombined.rds"))
 combined_skin_t <-
   readRDS(file.path(path_objs, "final", "combined_skin_t_ref.rds"))
 
@@ -183,10 +183,9 @@ combined_skin_with_doublets <-
 Use the airrflow objects:
 
 ```{r setup-airr}
-combined_bcr <-
-  readRDS(file.path(path_airrflow_objs, "combined_airrflow_bcr.rds"))
 combined_tcr <-
-  readRDS(file.path(path_airrflow_objs, "combined_airrflow_tcr.rds"))
+  readRDS(file.path(path_objs_airrflow, "combined_airrflow_tcr.rds"))
+# combined_airrflow_bulk_tcr.rds
 ```
 
 ## Differential expression
@@ -196,9 +195,6 @@ fdr_cutoff <- 0.05
 
 hallmark <- msigdbr::msigdbr(species = "Homo sapiens", category = "H") %>%
               select(gs_name, gene_symbol) # ensembl_gene, entrez_gene
-reactome <- msigdbr::msigdbr(species = "Homo sapiens", category = "C2",
-                             subcategory = "REACTOME") %>%
-              select(gs_name, gene_symbol)
 
 # this has had the "T Cells" removed
 de_skin_recombined <-
@@ -419,35 +415,6 @@ rownames(combined_blood_t@meta.data) <- combined_blood_t$Cell_ID_Unique
 rownames(combined_skin@meta.data) <- combined_skin$Cell_ID_Unique
 rownames(combined_skin_recombined@meta.data) <- combined_skin_recombined$Cell_ID_Unique
 rownames(combined_skin_t@meta.data) <- combined_skin_t$Cell_ID_Unique
-```
-
-Remove BCR columns:
-
-```{r}
-# the recombined object already had a lot of these columns, so let's make sure
-# that they exist prior to removal
-for (meta_col in c("Has_BCR", "Isotype", "j_call_family_IGK",
-                   "j_call_family_IGL", "mu_freq_bins", "mu_freq",
-                   "paired_light", "v_call_family_IGK", "v_call_family_IGL")) {
-  # blood
-  if (meta_col %in% colnames(combined_blood[[]])) {
-    combined_blood[[meta_col]] <- c()
-  }
-  if (meta_col %in% colnames(combined_blood_t[[]])) {
-    combined_blood_t[[meta_col]] <- c()
-  }
-
-  # skin
-  if (meta_col %in% colnames(combined_skin[[]])) {
-    combined_skin[[meta_col]] <- c()
-  }
-  if (meta_col %in% colnames(combined_skin_recombined[[]])) {
-    combined_skin_recombined[[meta_col]] <- c()
-  }
-  if (meta_col %in% colnames(combined_skin[[]])) {
-    combined_skin_t[[meta_col]] <- c()
-  }
-}
 ```
 
 Remove other miscellaneous columns:
@@ -2487,45 +2454,6 @@ cat(paste("Out of the", n_distinct(hallmark$gs_name),
                      str_remove("HALLMARK_") %>% str_replace_all("_", " "))))
 ```
 
-The website says Reactome has 1736 gene sets, not 1615.
-
-```{r}
-cat(paste("Out of the", n_distinct(reactome$gs_name),
-          "total Reactome pathways,", n_distinct(sig_gsea_reactome_results$ID),
-          "had significance for at least one cell type."))
-```
-
-What are the overlaps between Hallmark and Reactome gene sets?
-
-```{r}
-ifng_hallmark <-
-  filter(hallmark, gs_name == "HALLMARK_INTERFERON_GAMMA_RESPONSE")$gene_symbol
-ifng_reactome <-
-  filter(reactome, gs_name == "REACTOME_INTERFERON_GAMMA_SIGNALING")$gene_symbol
-
-ifng_both <- intersect(ifng_hallmark, ifng_reactome)
-ifng_both
-
-cat(paste("There are", length(ifng_hallmark),
-          "genes in the Hallmark interferon gamma response pathway and",
-          length(ifng_reactome), "genes in the Reactome interferon gamma",
-          "signaling pathway. A total of", length(ifng_both),
-          paste0("(", paste(ifng_both, collapse = ", "), ")"),
-          "genes intersect between the two. Reactome includes IFNG itself",
-          "and the IFNG receptors."))
-
-# ggvenn::ggvenn(data = list("Hallmark IFNG Response" = ifng_hallmark,
-#                            "Reactome IFNG Signaling" = ifng_reactome),
-#                # show_elements = TRUE,
-#                show_percentage = FALSE, set_name_size = 4,
-#                fill_color = c("lightblue", "lightgreen"), label_sep = "\n",
-#                auto_scale = TRUE)
-# ggvenn::ggvenn(data = list(Hallmark = ifng_hallmark, Reactome = ifng_reactome),
-#                show_elements = TRUE, show_percentage = FALSE,
-#                fill_color = c("lightblue", "lightgreen"),
-#                text_size = 2, label_sep = "\n")
-```
-
 ## Methods
 
 ### Data processing
@@ -2566,21 +2494,6 @@ cat(paste("There are",
           "total cells in the processed (doublets removed) blood data."))
 ```
 
-```{r}
-# a few cells had both BCRs and TCRs
-overlap_blood_gex_bcr <-
-  intersect(colnames(combined_blood_with_doublets),
-            (dplyr::filter(combined_bcr, locus == "IGH",
-                           TissueType == "Blood"))$Cell_ID_Unique)
-overlap_blood_gex_bcr_tcr <-
-  intersect(overlap_blood_gex_bcr,
-            (dplyr::filter(combined_tcr, locus == "TRB",
-                           TissueType == "Blood"))$Cell_ID_Unique)
-
-cat(paste("There were", length(overlap_blood_gex_bcr_tcr), "cells with both",
-          "BCRs and TCRs that were removed from the blood GEX data."))
-```
-
 Skin:
 
 ```{r}
@@ -2612,21 +2525,6 @@ cat(paste("There are",
           table(combined_skin$SampleType)[["Control"]] %>%
             prettyNum(big.mark = ","),
           "from the controls"))
-```
-
-```{r}
-# a few cells had both BCRs and TCRs
-overlap_skin_gex_bcr <-
-  intersect(colnames(combined_skin_with_doublets),
-            (dplyr::filter(combined_bcr, locus == "IGH",
-                           TissueType == "Skin"))$Cell_ID_Unique)
-overlap_skin_gex_bcr_tcr <-
-  intersect(overlap_skin_gex_bcr,
-            (dplyr::filter(combined_tcr, locus == "TRB",
-                           TissueType == "Skin"))$Cell_ID_Unique)
-
-cat(paste("There were", length(overlap_skin_gex_bcr_tcr), "cells with both",
-          "BCRs and TCRs that were removed from the skin GEX data."))
 ```
 
 ### Averages
