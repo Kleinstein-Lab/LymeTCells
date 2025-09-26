@@ -1937,14 +1937,15 @@ factor_family_info <- function(airr_db) {
 #' Add AIRR information to a GEX Seurat object.
 #'
 #' @details
+#' Assumes that `seurat_obj` contains `cell_id`.
 #' Assumes that the TCR data includes alpha chains.
 #' Collapsed light chains are alphabetized.
 #'
-#' @param seurat_obj The Seurat object.
-#' @param airr_type TCR
-#' @param combined_airr AIRR formatted data frame with heavy and light chains
-#' @param airr_cols
-#' @param overview
+#' @param seurat_obj The Seurat object containing GEX data.
+#' @param airr_type Type of immune receptor data. Default is "TCR".
+#' @param combined_airr AIRR formatted data frame with beta and alpha chains.
+#' @param new_cols Vector of column names to select from the AIRR data.
+#' @param overview Whether to print integration summary information. Default is TRUE.
 #'
 #' @returns The Seurat object with AIRR columns added to the metadata.
 gex_add_airr <- function(seurat_obj, airr_type = "TCR",
@@ -2049,52 +2050,6 @@ gex_add_airr <- function(seurat_obj, airr_type = "TCR",
   }
 
   seurat_obj
-}
-```
-
-### Integration overview
-
-```{r func-gex-airr-overview}
-#' Overview of the GEX/AIRR integration.
-#'
-#' @details
-#' Assumes that you have a `paired_light` column
-#'
-#' @param seurat_obj The Seurat object.
-#' @param tissue_type
-#' @param airr_type
-#' @param airr_select
-#' @param gex_airr_select
-#'
-#' @returns A text printout of the GEX/AIRR integration.
-gex_airr_overview <- function(seurat_obj, tissue_type, airr_type = "TCR",
-                              airr_select, gex_airr_select) {
-  airr_col <- paste0("Has_", airr_type)
-  airr_type <- paste0(airr_type, "s")
-
-  message <- paste("There are",
-                   nrow(dplyr::filter(gex_airr_select, get(airr_col))),
-                   tolower(tissue_type), airr_type, "being integrated in")
-
-  # paired light chain info
-  if (airr_type == "TCRs") {
-    message <- paste0(message, " (",
-                      nrow(dplyr::filter(gex_airr_select, paired_alpha)),
-                      " of which have paired alpha chains),")
-  }
-
-  message <- paste(message, "which covers",
-                   label_percent(accuracy = 0.01)(mean(Cells(seurat_obj) %in%
-                                                         airr_select$Cell_ID_Unique)),
-                   "of the total GEX data",
-                   paste0("(", ncol(seurat_obj), " cells)."),
-                   nrow(dplyr::filter(airr_select, get(airr_col))) -
-                   nrow(dplyr::filter(gex_airr_select, get(airr_col))),
-                   "of these", airr_type,
-                   paste0("(", label_percent()(1 - mean(airr_select$Cell_ID_Unique %in% Cells(seurat_obj))), ")"),
-                   "did not have a match with the GEX cell ids and were excluded.")
-
-  cat(message)
 }
 ```
 

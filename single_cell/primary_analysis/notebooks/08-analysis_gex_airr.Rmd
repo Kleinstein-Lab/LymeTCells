@@ -1,0 +1,451 @@
+---
+title: "GEX & AIRR Analysis"
+output:
+  html_document:
+    code_download: yes
+    code_folding: hide
+    css: ../"style.css"
+    dev: "png"
+    df_print: kable
+    fig_caption: yes
+    keep_md: no
+    self_contained: true
+    theme: yeti
+    toc: yes
+    toc_depth: 3
+    toc_float:
+        collapsed: false
+        smooth_scroll: false
+editor_options:
+  chunk_output_type: console
+---
+
+------------------------------------------------------------------------
+
+# Overview and setup
+
+```{r setup-options, include = FALSE}
+knitr::opts_chunk$set(comment = NA, dpi = 200, fig.align = "center",
+                      out.width = "100%", warning = FALSE, error = TRUE,
+                      message = FALSE,
+                      fig.path = here::here("primary_analysis", "figures",
+                                            "analysis", "gex_airr",
+                                            "gex-airr-"))
+
+# will mess with chunk labels
+options(knitr.duplicate.label = "allow")
+```
+
+**Author(s):** Edel Aron<br>
+**Date Created:** 2023-02-22<br>
+**Last Updated:** `r Sys.Date()`
+
+**R version:** `r R.Version()$version.string`<br>
+**Platform:** `r R.Version()$platform`<br>
+**Running under:** `r sessionInfo()$running`
+
+```{r, include = FALSE}
+# load packages, colors and themes and functions (R code only)
+code_setup <-
+  knitr::purl(here::here("single_cell", "primary_analysis", "notebooks",
+                         "01-setup.Rmd"),
+              output = tempfile(), documentation = 0)
+code_functions <-
+  knitr::purl(here::here("single_cell", "primary_analysis", "notebooks",
+                         "02-functions.Rmd"),
+              output = tempfile(), documentation = 0)
+code_meta <- 
+  knitr::purl(here::here("single_cell", "primary_analysis", "notebooks",
+                         "03-meta.Rmd"),
+              output = tempfile(), documentation = 0)
+
+# read in the code, then remove the temp files
+source(code_setup)
+source(code_functions)
+source(code_meta)
+unlink(c(code_setup, code_functions, code_meta))
+```
+
+Define AIRR columns of interest:
+
+```{r setup-cols}
+#| class.source = "fold-show"
+
+airr_cols <- c("v_call", "v_call_family", "v_call_gene",
+               "d_call", "d_call_family", "d_call_gene",
+               "j_call", "j_call_family", "j_call_gene",
+               "c_call", "locus", "clone_id", "clone_id_unique",
+               # not AIRR related:
+               "cell_id", "Cell_ID_Unique")
+
+# could also include the cdr3_aa_* columns
+```
+
+We will also add in a "paired_alpha" column for the TCR data.
+
+------------------------------------------------------------------------
+
+# Read in the data
+
+## GEX
+
+```{r setup-gex}
+# objects
+combined_blood <- readRDS(file.path(path_objs, "combined_blood.rds"))
+combined_skin <- readRDS(file.path(path_objs, "combined_skin.rds"))
+
+# colors
+colors_annotated_blood <- combined_blood@misc$colors_annotated
+colors_annotated_skin <- combined_skin@misc$colors_annotated
+```
+
+## AIRR
+
+```{r setup-airr}
+combined_tcr <-
+  readRDS(file.path(path_objs, "airr", "combined_airrflow_bulk_tcr.rds"))
+```
+
+------------------------------------------------------------------------
+
+# Blood
+
+## Integrate GEX & TCR data
+
+This integrates in the **beta** chains:
+
+```{r blood-tcr-setup}
+combined_blood <-
+  gex_add_airr(seurat_obj = combined_blood, airr_type = "TCR",
+               combined_airr = filter(combined_tcr, TissueType == "Blood"), 
+               airr_cols = c(airr_cols, "clone_id_sc", "clone_id_sc_unique"))
+```
+
+Example of the new columns in the Seurat metadata:
+
+```{r blood-tcr-setup-example}
+print_kable(combined_blood[[]] %>% filter(Has_TCR) %>% slice_sample(n = 5),
+            kable_height = NULL)
+```
+
+## Checks
+
+Check each cluster for what percentage TCRs or "`r t_cell_types_str`" it has:
+
+```{r blood-tcr-checks-percs}
+combined_blood_tcr_checks <-
+  clusters_gex_airr(seurat_obj = combined_blood,
+                    clusters_col = "seurat_clusters",
+                    annotations_col = "annotated_clusters",
+                    airr_type = "TCR", cell_types = t_cell_types)
+
+# add in cell type annotations and cell counts
+combined_blood_tcr_checks <-
+  merge(combined_blood_tcr_checks,
+        as.data.frame(table(combined_blood[[c("seurat_clusters",
+                                              "annotated_clusters")]])) %>%
+          dplyr::filter(Freq > 0) %>%
+          rename(Count = Freq)) %>%
+  relocate(annotated_clusters, .after = seurat_clusters) %>%
+  arrange(seurat_clusters)
+
+print_dt(combined_blood_tcr_checks)
+```
+
+## Bar plots {.tabset}
+
+### TCRs per Sample
+
+```{r blood-tcr-all-bar}
+#| fig.dim = c(12, 8)
+
+plot_pcts(pcts = calc_pcts(data = combined_blood[[]],
+                           meta_group_by = c("SampleName", "Dataset",
+                                             "SampleType"),
+                           focus_group = "Has_TCR"),
+          tissue_type = "Blood", plot_value = "TCRs",
+          x_axis = "SampleName", x_axis_label = "Sample",
+          fill_type = "Has_TCR",
+          clrs_specific = colors_binary,
+          plot_type = "Binary", perc_min = 2) %>%
+  add_info_bar(method = "contains", info_type = "Dataset")
+```
+
+### TCRs in T Cells per Sample
+
+```{r blood-tcr-b-cells-bar}
+#| fig.dim = c(12, 8)
+
+plot_pcts(pcts = calc_pcts(data = filter(combined_blood[[]],
+                                         annotated_clusters == t_cell_types),
+                           meta_group_by = c("SampleName", "Dataset",
+                                             "SampleType"),
+                           focus_group = "Has_TCR"),
+          tissue_type = "Blood", plot_value = "TCRs in 'T Cells'",
+          x_axis = "SampleName", x_axis_label = "Sample",
+          fill_type = "Has_TCR",
+          clrs_specific = colors_binary,
+          plot_type = "Binary", perc_min = 2) %>%
+  add_info_bar(method = "contains", info_type = "Dataset")
+```
+
+### TCRs per Cell Type
+
+```{r blood-tcr-cell-types-tcrs-bar}
+#| fig.dim = c(12, 8)
+
+plot_pcts(pcts = calc_pcts(data = combined_blood[[]],
+                           meta_group_by = "annotated_clusters",
+                           focus_group = "Has_TCR"),
+          tissue_type = "Blood", plot_value = "TCRs",
+          x_axis = "annotated_clusters", x_axis_label = "Cell Type",
+          fill_type = "Has_TCR",
+          clrs_specific = colors_binary,
+          plot_type = "Binary", perc_min = 2)
+```
+
+### Cell Types per TCRs
+
+```{r blood-tcr-tcrs-cell-types-bar}
+#| fig.dim = c(12, 8)
+
+plot_pcts(pcts = calc_pcts(data = combined_blood[[]],
+                           meta_group_by = "Has_TCR",
+                           focus_group = "annotated_clusters"),
+          tissue_type = "Blood", plot_value = "Cell Types",
+          x_axis = "Has_TCR", x_axis_label = "Has TCRs",
+          fill_type = "annotated_clusters", fill_label = "Cell Type",
+          clrs_specific = colors_annotated_blood,
+          perc_min = 2)
+```
+
+## UMAPs
+
+### Has TCRs
+
+All:
+
+```{r blood-tcr-umap-tcr-all}
+#| fig.dim = c(18, 6)
+
+# plot the UMAP overlays for all samples
+p1 <- plot_umap(seurat_obj = combined_blood,
+                tissue_type = "Blood", clrs_specific = colors_annotated_blood,
+                plot_by = "cluster_all", annotated = TRUE)
+p2 <- plot_immune_overlay(seurat_obj = combined_blood, tissue_type = "Blood",
+                          airr_type = "TCR", clrs_specific = colors_datatype,
+                          plot_by = "all")
+p3 <- plot_immune_overlay(seurat_obj = combined_blood, tissue_type = "Blood",
+                          airr_type = "TCR", clrs_specific = colors_dataset,
+                          plot_by = "dataset")
+
+p1 | p2 | p3
+```
+
+By Sample:
+
+```{r blood-tcr-umap-tcr-sample}
+#| fig.dim = c(16, 8)
+
+plot_immune_overlay(seurat_obj = combined_blood, tissue_type = "Blood",
+                    airr_type = "TCR", clrs_specific = colors_dataset,
+                    plot_by = "sample", ncol_sample = 4)
+```
+
+### GEX vs. TCR
+
+```{r blood-tcr-umap-gex-tcr}
+#| fig.dim = c(12, 6)
+
+p1 <- plot_umap(seurat_obj = combined_blood,
+                tissue_type = "Blood", clrs_specific = colors_annotated_blood,
+                plot_by = "cluster_specific",
+                specific_clusters = intersect(t_cell_types, 
+                                              levels(combined_blood$annotated_clusters)),
+                plot_label = FALSE, annotated = TRUE, include_legend = FALSE)
+p2 <- plot_immune_overlay(seurat_obj = combined_blood, tissue_type = "Blood",
+                          airr_type = "TCR", clrs_specific = colors_datatype,
+                          plot_by = "all")
+
+p1 | p2 & theme(legend.justification = "center", legend.position = "bottom")
+```
+
+------------------------------------------------------------------------
+
+# Skin
+
+## Integrate GEX & TCR data
+
+This integrates in the **beta chains**:
+
+```{r skin-tcr-setup}
+combined_skin <-
+  gex_add_airr(seurat_obj = combined_skin, airr_type = "TCR",
+               combined_airr = filter(combined_tcr, TissueType == "Skin"), 
+               airr_cols = c(airr_cols, "clone_id_sc", "clone_id_sc_unique"))
+```
+
+Example of the new columns in the Seurat metadata:
+
+```{r skin-tcr-setup-example}
+print_kable(combined_skin[[]] %>% filter(Has_TCR) %>% slice_sample(n = 5),
+            kable_height = NULL)
+```
+
+## Checks
+
+Check each cluster for what percentage TCRs or "`r t_cell_types_str`" it has:
+
+```{r skin-tcr-checks-percs}
+combined_skin_tcr_checks <-
+  clusters_gex_airr(seurat_obj = combined_skin,
+                    clusters_col = "seurat_clusters",
+                    annotations_col = "annotated_clusters",
+                    airr_type = "TCR", cell_types = t_cell_types)
+
+# add in cell type annotations and cell counts
+combined_skin_tcr_checks <-
+  merge(combined_skin_tcr_checks,
+        as.data.frame(table(combined_skin[[c("seurat_clusters",
+                                             "annotated_clusters")]])) %>%
+          dplyr::filter(Freq > 0) %>%
+          rename(Count = Freq)) %>%
+  relocate(annotated_clusters, .after = seurat_clusters) %>%
+  arrange(seurat_clusters)
+
+print_dt(combined_skin_tcr_checks)
+```
+
+## Bar plots {.tabset}
+
+### TCRs per Sample
+
+```{r skin-tcr-all-bar}
+#| fig.dim = c(12, 8)
+
+plot_pcts(pcts = calc_pcts(data = combined_skin[[]],
+                           meta_group_by = c("SampleName", "Dataset",
+                                             "SampleType"),
+                           focus_group = "Has_TCR"),
+          tissue_type = "Skin", plot_value = "TCRs",
+          x_axis = "SampleName", x_axis_label = "Sample",
+          fill_type = "Has_TCR",
+          clrs_specific = colors_binary,
+          plot_type = "Binary", perc_min = 2) %>%
+  add_info_bar(method = "contains", info_type = "Dataset")
+```
+
+### TCRs in T Cells per Sample
+
+```{r skin-tcr-b-cells-bar}
+#| fig.dim = c(12, 8)
+
+plot_pcts(pcts = calc_pcts(data = filter(combined_skin[[]],
+                                         annotated_clusters %in% t_cell_types),
+                           meta_group_by = c("SampleName", "Dataset",
+                                             "SampleType"),
+                           focus_group = "Has_TCR"),
+          tissue_type = "Skin", plot_value = "TCRs in 'T Cells'",
+          x_axis = "SampleName", x_axis_label = "Sample",
+          fill_type = "Has_TCR",
+          clrs_specific = colors_binary,
+          plot_type = "Binary", perc_min = 2) %>%
+  add_info_bar(method = "contains", info_type = "Dataset") +
+  labs(subtitle = str_c(t_cell_types, collapse = ", "))
+```
+
+### TCRs per Cell Type
+
+```{r skin-tcr-cell-types-tcrs-bar}
+#| fig.dim = c(12, 8)
+
+plot_pcts(pcts = calc_pcts(data = combined_skin[[]],
+                           meta_group_by = "annotated_clusters",
+                           focus_group = "Has_TCR"),
+          tissue_type = "Skin", plot_value = "TCRs",
+          x_axis = "annotated_clusters", x_axis_label = "Cell Type",
+          fill_type = "Has_TCR",
+          clrs_specific = colors_binary,
+          plot_type = "Binary", perc_min = 2)
+```
+
+### Cell Types per TCRs
+
+```{r skin-tcr-tcrs-cell-types-bar}
+#| fig.dim = c(12, 8)
+
+plot_pcts(pcts = calc_pcts(data = combined_skin[[]],
+                           meta_group_by = "Has_TCR",
+                           focus_group = "annotated_clusters"),
+          tissue_type = "Skin", plot_value = "Cell Types",
+          x_axis = "Has_TCR", x_axis_label = "Has TCRs",
+          fill_type = "annotated_clusters", fill_label = "Cell Type",
+          clrs_specific = colors_annotated_skin,
+          perc_min = 2)
+```
+
+## UMAPs
+
+### Has TCRs
+
+All:
+
+```{r skin-tcr-umap-tcr-all}
+#| fig.dim = c(18, 6)
+
+# plot the UMAP overlays for all samples
+p1 <- plot_umap(seurat_obj = combined_skin,
+                tissue_type = "Skin", clrs_specific = colors_annotated_skin,
+                plot_by = "cluster_all", annotated = TRUE)
+p2 <- plot_immune_overlay(seurat_obj = combined_skin, tissue_type = "Skin",
+                          airr_type = "TCR", clrs_specific = colors_datatype,
+                          plot_by = "all")
+p3 <- plot_immune_overlay(seurat_obj = combined_skin, tissue_type = "Skin",
+                          airr_type = "TCR", clrs_specific = colors_dataset,
+                          plot_by = "dataset")
+
+p1 | p2 | p3
+```
+
+By Sample:
+
+```{r skin-tcr-umap-tcr-sample}
+#| fig.dim = c(16, 24)
+
+plot_immune_overlay(seurat_obj = combined_skin, tissue_type = "Skin",
+                    airr_type = "TCR", clrs_specific = colors_dataset,
+                    plot_by = "sample", ncol_sample = 4)
+```
+
+### GEX vs. TCR
+
+```{r skin-tcr-umap-gex-tcr}
+#| fig.dim = c(12, 6)
+
+p1 <- plot_umap(seurat_obj = combined_skin,
+                tissue_type = "Skin", clrs_specific = colors_annotated_skin,
+                plot_by = "cluster_specific",
+                specific_clusters = intersect(t_cell_types,
+                                              levels(combined_skin$annotated_clusters)),
+                plot_label = FALSE, annotated = TRUE, include_legend = FALSE)
+p2 <- plot_immune_overlay(seurat_obj = combined_skin, tissue_type = "Skin",
+                          airr_type = "TCR", clrs_specific = colors_datatype,
+                          plot_by = "all")
+
+p1 | p2 & theme(legend.justification = "center", legend.position = "bottom")
+```
+
+------------------------------------------------------------------------
+
+# Save the objects
+
+```{r save-objects}
+#| eval = FALSE
+
+# save the airrflow version
+Misc(combined_blood, slot = "airrflow_version") <- airrflow_version
+Misc(combined_skin, slot = "airrflow_version") <- airrflow_version
+
+saveRDS(combined_blood, file.path(path_objs, "airr", "combined_blood_airr.rds"))
+saveRDS(combined_skin, file.path(path_objs, "airr", "combined_skin_airr.rds"))
+```
