@@ -306,7 +306,6 @@ get_features_from_all(markers_df = markers_all,
 ```{r blood-marker-overlays-dot-ira}
 #| fig.dim = c(16, 8)
 
-# blood markers
 DotPlot(combined_blood,
         features = get_features_from_all(markers_df = markers_all,
                                          sources = "Ira_Fleming",
@@ -459,13 +458,13 @@ VlnPlot(combined_blood,
 
 ## Annotate cell clusters
 
-During the annotation step (regardless of manual or automatic), you can create a csv file to store the annotations (so that they can be easily shared outside of code or used in other scripts such as "reduce_seurat_obj_size.R").
-
 ### Manually
 
-Upon more careful examination, we noticed that the plasma cells had some T cell markers and decided to subcluster cluster 15:
+Upon more careful examination, we noticed that the plasma cells (cluster 15) had some T cell markers and decided to subcluster them:
 
 ```{r}
+#| eval = FALSE
+
 Idents(combined_blood) <- "seurat_clusters"
 
 combined_blood <-
@@ -534,14 +533,6 @@ print_kable(annotations_blood %>%
 Choose the color scheme:
 
 ```{r blood-annotations-color-scheme}
-# these RColorBrewer palettes can have up to 9 or 11 colors
-# excludes light colors (hard to see on plots)
-# colors_annotated_blood <-
-#   setNames(brewer.pal(n_distinct(combined_blood$annotated_clusters) + 2,
-#                       name = "Reds")
-#            [3:(n_distinct(combined_blood$annotated_clusters) + 2)],
-#            sort(unique(combined_blood$annotated_clusters)))
-
 # chosen to resemble the skin where possible (except the natural killers)
 colors_annotated_blood <-
   setNames(c("#CC6666", "#6F0C33", "#41BBE8", "#FF8C00", "#005198", "#28CE0E",
@@ -567,21 +558,24 @@ saveRDS(combined_blood,
 ```{r blood-findallmarkers-save}
 #| eval = FALSE
 
-# find markers for every cluster compared to all remaining cells, report only the positive ones
+# find markers for every cluster compared to all remaining cells
+# report only the positive ones
 combined_blood_findallmarkers <- FindAllMarkers(combined_blood,
                                                 only.pos = TRUE, min.pct = 0.25,
                                                 logfc.threshold = 0.25)
 
 # save the markers as a csv
 write_csv(combined_blood_findallmarkers,
-          file = file.path(path_tables, "findmarkers", "annotations_blood_findallmarkers.csv"))
+          file.path(path_tables, "findmarkers",
+                    "annotations_blood_findallmarkers.csv"))
 ```
 
 ```{r blood-findallmarkers-load}
 # load markers
-combined_blood_findallmarkers <- read_csv(file.path(path_tables, "findmarkers",
-                                                    "annotations_blood_findallmarkers.csv"),
-                                          show_col_types = FALSE)
+combined_blood_findallmarkers <-
+  read_csv(file.path(path_tables, "findmarkers",
+                     "annotations_blood_findallmarkers.csv"),
+           show_col_types = FALSE)
 
 print_kable(combined_blood_findallmarkers %>%
               group_by(cluster) %>%
@@ -610,7 +604,6 @@ DoHeatmap(combined_blood, features = top10_blood$gene) +
 #| fig.dim = c(16, 8)
 
 # these use the default "annotated_clusters" column
-
 p1 <- plot_umap(seurat_obj = combined_blood, tissue_type = "Blood",
                 plot_by = "cluster_all") # for comparison
 p2 <- plot_umap(seurat_obj = combined_blood, tissue_type = "Blood",
@@ -783,7 +776,6 @@ Recheck Ira Fleming's markers:
 ```{r blood-check-annotations-dot-ira}
 #| fig.dim = c(16, 5)
 
-# blood markers
 DotPlot(combined_blood,
         features = get_features_from_all(markers_df = markers_all,
                                          sources = "Ira_Fleming",
@@ -800,14 +792,6 @@ DotPlot(combined_blood,
 ### Violin plots {.tabset}
 
 For the T cells:
-
-```{r blood-check-annotations-flip}
-#| eval = FALSE
-
-# undo reversing the levels for the dot plots
-combined_blood$annotated_clusters <-
-  mutate(combined_blood[[]], annotated_clusters = fct_rev(annotated_clusters))
-```
 
 #### With points
 
@@ -843,8 +827,6 @@ VlnPlot(combined_blood,
 
 ### Run the standard pipeline
 
-Using the original resolution of 0.4 and an increased resolution based on the <a href="./notebooks/other/resolution_choices.html" target="_blank">clustree</a> in order to (hopefully) better separate out the B cell cluster.
-
 ```{r skin-seurat-pipeline-run}
 #| class.source = "fold-show",
 #| eval = FALSE
@@ -855,6 +837,7 @@ combined_skin <- seurat_pipeline(seurat_obj = combined_skin,
                                  cluster_res = c(0.4, 1, 1.5))
 
 # choose a resolution
+# a higher resolution separates out the B cells better
 Idents(combined_skin) <- combined_skin$RNA_snn_res.1
 combined_skin$seurat_clusters <- combined_skin$RNA_snn_res.1
 
@@ -979,8 +962,6 @@ plot_umap(seurat_obj = combined_skin, tissue_type = "Skin",
 
 As an example, we can look at Mary Tomayko's markers:
 
-Use markers from Mary Tomayko, Roy Jiang, and the Hughes paper:
-
 ```{r skin-marker-overlays-choice}
 # choose skin marker sources
 markers_skin_sources <- "Mary_Tomayko"
@@ -994,7 +975,6 @@ get_features_from_all(markers_df = markers_all,
 ```{r skin-marker-overlays-dot-mary}
 #| fig.dim = c(16, 8)
 
-# skin markers from Mary Tomayko
 DotPlot(combined_skin,
         features = get_features_from_all(markers_df = markers_all,
                                          sources = "Mary_Tomayko",
@@ -1241,14 +1221,13 @@ FeaturePlot(combined_skin,
 
 #### NK Cells
 
-Includes Ira's NK markers too
-
 ```{r skin-marker-overlays-feature-nk}
 #| fig.dim = c(24, 12)
 
 FeaturePlot(combined_skin,
             features = get_features_from_all(markers_df = markers_all,
-                                             sources = c(markers_skin_sources, "Ira_Fleming"),
+                                             sources = c(markers_skin_sources,
+                                                         "Ira_Fleming"),
                                              cell_types = "NK"),
             min.cutoff = 0, label = TRUE, label.size = 2,
             ncol = 4, raster = FALSE) +
@@ -1386,7 +1365,7 @@ wrap_plots(plots_skin, ncol = min(length(plots_skin), 4))
 
 #### Joint markers
 
-* Paris suggested plotting pan-myeloid markers to help identify actual mast cells
+* It was suggested that plotting pan-myeloid markers to help identify actual mast cells
   * [The Emerging Understanding of Myeloid Cells as Partners and Targets in Tumor Rejection](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4391275/)
     * "Critically, for full myeloid population delineation, 9 conventional surface markers are required: CD45, CD11b, CD11c, Ly6C, CD24, CD90.2/1, MHCII, F4/80, and CD103."
 * What are the Langerhans-like cells?
@@ -1435,8 +1414,6 @@ wrap_plots(plots_skin, ncol = min(length(plots_skin), 4))
 
 ## Annotate cell clusters
 
-During the annotation step (regardless of manual or automatic), you can create a csv file to store the annotations (so that they can be easily shared outside of code or used in other scripts such as "reduce_seurat_obj_size.R").
-
 ### Manually
 
 Annotate the clusters (for `cluster_res = 1`):
@@ -1472,17 +1449,17 @@ combined_skin_annotations <- rbind(c("0", "T Cells"), # CD4 T Cells
                                    c("26", "Endothelial Cells"),
                                    c("27", "Fibroblasts"),
                                    c("28", "Endothelial Cells"),
-                                   c("29", "Endothelial Cells"), # Lymphatic
+                                   c("29", "Endothelial Cells"),
                                    c("30", "Fibroblasts"),
                                    c("31", "Keratinocytes"),
-                                   c("32", "T Cells"), # Tregs? # Cycling
+                                   c("32", "T Cells"),
                                    c("33", "Keratinocytes"),
                                    c("34", "Nerves"),
-                                   c("35", "Fibroblasts"), # Cycling
-                                   c("36", "Cycling Dendritic Cells"), # Cycling cDC/Langerhans
+                                   c("35", "Fibroblasts"),
+                                   c("36", "Cycling Dendritic Cells"),
                                    c("37", "Keratinocytes"),
                                    c("38", "Mast Cells"),
-                                   c("39", "Endothelial Cells"), # Cycling Vascular
+                                   c("39", "Endothelial Cells"),
                                    c("40", "Keratinocytes"),
                                    c("41", "Endothelial Cells"))
 
@@ -1495,8 +1472,6 @@ write_csv(combined_skin_annotations,
 ```
 
 Add the annotations to the Seurat object and examine them:
-
-**These are now different from the previous cell because of the Shiny app usage**
 
 ```{r skin-annotations-manual-add}
 # read in and show the annotations
@@ -1544,8 +1519,6 @@ saveRDS(combined_skin,
 
 Uses `limma` for "a more efficient implementation of the Wilcoxon Rank Sum Test".
 
-#### All clusters
-
 ```{r skin-findallmarkers-save}
 #| eval = FALSE
 
@@ -1556,14 +1529,16 @@ combined_skin_findallmarkers <- FindAllMarkers(combined_skin,
 
 # save the markers as a csv
 write_csv(combined_skin_findallmarkers,
-          file = file.path(path_tables, "findmarkers", "annotations_skin_findallmarkers.csv"))
+          file.path(path_tables, "findmarkers",
+                    "annotations_skin_findallmarkers.csv"))
 ```
 
 ```{r skin-findallmarkers-load}
 # load markers
-combined_skin_findallmarkers <- read_csv(file.path(path_tables, "findmarkers",
-                                                   "annotations_skin_findallmarkers.csv"),
-                                         show_col_types = FALSE)
+combined_skin_findallmarkers <-
+  read_csv(file.path(path_tables, "findmarkers",
+                     "annotations_skin_findallmarkers.csv"),
+           show_col_types = FALSE)
 
 print_kable(combined_skin_findallmarkers %>%
               group_by(cluster) %>%
@@ -1585,100 +1560,6 @@ top10_skin <- combined_skin_findallmarkers %>%
 # expression heatmap
 DoHeatmap(combined_skin, features = top10_skin$gene) +
   labs(title = "Skin Heatmap - Top 10 Features") + labels_standard
-```
-
-#### Specific clusters {.tabset}
-
-In order to run `FindMarkers`, you need to have the original idents (the cluster ids) set as active. Perhaps I should only include the positives?
-
-##### Cluster 10
-
-```{r skin-findmarkers-skin-cluster10-save}
-#| eval = FALSE
-
-combined_skin_findmarkers_cluster10 <- FindMarkers(combined_skin, ident.1 = 10,
-                                                   min.pct = 0.25) %>%
-                                         rownames_to_column(var = "gene")
-
-# save the markers as a csv
-write_csv(combined_skin_findmarkers_cluster10,
-          file = file.path(path_tables, "findmarkers", "annotations_skin_findmarkers_cluster10.csv"))
-```
-
-```{r skin-findmarkers-skin-cluster10-load}
-# load and show markers
-print_kable(read_csv(file.path(path_tables, "findmarkers",
-                               "annotations_skin_findmarkers_cluster10.csv"),
-                     show_col_types = FALSE) %>% head(10),
-            kable_height = NULL)
-```
-
-##### Cluster 13
-
-```{r skin-findmarkers-skin-cluster13-save}
-#| eval = FALSE
-
-combined_skin_findmarkers_cluster13 <- FindMarkers(combined_skin, ident.1 = 13,
-                                                   min.pct = 0.25) %>%
-                                         rownames_to_column(var = "gene")
-
-# save the markers as a csv
-write_csv(combined_skin_findmarkers_cluster13,
-          file = file.path(path_tables, "findmarkers", "annotations_skin_findmarkers_cluster13.csv"))
-```
-
-```{r skin-findmarkers-skin-cluster13-load}
-# load and show markers
-print_kable(read_csv(file.path(path_tables, "findmarkers",
-                               "annotations_skin_findmarkers_cluster13.csv"),
-                     show_col_types = FALSE) %>% head(10),
-            kable_height = NULL)
-```
-
-##### Cluster 20
-
-```{r skin-findmarkers-skin-cluster20-save}
-#| eval = FALSE
-
-combined_skin_findmarkers_cluster20 <- FindMarkers(combined_skin, ident.1 = 20,
-                                                   min.pct = 0.25) %>%
-                                         rownames_to_column(var = "gene")
-
-# save the markers as a csv
-write_csv(combined_skin_findmarkers_cluster20,
-          file = file.path(path_tables, "findmarkers",
-                           "annotations_skin_findmarkers_cluster20.csv"))
-```
-
-```{r skin-findmarkers-skin-cluster20-load}
-# load and show markers
-print_kable(read_csv(file.path(path_tables, "findmarkers",
-                               "annotations_skin_findmarkers_cluster20.csv"),
-                     show_col_types = FALSE) %>% head(10),
-            kable_height = NULL)
-```
-
-##### Cluster 36
-
-```{r skin-findmarkers-skin-cluster36-save}
-#| eval = FALSE
-
-combined_skin_findmarkers_cluster36 <- FindMarkers(combined_skin, ident.1 = 36,
-                                                   min.pct = 0.25) %>%
-                                         rownames_to_column(var = "gene")
-
-# save the markers as a csv
-write_csv(combined_skin_findmarkers_cluster36,
-          file = file.path(path_tables, "findmarkers",
-                           "annotations_skin_findmarkers_cluster36.csv"))
-```
-
-```{r skin-findmarkers-skin-cluster36-load}
-# load and show markers
-print_kable(read_csv(file.path(path_tables, "findmarkers",
-                               "annotations_skin_findmarkers_cluster36.csv"),
-                     show_col_types = FALSE) %>% head(10),
-            kable_height = NULL)
 ```
 
 ### Final annotations
@@ -1771,11 +1652,6 @@ p2 <- plot_pcts(pcts = calc_pcts(data = combined_skin[[]],
         add_info_bar(info_type = "Dataset")
 
 # see which samples are going into each cell type
-# p3 <- plot_tile(seurat_obj = combined_skin, tissue_type = "Skin",
-#                 clrs_specific = colors_sample_skin,
-#                 x_axis = "annotated_clusters", x_axis_label = "Cell Type") +
-#         labels_rotate_x
-
 p3 <- ggplot(combined_skin[[]] %>%
                group_by(annotated_clusters, SampleName, Dataset) %>%
                summarize(n = n()),
@@ -1904,14 +1780,6 @@ DotPlot(combined_skin,
 ### Violin plots {.tabset}
 
 For the T cells:
-
-```{r skin-check-annotations-flip}
-#| eval = FALSE
-
-# undo reversing the levels for the dot plots
-combined_skin$annotated_clusters <-
-  mutate(combined_skin[[]], annotated_clusters = fct_rev(annotated_clusters))
-```
 
 #### With points
 
