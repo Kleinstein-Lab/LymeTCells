@@ -1,0 +1,1501 @@
+Cell_Type,Cell_Type_Full,Cell_Type_Alternate,Marker,Alternate_Name,Source,Species,Tissue_Type,Details,Notes
+B,B_Cells,NA,BACH2,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763431,NA
+B,B_Cells,NA,BANK1,NA,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B,B_Cells,NA,BANK1,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763432,NA
+B,B_Cells,NA,BANK1,NA,Ira_Fleming,Human,Skin,NA,NA
+B,B_Cells,NA,BCL11A,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763433,NA
+B,B_Cells,NA,BLK,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763434,NA
+B,B_Cells,NA,BLK,NA,Mary_Tomayko,Human,Skin,NA,NA
+B,B_Cells,NA,BLNK,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763435,NA
+B,B_Cells,NA,BTLA,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763436,NA
+B,B_Cells,NA,MME,CD10,Literature,Human,PBMC,10.1002/cyto.b.20547,NA
+B,B_Cells,NA,MME,CD10,Mary_Tomayko,Human,Skin,NA,NA
+B,B_Cells,NA,SDC1,CD138,Literature,Human,PBMC,10.1002/cyto.b.20550,NA
+B,B_Cells,NA,CD19,NA,CellTypist,Human,"Blood, Eye, Intestine, Kidney, Liver, Lung, Trachea",CL:0000236,B lymphocytes with diverse cell surface immunoglobulin receptors recognising specific antigenic epitopes and mediating humoral immunity
+B,B_Cells,NA,CD19,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763437,NA
+B,B_Cells,NA,CD19,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+B,B_Cells,NA,CD19,NA,Mary_Tomayko,Human,Skin,NA,NA
+B,B_Cells,NA,CD22,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763438,NA
+B,B_Cells,NA,CD27,NA,Literature,Human,PBMC,10.1002/cyto.b.20548,NA
+B,B_Cells,NA,CD27,NA,Mary_Tomayko,Human,Skin,NA,NA
+B,B_Cells,NA,CD38,NA,Literature,Human,PBMC,10.1002/cyto.b.20549,NA
+B,B_Cells,NA,CD38,NA,Mary_Tomayko,Human,Skin,NA,NA
+B,B_Cells,NA,CD72,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763439,NA
+B,B_Cells,NA,CD74,NA,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B,B_Cells,NA,CD79A,NA,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B,B_Cells,NA,CD79A,NA,CellTypist,Human,"Blood, Eye, Intestine, Kidney, Liver, Lung, Trachea",CL:0000236,B lymphocytes with diverse cell surface immunoglobulin receptors recognising specific antigenic epitopes and mediating humoral immunity
+B,B_Cells,NA,CD79A,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763440,NA
+B,B_Cells,NA,CD79A,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+B,B_Cells,NA,CD79A,NA,Ira_Fleming,Human,Skin,NA,NA
+B,B_Cells,NA,CD79A,NA,Mary_Tomayko,Human,Skin,NA,NA
+B,B_Cells,NA,CD79A,NA,Literature,Human,Skin,doi.org/10.1101/689273,NA
+B,B_Cells,NA,CD79B,NA,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B,B_Cells,NA,CD79B,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763441,NA
+B,B_Cells,NA,CD79B,NA,Mary_Tomayko,Human,Skin,NA,NA
+B,B_Cells,NA,CR2,CD21,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763442,NA
+B,B_Cells,NA,EAF2,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763443,NA
+B,B_Cells,NA,EZR,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763444,NA
+B,B_Cells,NA,FAM3C,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763445,NA
+B,B_Cells,NA,FCER2,CD23,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763446,NA
+B,B_Cells,NA,FCMR,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763447,NA
+B,B_Cells,NA,FCRLA,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763448,NA
+B,B_Cells,NA,GGA2,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763449,NA
+B,B_Cells,NA,GNG7,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763450,NA
+B,B_Cells,NA,GUCD1,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763451,NA
+B,B_Cells,NA,HLA-DMB,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763452,NA
+B,B_Cells,NA,HLA-DOA,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763453,NA
+B,B_Cells,NA,HLA-DOB,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763454,NA
+B,B_Cells,NA,HLA-DQA1,NA,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B,B_Cells,NA,HLA-DQA1,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763455,NA
+B,B_Cells,NA,HLA-DQB1,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763456,NA
+B,B_Cells,NA,HVCN1,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763457,NA
+B,B_Cells,NA,IGHD,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763458,NA
+B,B_Cells,NA,IGHD,NA,Mary_Tomayko,Human,Skin,NA,NA
+B,B_Cells,NA,IGHG1,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763459,NA
+B,B_Cells,NA,IGHM,NA,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B,B_Cells,NA,IGHM,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763460,NA
+B,B_Cells,NA,IGKC,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763461,NA
+B,B_Cells,NA,IGLC2,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763462,NA
+B,B_Cells,NA,IGLC3,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763463,NA
+B,B_Cells,NA,IGLL1,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763464,NA
+B,B_Cells,NA,LRMP,IRAG2,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763465,NA
+B,B_Cells,NA,JCHAIN,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763466,NA
+B,B_Cells,NA,LINC00926,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763467,NA
+B,B_Cells,NA,LTB,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763468,NA
+B,B_Cells,NA,LY6D,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763469,NA
+B,B_Cells,NA,MBD4,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763470,NA
+B,B_Cells,NA,MEF2C,NA,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B,B_Cells,NA,MS4A1,CD20,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B,B_Cells,NA,MS4A1,CD20,CellTypist,Human,"Blood, Eye, Intestine, Kidney, Liver, Lung, Trachea",CL:0000236,B lymphocytes with diverse cell surface immunoglobulin receptors recognising specific antigenic epitopes and mediating humoral immunity
+B,B_Cells,NA,MS4A1,CD20,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763471,NA
+B,B_Cells,NA,MS4A1,CD20,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+B,B_Cells,NA,MS4A1,CD20,Ira_Fleming,Human,Skin,NA,NA
+B,B_Cells,NA,MS4A1,CD20,Literature,Human,Skin,doi.org/10.1101/689273,NA
+B,B_Cells,NA,MZB1,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763472,NA
+B,B_Cells,NA,NIBAN3,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763473,NA
+B,B_Cells,NA,ODC1,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763474,NA
+B,B_Cells,NA,ORAI2,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763475,NA
+B,B_Cells,NA,P2RX5,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763476,NA
+B,B_Cells,NA,PARP1,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763477,NA
+B,B_Cells,NA,PAX5,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763478,NA
+B,B_Cells,NA,PLEKHF2,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763479,NA
+B,B_Cells,NA,POU2AF1,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763480,NA
+B,B_Cells,NA,POU2F2,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763481,NA
+B,B_Cells,NA,PPM1K,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763482,NA
+B,B_Cells,NA,QRSL1,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763483,NA
+B,B_Cells,NA,RALGPS2,NA,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B,B_Cells,NA,RALGPS2,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763484,NA
+B,B_Cells,NA,RCSD1,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763485,NA
+B,B_Cells,NA,SHMT2,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763486,NA
+B,B_Cells,NA,SNX2,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763487,NA
+B,B_Cells,NA,SPIB,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763488,NA
+B,B_Cells,NA,ST6GAL1,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763489,NA
+B,B_Cells,NA,SWAP70,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763490,NA
+B,B_Cells,NA,TCF3,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763491,NA
+B,B_Cells,NA,TCL1A,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763492,NA
+B,B_Cells,NA,TCOF1,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763493,NA
+B,B_Cells,NA,TIFA,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763494,NA
+B,B_Cells,NA,TMEM156,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763495,NA
+B,B_Cells,NA,TNFRSF13B,CD267,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763496,NA
+B,B_Cells,NA,TNFRSF13C,CD268,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B,B_Cells,NA,TNFRSF13C,CD268,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763497,NA
+B,B_Cells,NA,TNFRSF17,CD269,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763498,NA
+B,B_Cells,NA,TP53INP1,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763499,NA
+B,B_Cells,NA,TPD52,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763500,NA
+B,B_Cells,NA,TXNDC11,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763501,NA
+B,B_Cells,NA,VPREB1,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763502,NA
+B,B_Cells,NA,VPREB3,NA,GeneMarkeR,Human,Unknown,10.3389/fgene.2021.763503,NA
+B_Aging,Age_Associated_B_Cells,Age-Associated_B_Cells,FCRL2,NA,CellTypist,Human,"Blood, Bone marrow, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Skeletal muscle, Spleen, Thymus",CL:0000787,CD11c+ T-bet+ memory B cells associated with autoimmunity and aging
+B_Aging,Age_Associated_B_Cells,Age-Associated_B_Cells,ITGAX,CD11c,CellTypist,Human,"Blood, Bone marrow, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Skeletal muscle, Spleen, Thymus",CL:0000787,CD11c+ T-bet+ memory B cells associated with autoimmunity and aging
+B_Aging,Age_Associated_B_Cells,Age-Associated_B_Cells,TBX21,NA,CellTypist,Human,"Blood, Bone marrow, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Skeletal muscle, Spleen, Thymus",CL:0000787,CD11c+ T-bet+ memory B cells associated with autoimmunity and aging
+B_Cycling,Cycling_B_Cells,NA,CD19,NA,CellTypist,Human,Intestine,CL:0000236,proliferating B lymphocytes
+B_Cycling,Cycling_B_Cells,NA,MKI67,Ki-67,CellTypist,Human,Intestine,CL:0000236,proliferating B lymphocytes
+B_Cycling,Cycling_B_Cells,NA,TOP2A,NA,CellTypist,Human,Intestine,CL:0000236,proliferating B lymphocytes
+B_Follicular,Follicular_B_Cells,NA,CD22,NA,CellTypist,Human,Intestine,CL:0000843,resting mature B lymphocytes found in the primary and secondary lymphoid follicles and participating in T cell-dependent immune responses
+B_Follicular,Follicular_B_Cells,NA,CXCR5,NA,CellTypist,Human,Intestine,CL:0000843,resting mature B lymphocytes found in the primary and secondary lymphoid follicles and participating in T cell-dependent immune responses
+B_Follicular,Follicular_B_Cells,NA,TNFRSF13B,CD267,CellTypist,Human,Intestine,CL:0000843,resting mature B lymphocytes found in the primary and secondary lymphoid follicles and participating in T cell-dependent immune responses
+B_GC,Germinal_Center_B_Cells,Proliferative_Germinal_Center_B_Cells,AICDA,NA,CellTypist,Human,"Intestine, Lung-draining lymph node, Mesenteric lymph node, Spleen",CL:0000844,proliferating germinal center B cells
+B_GC,Germinal_Center_B_Cells,NA,CD40,NA,CellTypist,Human,"Intestine, Lung-draining lymph node, Mesenteric lymph node, Spleen",CL:0000844,proliferating mature B cells that undergo somatic hypermutation and class-switch recombination in secondary lymphoid organs
+B_GC,Germinal_Center_B_Cells,Proliferative_Germinal_Center_B_Cells,MKI67,Ki-67,CellTypist,Human,"Intestine, Lung-draining lymph node, Mesenteric lymph node, Spleen",CL:0000844,proliferating germinal center B cells
+B_GC,Germinal_Center_B_Cells,NA,POU2AF1,NA,CellTypist,Human,"Intestine, Lung-draining lymph node, Mesenteric lymph node, Spleen",CL:0000844,proliferating mature B cells that undergo somatic hypermutation and class-switch recombination in secondary lymphoid organs
+B_GC,Germinal_Center_B_Cells,NA,SUGCT,NA,CellTypist,Human,"Intestine, Lung-draining lymph node, Mesenteric lymph node, Spleen",CL:0000844,proliferating mature B cells that undergo somatic hypermutation and class-switch recombination in secondary lymphoid organs
+B_GC,Germinal_Center_B_Cells,Proliferative_Germinal_Center_B_Cells,SUGCT,NA,CellTypist,Human,"Intestine, Lung-draining lymph node, Mesenteric lymph node, Spleen",CL:0000844,proliferating germinal center B cells
+B_Immature,Immature_B_Cells,NA,MME,CD10,Literature,Human,PBMC,10.1002/cyto.b.20552,NA
+B_Immature,Immature_B_Cells,NA,CR2,CD21,Literature,Human,PBMC,10.1002/cyto.b.20553,NA
+B_Immature,Immature_B_Cells,NA,FCER2,CD23,Literature,Human,PBMC,10.1002/cyto.b.20554,NA
+B_Immature,Immature_B_Cells,NA,CD5,NA,Literature,Human,PBMC,10.1002/cyto.b.20551,NA
+B_Intermediate,Intermediate_B_Cells,NA,AIM2,NA,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B_Intermediate,Intermediate_B_Cells,NA,BANK1,NA,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B_Intermediate,Intermediate_B_Cells,NA,CD79A,NA,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B_Intermediate,Intermediate_B_Cells,NA,CD79B,NA,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B_Intermediate,Intermediate_B_Cells,NA,IGHD,NA,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B_Intermediate,Intermediate_B_Cells,NA,IGHM,NA,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B_Intermediate,Intermediate_B_Cells,NA,LINC01857,NA,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B_Intermediate,Intermediate_B_Cells,NA,MS4A1,CD20,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B_Intermediate,Intermediate_B_Cells,NA,RALGPS2,NA,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B_Intermediate,Intermediate_B_Cells,NA,TNFRSF13B,CD267,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B_Intermediate_Kappa,Intermediate_B_Cells_Kappa_Light_Chain,NA,BANK1,NA,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B_Intermediate_Kappa,Intermediate_B_Cells_Kappa_Light_Chain,NA,CD24,NA,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B_Intermediate_Kappa,Intermediate_B_Cells_Kappa_Light_Chain,NA,FCRL2,NA,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B_Intermediate_Kappa,Intermediate_B_Cells_Kappa_Light_Chain,NA,IGHD,NA,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B_Intermediate_Kappa,Intermediate_B_Cells_Kappa_Light_Chain,NA,IGHM,NA,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B_Intermediate_Kappa,Intermediate_B_Cells_Kappa_Light_Chain,NA,IGKC,NA,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B_Intermediate_Kappa,Intermediate_B_Cells_Kappa_Light_Chain,NA,LINC01857,NA,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B_Intermediate_Kappa,Intermediate_B_Cells_Kappa_Light_Chain,NA,MARCKS,NA,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B_Intermediate_Kappa,Intermediate_B_Cells_Kappa_Light_Chain,NA,MS4A1,CD20,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B_Intermediate_Kappa,Intermediate_B_Cells_Kappa_Light_Chain,NA,TNFRSF13B,CD267,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B_Intermediate_Lambda,Intermediate_B_Cells_Lambda_Light_Chain,NA,BANK1,NA,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B_Intermediate_Lambda,Intermediate_B_Cells_Lambda_Light_Chain,NA,CD22,NA,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B_Intermediate_Lambda,Intermediate_B_Cells_Lambda_Light_Chain,NA,CD79A,NA,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B_Intermediate_Lambda,Intermediate_B_Cells_Lambda_Light_Chain,NA,IGHD,NA,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B_Intermediate_Lambda,Intermediate_B_Cells_Lambda_Light_Chain,NA,IGHM,NA,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B_Intermediate_Lambda,Intermediate_B_Cells_Lambda_Light_Chain,NA,IGLC2,NA,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B_Intermediate_Lambda,Intermediate_B_Cells_Lambda_Light_Chain,NA,IGLC3,NA,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B_Intermediate_Lambda,Intermediate_B_Cells_Lambda_Light_Chain,NA,MS4A1,CD20,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B_Intermediate_Lambda,Intermediate_B_Cells_Lambda_Light_Chain,NA,TNFRSF13B,CD267,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B_Intermediate_Lambda,Intermediate_B_Cells_Lambda_Light_Chain,NA,TNFRSF13C,CD268,Azimuth,Human,NA,CL_0000785,Human PBMCs reference
+B_Lineage,Small_Pre-B_Cells,NA,CD24,NA,CellTypist,Human,Bone marrow,CL:0000817,non-proliferative B lymphocyte precursors derived from Pro-B cells and expressing membrane μ chains with surrogate light chains in their receptors
+B_Lineage,Large_Pre-B_Cells,NA,CD24,NA,CellTypist,Human,"Bone marrow, Liver",CL:0000817,proliferative B lymphocyte precursors derived from Pro-B cells and expressing membrane μ chains with surrogate light chains in their receptors
+B_Lineage,Pro-B_Cells,NA,DNTT,NA,CellTypist,Human,"Bone marrow, Liver",CL:0000826,early B lymphocyte progenitors undergoing D-J joining on the H chain chromosome and joining of a V segment to the rearranged D-J
+B_Lineage,Pro-B_Cells,NA,IGLL1,NA,CellTypist,Human,"Bone marrow, Liver",CL:0000826,early B lymphocyte progenitors undergoing D-J joining on the H chain chromosome and joining of a V segment to the rearranged D-J
+B_Lineage,Small_Pre-B_Cells,NA,IGLL5,IGL,CellTypist,Human,Bone marrow,CL:0000817,non-proliferative B lymphocyte precursors derived from Pro-B cells and expressing membrane μ chains with surrogate light chains in their receptors
+B_Lineage,Pre-Pro-B_Cells,NA,IL7R,NA,CellTypist,Human,Liver,CL:0002046,"the earliest primitive B cell progenitors which express CD34 and SPINK2, have germline Ig genes and give rise to Pro-B cells"
+B_Lineage,Large_Pre-B_Cells,NA,MKI67,Ki-67,CellTypist,Human,"Bone marrow, Liver",CL:0000817,proliferative B lymphocyte precursors derived from Pro-B cells and expressing membrane μ chains with surrogate light chains in their receptors
+B_Lineage,Small_Pre-B_Cells,NA,MME,CD10,CellTypist,Human,Bone marrow,CL:0000817,non-proliferative B lymphocyte precursors derived from Pro-B cells and expressing membrane μ chains with surrogate light chains in their receptors
+B_Lineage,Large_Pre-B_Cells,NA,MME,CD10,CellTypist,Human,"Bone marrow, Liver",CL:0000817,proliferative B lymphocyte precursors derived from Pro-B cells and expressing membrane μ chains with surrogate light chains in their receptors
+B_Lineage,Pro-B_Cells,NA,MME,CD10,CellTypist,Human,"Bone marrow, Liver",CL:0000826,early B lymphocyte progenitors undergoing D-J joining on the H chain chromosome and joining of a V segment to the rearranged D-J
+B_Lineage,Pre-Pro-B_Cells,NA,RAG1,NA,CellTypist,Human,Liver,CL:0002046,"the earliest primitive B cell progenitors which express CD34 and SPINK2, have germline Ig genes and give rise to Pro-B cells"
+B_Lineage,Pre-Pro-B_Cells,NA,ZCCHC7,NA,CellTypist,Human,Liver,CL:0002046,"the earliest primitive B cell progenitors which express CD34 and SPINK2, have germline Ig genes and give rise to Pro-B cells"
+B_Memory,Memory_B_Cells,NA,AIM2,NA,Azimuth,Human,NA,CL_0000787,Human PBMCs reference
+B_Memory,Memory_B_Cells,NA,BANK1,NA,Azimuth,Human,NA,CL_0000787,Human PBMCs reference
+B_Memory,Memory_B_Cells,NA,CD27,NA,CellTypist,Human,"Blood, Bone marrow, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Oesophagus, Omentum, Skeletal muscle, Spleen, Thymus",CL:0000787,long-lived mature B lymphocytes which are formed within germinal centers following primary infection and selected for higher-affinity immunoglobulin
+B_Memory,Memory_B_Cells,NA,CD79A,NA,Azimuth,Human,NA,CL_0000787,Human PBMCs reference
+B_Memory,Memory_B_Cells,NA,COCH,NA,Azimuth,Human,NA,CL_0000787,Human PBMCs reference
+B_Memory,Memory_B_Cells,NA,CR2,CD21,CellTypist,Human,"Blood, Bone marrow, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Oesophagus, Omentum, Skeletal muscle, Spleen, Thymus",CL:0000787,long-lived mature B lymphocytes which are formed within germinal centers following primary infection and selected for higher-affinity immunoglobulin
+B_Memory,Memory_B_Cells,NA,LINC01781,NA,Azimuth,Human,NA,CL_0000787,Human PBMCs reference
+B_Memory,Memory_B_Cells,NA,MS4A1,CD20,Azimuth,Human,NA,CL_0000787,Human PBMCs reference
+B_Memory,Memory_B_Cells,NA,MS4A1,CD20,CellTypist,Human,"Blood, Bone marrow, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Oesophagus, Omentum, Skeletal muscle, Spleen, Thymus",CL:0000787,long-lived mature B lymphocytes which are formed within germinal centers following primary infection and selected for higher-affinity immunoglobulin
+B_Memory,Memory_B_Cells,NA,RALGPS2,NA,Azimuth,Human,NA,CL_0000787,Human PBMCs reference
+B_Memory,Memory_B_Cells,NA,SSPN,NA,Azimuth,Human,NA,CL_0000787,Human PBMCs reference
+B_Memory,Memory_B_Cells,NA,TEX9,NA,Azimuth,Human,NA,CL_0000787,Human PBMCs reference
+B_Memory,Memory_B_Cells,NA,TNFRSF13C,CD268,Azimuth,Human,NA,CL_0000787,Human PBMCs reference
+B_Memory_Kappa,Memory_B_Cells_Kappa_Light_Chain,NA,BANK1,NA,Azimuth,Human,NA,CL_0000787,Human PBMCs reference
+B_Memory_Kappa,Memory_B_Cells_Kappa_Light_Chain,NA,CD79A,NA,Azimuth,Human,NA,CL_0000787,Human PBMCs reference
+B_Memory_Kappa,Memory_B_Cells_Kappa_Light_Chain,NA,IGKC,NA,Azimuth,Human,NA,CL_0000787,Human PBMCs reference
+B_Memory_Kappa,Memory_B_Cells_Kappa_Light_Chain,NA,LINC00926,NA,Azimuth,Human,NA,CL_0000787,Human PBMCs reference
+B_Memory_Kappa,Memory_B_Cells_Kappa_Light_Chain,NA,LINC01781,NA,Azimuth,Human,NA,CL_0000787,Human PBMCs reference
+B_Memory_Kappa,Memory_B_Cells_Kappa_Light_Chain,NA,MS4A1,CD20,Azimuth,Human,NA,CL_0000787,Human PBMCs reference
+B_Memory_Kappa,Memory_B_Cells_Kappa_Light_Chain,NA,RALGPS2,NA,Azimuth,Human,NA,CL_0000787,Human PBMCs reference
+B_Memory_Kappa,Memory_B_Cells_Kappa_Light_Chain,NA,SSPN,NA,Azimuth,Human,NA,CL_0000787,Human PBMCs reference
+B_Memory_Kappa,Memory_B_Cells_Kappa_Light_Chain,NA,TNFRSF13C,CD268,Azimuth,Human,NA,CL_0000787,Human PBMCs reference
+B_Memory_Lambda,Memory_B_Cells_Lambda_Light_Chain,NA,BANK1,NA,Azimuth,Human,NA,CL_0000787,Human PBMCs reference
+B_Memory_Lambda,Memory_B_Cells_Lambda_Light_Chain,NA,BLK,NA,Azimuth,Human,NA,CL_0000787,Human PBMCs reference
+B_Memory_Lambda,Memory_B_Cells_Lambda_Light_Chain,NA,COCH,NA,Azimuth,Human,NA,CL_0000787,Human PBMCs reference
+B_Memory_Lambda,Memory_B_Cells_Lambda_Light_Chain,NA,IGHA2,NA,Azimuth,Human,NA,CL_0000787,Human PBMCs reference
+B_Memory_Lambda,Memory_B_Cells_Lambda_Light_Chain,NA,IGLC2,NA,Azimuth,Human,NA,CL_0000787,Human PBMCs reference
+B_Memory_Lambda,Memory_B_Cells_Lambda_Light_Chain,NA,IGLC3,NA,Azimuth,Human,NA,CL_0000787,Human PBMCs reference
+B_Memory_Lambda,Memory_B_Cells_Lambda_Light_Chain,NA,LINC01781,NA,Azimuth,Human,NA,CL_0000787,Human PBMCs reference
+B_Memory_Lambda,Memory_B_Cells_Lambda_Light_Chain,NA,MS4A1,CD20,Azimuth,Human,NA,CL_0000787,Human PBMCs reference
+B_Memory_Lambda,Memory_B_Cells_Lambda_Light_Chain,NA,TNFRSF13B,CD267,Azimuth,Human,NA,CL_0000787,Human PBMCs reference
+B_Memory_Lambda,Memory_B_Cells_Lambda_Light_Chain,NA,TNFRSF13C,CD268,Azimuth,Human,NA,CL_0000787,Human PBMCs reference
+B_Naive,Naive_B_Cells,NA,BTG1,NA,Azimuth,Human,NA,CL_0000788,Human PBMCs reference
+B_Naive,Naive_B_Cells,NA,CD79A,NA,Azimuth,Human,NA,CL_0000788,Human PBMCs reference
+B_Naive,Naive_B_Cells,NA,CD79B,NA,Azimuth,Human,NA,CL_0000788,Human PBMCs reference
+B_Naive,Naive_B_Cells,NA,CXCR4,NA,Azimuth,Human,NA,CL_0000788,Human PBMCs reference
+B_Naive,Naive_B_Cells,NA,IGHD,NA,Azimuth,Human,NA,CL_0000788,Human PBMCs reference
+B_Naive,Naive_B_Cells,NA,IGHD,NA,CellTypist,Human,"Blood, Bone marrow, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Oesophagus, Omentum, Spleen, Thymus",CL:0000788,mature B lymphocytes which express cell-surface IgM and IgD and have not been exposed to/activated by antigens
+B_Naive,Naive_B_Cells,NA,IGHM,NA,Azimuth,Human,NA,CL_0000788,Human PBMCs reference
+B_Naive,Naive_B_Cells,NA,IGHM,NA,CellTypist,Human,"Blood, Bone marrow, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Oesophagus, Omentum, Spleen, Thymus",CL:0000788,mature B lymphocytes which express cell-surface IgM and IgD and have not been exposed to/activated by antigens
+B_Naive,Naive_B_Cells,NA,IL4R,NA,Azimuth,Human,NA,CL_0000788,Human PBMCs reference
+B_Naive,Naive_B_Cells,NA,MS4A1,CD20,Azimuth,Human,NA,CL_0000788,Human PBMCs reference
+B_Naive,Naive_B_Cells,NA,TCL1A,NA,Azimuth,Human,NA,CL_0000788,Human PBMCs reference
+B_Naive,Naive_B_Cells,NA,TCL1A,NA,CellTypist,Human,"Blood, Bone marrow, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Oesophagus, Omentum, Spleen, Thymus",CL:0000788,mature B lymphocytes which express cell-surface IgM and IgD and have not been exposed to/activated by antigens
+B_Naive,Naive_B_Cells,NA,YBX3,NA,Azimuth,Human,NA,CL_0000788,Human PBMCs reference
+B_Naive_Kappa,Naive_B_Cells_Kappa_Light_Chain,NA,CD37,NA,Azimuth,Human,NA,CL_0000788,Human PBMCs reference
+B_Naive_Kappa,Naive_B_Cells_Kappa_Light_Chain,NA,CD79A,NA,Azimuth,Human,NA,CL_0000788,Human PBMCs reference
+B_Naive_Kappa,Naive_B_Cells_Kappa_Light_Chain,NA,IGHD,NA,Azimuth,Human,NA,CL_0000788,Human PBMCs reference
+B_Naive_Kappa,Naive_B_Cells_Kappa_Light_Chain,NA,IGHG3,NA,Azimuth,Human,NA,CL_0000788,Human PBMCs reference
+B_Naive_Kappa,Naive_B_Cells_Kappa_Light_Chain,NA,IGHM,NA,Azimuth,Human,NA,CL_0000788,Human PBMCs reference
+B_Naive_Kappa,Naive_B_Cells_Kappa_Light_Chain,NA,IGKC,NA,Azimuth,Human,NA,CL_0000788,Human PBMCs reference
+B_Naive_Kappa,Naive_B_Cells_Kappa_Light_Chain,NA,IL4R,NA,Azimuth,Human,NA,CL_0000788,Human PBMCs reference
+B_Naive_Kappa,Naive_B_Cells_Kappa_Light_Chain,NA,MS4A1,CD20,Azimuth,Human,NA,CL_0000788,Human PBMCs reference
+B_Naive_Kappa,Naive_B_Cells_Kappa_Light_Chain,NA,TCL1A,NA,Azimuth,Human,NA,CL_0000788,Human PBMCs reference
+B_Naive_Lambda,Naive_B_Cells_Lambda_Light_Chain,NA,CD79A,NA,Azimuth,Human,NA,CL_0000788,Human PBMCs reference
+B_Naive_Lambda,Naive_B_Cells_Lambda_Light_Chain,NA,CD79B,NA,Azimuth,Human,NA,CL_0000788,Human PBMCs reference
+B_Naive_Lambda,Naive_B_Cells_Lambda_Light_Chain,NA,CXCR4,NA,Azimuth,Human,NA,CL_0000788,Human PBMCs reference
+B_Naive_Lambda,Naive_B_Cells_Lambda_Light_Chain,NA,IGHD,NA,Azimuth,Human,NA,CL_0000788,Human PBMCs reference
+B_Naive_Lambda,Naive_B_Cells_Lambda_Light_Chain,NA,IGHM,NA,Azimuth,Human,NA,CL_0000788,Human PBMCs reference
+B_Naive_Lambda,Naive_B_Cells_Lambda_Light_Chain,NA,IGLC2,NA,Azimuth,Human,NA,CL_0000788,Human PBMCs reference
+B_Naive_Lambda,Naive_B_Cells_Lambda_Light_Chain,NA,IGLC3,NA,Azimuth,Human,NA,CL_0000788,Human PBMCs reference
+B_Naive_Lambda,Naive_B_Cells_Lambda_Light_Chain,NA,IL4R,NA,Azimuth,Human,NA,CL_0000788,Human PBMCs reference
+B_Naive_Lambda,Naive_B_Cells_Lambda_Light_Chain,NA,MS4A1,CD20,Azimuth,Human,NA,CL_0000788,Human PBMCs reference
+B_Naive_Lambda,Naive_B_Cells_Lambda_Light_Chain,NA,TCL1A,NA,Azimuth,Human,NA,CL_0000788,Human PBMCs reference
+B_Transitional,Transitional_B_Cells,NA,CD24,NA,CellTypist,Human,Bone marrow,CL:0000818,immature B cell precursors in the bone marrow which connect Pre-B cells with mature naive B cells and are subject to the process of B cell selection
+B_Transitional,Transitional_B_Cells,NA,MS4A1,CD20,CellTypist,Human,Bone marrow,CL:0000818,immature B cell precursors in the bone marrow which connect Pre-B cells with mature naive B cells and are subject to the process of B cell selection
+B_Transitional,Transitional_B_Cells,NA,MYO1C,NA,CellTypist,Human,Bone marrow,CL:0000818,immature B cell precursors in the bone marrow which connect Pre-B cells with mature naive B cells and are subject to the process of B cell selection
+Chondrocytes,Chondrocytes,NA,COL9A2,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Cycling,Cycling_Natural_Killers,Cycling_NK_Cells,GNLY,NA,CellTypist,Human,Spleen,CL:0000623,proliferating natural killer cells
+Cycling,Cycling_Monocytes,Cycling_Monocytes,MKI67,Ki-67,CellTypist,Human,Intestine,CL:0000576,proliferating monocytes
+Cycling,Cycling_Natural_Killers,Cycling_NK_Cells,MKI67,Ki-67,CellTypist,Human,Spleen,CL:0000623,proliferating natural killer cells
+Cycling,Cycling_Monocytes,Cycling_Monocytes,S100A9,NA,CellTypist,Human,Intestine,CL:0000576,proliferating monocytes
+Cycling,Cycling_Monocytes,Cycling_Monocytes,TOP2A,NA,CellTypist,Human,Intestine,CL:0000576,proliferating monocytes
+Cycling,Cycling_Natural_Killers,Cycling_NK_Cells,TOP2A,NA,CellTypist,Human,Spleen,CL:0000623,proliferating natural killer cells
+DC,Dendritic_Cells,DC1,BATF3,NA,CellTypist,Human,"Blood, Bone marrow, Decidua, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Spleen, Thymus",CL:0000990,conventional type 1 dendritic cells which constitute a rare dendritic cell population with superior cross-presentation ability
+DC,Dendritic_Cells,DC1,CADM1,NA,CellTypist,Human,"Blood, Bone marrow, Decidua, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Spleen, Thymus",CL:0000990,conventional type 1 dendritic cells which constitute a rare dendritic cell population with superior cross-presentation ability
+DC,Dendritic_Cells,Dendritic_Cells,CCDC88A,NA,Azimuth,Human,NA,CL_0000451,Human PBMCs reference
+DC,Dendritic_Cells,Dendritic_Cells,CCL22,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+DC,Dendritic_Cells,Dendritic_Cells,ITGAM,CD11B,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+DC,Dendritic_Cells,Dendritic_Cells,CD14,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+DC,Dendritic_Cells,Dendritic_Cells,THBD,CD141,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+DC,Dendritic_Cells,Dendritic_Cells,FCGR3A,CD16,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+DC,Dendritic_Cells,DC2,CD1C,NA,CellTypist,Human,"Blood, Bone marrow, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Spleen, Thymus",CL:0000990,conventional type 2 dendritic cells which constitute the major subset of myeloid dendritic cells
+DC,Dendritic_Cells,DC,CD1C,NA,CellTypist,Human,"Blood, Kidney, Lung, Oesophagus, Upper airway",CL:0001056,dendrite-shaped cells which process and present antigens to naïve T cells and induce adaptive immune responses
+DC,Dendritic_Cells,Dendritic_Cells,CD1C,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+DC,Dendritic_Cells,Dendritic_Cells,CD1C,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+DC,Dendritic_Cells,Dendritic_Cells,CD1C,NA,Ira_Fleming,Human,Skin,NA,NA
+DC,Dendritic_Cells,Dendritic_Cells,CD1C,NA,Mary_Tomayko,Human,Skin,NA,NA
+DC,Dendritic_Cells,Dendritic_Cells,CD209,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+DC,Dendritic_Cells,Dendritic_Cells,CD301A,CLEC10A,Mary_Tomayko,Human,Skin,NA,NA
+DC,Dendritic_Cells,Dendritic_Cells,CD74,NA,Azimuth,Human,NA,CL_0000451,Human PBMCs reference
+DC,Dendritic_Cells,Dendritic_Cells,CD86,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+DC,Dendritic_Cells,DC2,CLEC10A,NA,CellTypist,Human,"Blood, Bone marrow, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Spleen, Thymus",CL:0000990,conventional type 2 dendritic cells which constitute the major subset of myeloid dendritic cells
+DC,Dendritic_Cells,DC,CLEC10A,NA,CellTypist,Human,"Blood, Kidney, Lung, Oesophagus, Upper airway",CL:0001056,dendrite-shaped cells which process and present antigens to naïve T cells and induce adaptive immune responses
+DC,Dendritic_Cells,DC3,CLEC10A,NA,CellTypist,Human,Bone marrow,CL:0001056,a dendritic cell subtype found in bone marrow which shares features with monocytes and conventional type 2 dendritic cells
+DC,Dendritic_Cells,Dendritic_Cells,CLEC10A,NA,Ira_Fleming,Human,Skin,NA,NA
+DC,Dendritic_Cells,Dendritic_Cells,CLEC10A,NA,Literature,Human,Skin,doi.org/10.1101/689273,NA
+DC,Dendritic_Cells,Dendritic_Cells,CLEC4C,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+DC,Dendritic_Cells,DC1,CLEC9A,NA,CellTypist,Human,"Blood, Bone marrow, Decidua, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Spleen, Thymus",CL:0000990,conventional type 1 dendritic cells which constitute a rare dendritic cell population with superior cross-presentation ability
+DC,Dendritic_Cells,Dendritic_Cells,CLEC9A,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+DC,Dendritic_Cells,Dendritic_Cells,CST3,NA,Azimuth,Human,NA,CL_0000451,Human PBMCs reference
+DC,Dendritic_Cells,Dendritic_Cells,CST3,NA,Ira_Fleming,Human,Skin,NA,NA
+DC,Dendritic_Cells,DC2,FCER1A,NA,CellTypist,Human,"Blood, Bone marrow, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Spleen, Thymus",CL:0000990,conventional type 2 dendritic cells which constitute the major subset of myeloid dendritic cells
+DC,Dendritic_Cells,DC,FCER1A,NA,CellTypist,Human,"Blood, Kidney, Lung, Oesophagus, Upper airway",CL:0001056,dendrite-shaped cells which process and present antigens to naïve T cells and induce adaptive immune responses
+DC,Dendritic_Cells,DC3,FCER1A,NA,CellTypist,Human,Bone marrow,CL:0001056,a dendritic cell subtype found in bone marrow which shares features with monocytes and conventional type 2 dendritic cells
+DC,Dendritic_Cells,Dendritic_Cells,FCER1A,NA,Ira_Fleming,Human,Skin,NA,NA
+DC,Dendritic_Cells,Dendritic_Cells,FCER1G,NA,Literature,Human,Skin,doi.org/10.1101/689273,NA
+DC,Dendritic_Cells,Dendritic_Cells,FLT3,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+DC,Dendritic_Cells,Dendritic_Cells,FLT3,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+DC,Dendritic_Cells,Dendritic_Cells,GZMB,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+DC,Dendritic_Cells,Dendritic_Cells,HLA-DMA,NA,Azimuth,Human,NA,CL_0000451,Human PBMCs reference
+DC,Dendritic_Cells,Dendritic_Cells,HLA-DPA1,NA,Azimuth,Human,NA,CL_0000451,Human PBMCs reference
+DC,Dendritic_Cells,Dendritic_Cells,HLA-DPB1,NA,Azimuth,Human,NA,CL_0000451,Human PBMCs reference
+DC,Dendritic_Cells,Dendritic_Cells,HLA-DQA1,NA,Azimuth,Human,NA,CL_0000451,Human PBMCs reference
+DC,Dendritic_Cells,Dendritic_Cells,HLA-DQB1,NA,Azimuth,Human,NA,CL_0000451,Human PBMCs reference
+DC,Dendritic_Cells,Dendritic_Cells,HLA-DRA,NA,Ira_Fleming,Human,Skin,NA,NA
+DC,Dendritic_Cells,Dendritic_Cells,HLA-DRA,NA,Azimuth,Human,NA,CL_0000451,Human PBMCs reference
+DC,Dendritic_Cells,Dendritic_Cells,HLA-DRB1,NA,Azimuth,Human,NA,CL_0000451,Human PBMCs reference
+DC,Dendritic_Cells,Dendritic_Cells,IL3RA,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+DC,Dendritic_Cells,Dendritic_Cells,IRF7,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+DC,Dendritic_Cells,Dendritic_Cells,ITGAX,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+DC,Dendritic_Cells,Dendritic_Cells,LAMP3,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+DC,Dendritic_Cells,Dendritic_Cells,LILRB4,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+DC,Dendritic_Cells,Dendritic_Cells,LYZ,NA,Ira_Fleming,Human,Skin,NA,NA
+DC,Dendritic_Cells,DC3,S100A9,NA,CellTypist,Human,Bone marrow,CL:0001056,a dendritic cell subtype found in bone marrow which shares features with monocytes and conventional type 2 dendritic cells
+DC_Axl,Axl+_Dendritic_Cell,ASDC,AXL,NA,Azimuth,Human,NA,CL_0000451,Human PBMCs reference
+DC_Axl,Axl+_Dendritic_Cell,ASDC,CLEC4C,NA,Azimuth,Human,NA,CL_0000451,Human PBMCs reference
+DC_Axl,Axl+_Dendritic_Cell,ASDC,DNASE1L3,NA,Azimuth,Human,NA,CL_0000451,Human PBMCs reference
+DC_Axl,Axl+_Dendritic_Cell,ASDC,GAS6,NA,Azimuth,Human,NA,CL_0000451,Human PBMCs reference
+DC_Axl,Axl+_Dendritic_Cell,ASDC,IL3RA,NA,Azimuth,Human,NA,CL_0000451,Human PBMCs reference
+DC_Axl,Axl+_Dendritic_Cell,ASDC,LGMN,NA,Azimuth,Human,NA,CL_0000451,Human PBMCs reference
+DC_Axl,Axl+_Dendritic_Cell,ASDC,LILRA4,NA,Azimuth,Human,NA,CL_0000451,Human PBMCs reference
+DC_Axl,Axl+_Dendritic_Cell,ASDC,PPP1R14A,NA,Azimuth,Human,NA,CL_0000451,Human PBMCs reference
+DC_Axl,Axl+_Dendritic_Cell,ASDC,SCN9A,NA,Azimuth,Human,NA,CL_0000451,Human PBMCs reference
+DC_Axl,Axl+_Dendritic_Cell,ASDC,SCT,NA,Azimuth,Human,NA,CL_0000451,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_2,AFF3,NA,Azimuth,Human,NA,CL_0002399,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_2_2,BASP1,NA,Azimuth,Human,NA,CL_0002399,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_1,BATF3,NA,Azimuth,Human,NA,CL_0002394,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_1,C1orf54,NA,Azimuth,Human,NA,CL_0002394,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_1,CADM1,NA,Azimuth,Human,NA,CL_0002394,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_2_1,CD14,NA,Azimuth,Human,NA,CL_0002399,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_2,CD1C,NA,Azimuth,Human,NA,CL_0002399,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_2_1,CD1C,NA,Azimuth,Human,NA,CL_0002399,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_2_2,CD1C,NA,Azimuth,Human,NA,CL_0002399,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_2_2,CD74,NA,Azimuth,Human,NA,CL_0002399,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_2,CLEC10A,NA,Azimuth,Human,NA,CL_0002399,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_2_1,CLEC10A,NA,Azimuth,Human,NA,CL_0002399,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_2_2,CLEC10A,NA,Azimuth,Human,NA,CL_0002399,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_1,CLEC9A,NA,Azimuth,Human,NA,CL_0002394,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_1,CLNK,NA,Azimuth,Human,NA,CL_0002394,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_2_1,CTSS,NA,Azimuth,Human,NA,CL_0002399,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_1,DNASE1L3,NA,Azimuth,Human,NA,CL_0002394,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_2,ENHO,NA,Azimuth,Human,NA,CL_0002399,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_2_1,ENHO,NA,Azimuth,Human,NA,CL_0002399,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_2_2,ENHO,NA,Azimuth,Human,NA,CL_0002399,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_1,ENPP1,NA,Azimuth,Human,NA,CL_0002394,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_2,FCER1A,NA,Azimuth,Human,NA,CL_0002399,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_2_1,FCER1A,NA,Azimuth,Human,NA,CL_0002399,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_2_2,FCER1A,NA,Azimuth,Human,NA,CL_0002399,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_2_1,FCGR2B,NA,Azimuth,Human,NA,CL_0002399,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_1,FLT3,NA,Azimuth,Human,NA,CL_0002394,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_2,GSN,NA,Azimuth,Human,NA,CL_0002399,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_2_2,HLA-DPA1,NA,Azimuth,Human,NA,CL_0002399,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_2_2,HLA-DPB1,NA,Azimuth,Human,NA,CL_0002399,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_2,HLA-DQA1,NA,Azimuth,Human,NA,CL_0002399,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_2_2,HLA-DQA1,NA,Azimuth,Human,NA,CL_0002399,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_1,IDO1,NA,Azimuth,Human,NA,CL_0002394,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_2_1,IL13RA1,NA,Azimuth,Human,NA,CL_0002399,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_2_1,MRC1,NA,Azimuth,Human,NA,CL_0002399,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_1,NDRG2,NA,Azimuth,Human,NA,CL_0002394,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_2,NDRG2,NA,Azimuth,Human,NA,CL_0002399,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_2_1,PID1,NA,Azimuth,Human,NA,CL_0002399,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_2,PLD4,NA,Azimuth,Human,NA,CL_0002399,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_2_2,PLD4,NA,Azimuth,Human,NA,CL_0002399,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_2,SLC38A1,NA,Azimuth,Human,NA,CL_0002399,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_1,TSPAN33,NA,Azimuth,Human,NA,CL_0002394,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_1,WDFY4,NA,Azimuth,Human,NA,CL_0002394,Human PBMCs reference
+DC_Conventional,Conventional_Dendritic_Cells,Conventional_Dendritic_Cell_1,XCR1,NA,Azimuth,Human,NA,CL_0002394,Human PBMCs reference
+DC_Cycling,Cycling_Dendritic_Cells,Cycling_DCs,CLEC10A,NA,CellTypist,Human,Intestine,CL:0001056,proliferating dendritic cells
+DC_Cycling,Cycling_Dendritic_Cells,Cycling_DCs,MKI67,Ki-67,CellTypist,Human,Intestine,CL:0001056,proliferating dendritic cells
+DC_Cycling,Cycling_Dendritic_Cells,Cycling_DCs,TOP2A,NA,CellTypist,Human,Intestine,CL:0001056,proliferating dendritic cells
+DC_Migratory,Migratory_Dendritic_Cells,Migratory_DCs,CCL19,NA,CellTypist,Human,"Lung, Lung-draining lymph node, Mesenteric lymph node, Spleen, Thymus",CL:0001056,migratory dendritic cells that transport antigens to the draining lymph nodes during both homeostatic conditions and infections
+DC_Migratory,Migratory_Dendritic_Cells,Migratory_DCs,CCR7,NA,CellTypist,Human,"Lung, Lung-draining lymph node, Mesenteric lymph node, Spleen, Thymus",CL:0001056,migratory dendritic cells that transport antigens to the draining lymph nodes during both homeostatic conditions and infections
+DC_Migratory,Migratory_Dendritic_Cells,Migratory_DCs,EBI3,NA,CellTypist,Human,"Lung, Lung-draining lymph node, Mesenteric lymph node, Spleen, Thymus",CL:0001056,migratory dendritic cells that transport antigens to the draining lymph nodes during both homeostatic conditions and infections
+DC_Myeloid_Axl,Axl+_Myeloid_Dendritic_Cells,ASDC_mDC,AXL,NA,Azimuth,Human,NA,CL_0000782,Human PBMCs reference
+DC_Myeloid_Axl,Axl+_Myeloid_Dendritic_Cells,ASDC_mDC,CLEC4C,NA,Azimuth,Human,NA,CL_0000782,Human PBMCs reference
+DC_Myeloid_Axl,Axl+_Myeloid_Dendritic_Cells,ASDC_mDC,GAS6,NA,Azimuth,Human,NA,CL_0000782,Human PBMCs reference
+DC_Myeloid_Axl,Axl+_Myeloid_Dendritic_Cells,ASDC_mDC,IL3RA,NA,Azimuth,Human,NA,CL_0000782,Human PBMCs reference
+DC_Myeloid_Axl,Axl+_Myeloid_Dendritic_Cells,ASDC_mDC,LGMN,NA,Azimuth,Human,NA,CL_0000782,Human PBMCs reference
+DC_Myeloid_Axl,Axl+_Myeloid_Dendritic_Cells,ASDC_mDC,LILRA4,NA,Azimuth,Human,NA,CL_0000782,Human PBMCs reference
+DC_Myeloid_Axl,Axl+_Myeloid_Dendritic_Cells,ASDC_mDC,LTK,NA,Azimuth,Human,NA,CL_0000782,Human PBMCs reference
+DC_Myeloid_Axl,Axl+_Myeloid_Dendritic_Cells,ASDC_mDC,PPP1R14A,NA,Azimuth,Human,NA,CL_0000782,Human PBMCs reference
+DC_Myeloid_Axl,Axl+_Myeloid_Dendritic_Cells,ASDC_mDC,SCN9A,NA,Azimuth,Human,NA,CL_0000782,Human PBMCs reference
+DC_Myeloid_Axl,Axl+_Myeloid_Dendritic_Cells,ASDC_mDC,SCT,NA,Azimuth,Human,NA,CL_0000782,Human PBMCs reference
+DC_Plasmacytoid,Plasmacytoid_Dendritic_Cells,pDC,CCDC50,NA,Azimuth,Human,NA,CL_0000784,Human PBMCs reference
+DC_Plasmacytoid,Plasmacytoid_Dendritic_Cells,pDC,CLEC4C,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+DC_Plasmacytoid,Plasmacytoid_Dendritic_Cells,pDC,IL3RA,NA,Azimuth,Human,NA,CL_0000784,Human PBMCs reference
+DC_Plasmacytoid,Plasmacytoid_Dendritic_Cells,pDC,IL3RA,NA,CellTypist,Human,"Blood, Bone marrow, Kidney, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Spleen, Thymus",CL:0001058,rare plasmacytoid dendritic cell subpopulation which serves as the major source of type I interferons when the body is infected by a virus
+DC_Plasmacytoid,Plasmacytoid_Dendritic_Cells,pDC,IRF4,NA,Azimuth,Human,NA,CL_0000784,Human PBMCs reference
+DC_Plasmacytoid,Plasmacytoid_Dendritic_Cells,pDC,IRF7,NA,Azimuth,Human,NA,CL_0000784,Human PBMCs reference
+DC_Plasmacytoid,Plasmacytoid_Dendritic_Cells,pDC,IRF8,NA,Azimuth,Human,NA,CL_0000784,Human PBMCs reference
+DC_Plasmacytoid,Plasmacytoid_Dendritic_Cells,pDC,ITM2C,NA,Azimuth,Human,NA,CL_0000784,Human PBMCs reference
+DC_Plasmacytoid,Plasmacytoid_Dendritic_Cells,pDC,LILRA4,NA,Azimuth,Human,NA,CL_0000784,Human PBMCs reference
+DC_Plasmacytoid,Plasmacytoid_Dendritic_Cells,pDC,LILRA4,NA,CellTypist,Human,"Blood, Bone marrow, Kidney, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Spleen, Thymus",CL:0001058,rare plasmacytoid dendritic cell subpopulation which serves as the major source of type I interferons when the body is infected by a virus
+DC_Plasmacytoid,Plasmacytoid_Dendritic_Cells,pDC,LILRA4,ILT7,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+DC_Plasmacytoid,Plasmacytoid_Dendritic_Cells,pDC,MZB1,NA,Azimuth,Human,NA,CL_0000784,Human PBMCs reference
+DC_Plasmacytoid,Plasmacytoid_Dendritic_Cells,pDC,PLD4,NA,Azimuth,Human,NA,CL_0000784,Human PBMCs reference
+DC_Plasmacytoid,Plasmacytoid_Dendritic_Cells,pDC,PLD4,NA,CellTypist,Human,"Blood, Bone marrow, Kidney, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Spleen, Thymus",CL:0001058,rare plasmacytoid dendritic cell subpopulation which serves as the major source of type I interferons when the body is infected by a virus
+DC_Plasmacytoid,Plasmacytoid_Dendritic_Cells,pDC,SERPINF1,NA,Azimuth,Human,NA,CL_0000784,Human PBMCs reference
+DC_Plasmacytoid,Plasmacytoid_Dendritic_Cells,pDC,SMPD3,NA,Azimuth,Human,NA,CL_0000784,Human PBMCs reference
+DC_Plasmacytoid,Plasmacytoid_Dendritic_Cells,pDC,SPIB,NA,Azimuth,Human,NA,CL_0000784,Human PBMCs reference
+DC_Plasmacytoid,Plasmacytoid_Dendritic_Cells,pDC,TCF4,NA,Azimuth,Human,NA,CL_0000784,Human PBMCs reference
+DC_Plasmacytoid,Plasmacytoid_Dendritic_Cells,pDC,TPM2,NA,Azimuth,Human,NA,CL_0000784,Human PBMCs reference
+DC_Plasmacytoid,Plasmacytoid_Dendritic_Cells,pDC,UGCG,NA,Azimuth,Human,NA,CL_0000784,Human PBMCs reference
+DC_Plasmacytoid_Axl,Axl+_Plasmacytoid_Dendritic_Cells,ASDC_pDC,AXL,NA,Azimuth,Human,NA,CL_0000784,Human PBMCs reference
+DC_Plasmacytoid_Axl,Axl+_Plasmacytoid_Dendritic_Cells,ASDC_pDC,CLEC4C,NA,Azimuth,Human,NA,CL_0000784,Human PBMCs reference
+DC_Plasmacytoid_Axl,Axl+_Plasmacytoid_Dendritic_Cells,ASDC_pDC,DNASE1L3,NA,Azimuth,Human,NA,CL_0000784,Human PBMCs reference
+DC_Plasmacytoid_Axl,Axl+_Plasmacytoid_Dendritic_Cells,ASDC_pDC,EPHB1,NA,Azimuth,Human,NA,CL_0000784,Human PBMCs reference
+DC_Plasmacytoid_Axl,Axl+_Plasmacytoid_Dendritic_Cells,ASDC_pDC,LILRA4,NA,Azimuth,Human,NA,CL_0000784,Human PBMCs reference
+DC_Plasmacytoid_Axl,Axl+_Plasmacytoid_Dendritic_Cells,ASDC_pDC,LRRC26,NA,Azimuth,Human,NA,CL_0000784,Human PBMCs reference
+DC_Plasmacytoid_Axl,Axl+_Plasmacytoid_Dendritic_Cells,ASDC_pDC,LTK,NA,Azimuth,Human,NA,CL_0000784,Human PBMCs reference
+DC_Plasmacytoid_Axl,Axl+_Plasmacytoid_Dendritic_Cells,ASDC_pDC,PROC,NA,Azimuth,Human,NA,CL_0000784,Human PBMCs reference
+DC_Plasmacytoid_Axl,Axl+_Plasmacytoid_Dendritic_Cells,ASDC_pDC,SCN9A,NA,Azimuth,Human,NA,CL_0000784,Human PBMCs reference
+DC_Plasmacytoid_Axl,Axl+_Plasmacytoid_Dendritic_Cells,ASDC_pDC,SCT,NA,Azimuth,Human,NA,CL_0000784,Human PBMCs reference
+DC_Plasmacytoid_Precursor,Precursor_Plasmacytoid_Dendritic_Cells,pDC_Precursor,CCDC50,NA,CellTypist,Human,Liver,CL:0001058,precursors of plasmacytoid dendritic cells which have intermixed lymphoid and myeloid origins and give rise to plasmacytoid dendritic cells
+DC_Plasmacytoid_Precursor,Precursor_Plasmacytoid_Dendritic_Cells,pDC_Precursor,IL3RA,NA,CellTypist,Human,Liver,CL:0001058,precursors of plasmacytoid dendritic cells which have intermixed lymphoid and myeloid origins and give rise to plasmacytoid dendritic cells
+DC_Plasmacytoid_Precursor,Precursor_Plasmacytoid_Dendritic_Cells,pDC_Precursor,IRF7,NA,CellTypist,Human,Liver,CL:0001058,precursors of plasmacytoid dendritic cells which have intermixed lymphoid and myeloid origins and give rise to plasmacytoid dendritic cells
+DC_Precursor,Precursor_Dendritic_Cells,DC_Precursor,CLEC10A,NA,CellTypist,Human,"Blood, Bone marrow, Liver",CL:0001029,dendritic cell precursors that differentiate into dendritic cells
+DC_Precursor,Precursor_Dendritic_Cells,DC_Precursor,IRF8,NA,CellTypist,Human,"Blood, Bone marrow, Liver",CL:0001029,dendritic cell precursors that differentiate into dendritic cells
+DC_Precursor,Precursor_Dendritic_Cells,DC_Precursor,PCLAF,NA,CellTypist,Human,"Blood, Bone marrow, Liver",CL:0001029,dendritic cell precursors that differentiate into dendritic cells
+DC_Transitional,Transitional_Dendritic_Cells,Transitional_DC,AXL,NA,CellTypist,Human,"Blood, Bone marrow",CL:0000840,immature dendritic cells which follow dendritic cell precursors and are committed to the mature dendritic cells
+DC_Transitional,Transitional_Dendritic_Cells,Transitional_DC,CLEC10A,NA,CellTypist,Human,"Blood, Bone marrow",CL:0000840,immature dendritic cells which follow dendritic cell precursors and are committed to the mature dendritic cells
+DC_Transitional,Transitional_Dendritic_Cells,Transitional_DC,KLF4,NA,CellTypist,Human,"Blood, Bone marrow",CL:0000840,immature dendritic cells which follow dendritic cell precursors and are committed to the mature dendritic cells
+Endothelial,Endothelial_Cells,NA,CD93,NA,Literature,Human,Skin,doi.org/10.1101/689273,NA
+Endothelial,Endothelial_Cells,NA,CDH5,NA,Mary_Tomayko,Human,Skin,NA,NA
+Endothelial,Endothelial_Cells,NA,CLDN5,NA,CellTypist,Human,Thymus,CL:0000115,"single-layered lining cells that constitute the interior vasculature, form part of the microenvironment and fulfill different functions"
+Endothelial,Endothelial_Cells,NA,PECAM1,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Endothelial,Endothelial_Cells,NA,PECAM1,NA,Mary_Tomayko,Human,Skin,NA,NA
+Endothelial,Endothelial_Cells,NA,PLVAP,NA,CellTypist,Human,Thymus,CL:0000115,"single-layered lining cells that constitute the interior vasculature, form part of the microenvironment and fulfill different functions"
+Endothelial,Endothelial_Cells,NA,SELE,NA,Literature,Human,Skin,doi.org/10.1101/689273,NA
+Endothelial,Endothelial_Cells,NA,SPARCL1,NA,CellTypist,Human,Thymus,CL:0000115,"single-layered lining cells that constitute the interior vasculature, form part of the microenvironment and fulfill different functions"
+Endothelial,Endothelial_Cells,NA,VWF,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Endothelial,Endothelial_Cells,NA,VWF,NA,Mary_Tomayko,Human,Skin,NA,NA
+Endothelial_Lymphatic,Lymphatic_Endothelial_Cells,NA,CCL21,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Endothelial_Lymphatic,Lymphatic_Endothelial_Cells,NA,CLDN5,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Endothelial_Lymphatic,Lymphatic_Endothelial_Cells,NA,LYVE1,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Endothelial_Lymphatic,Lymphatic_Endothelial_Cells,NA,PROX1,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Endothelial_Lymphatic,Lymphatic_Endothelial_Cells,NA,TFF3,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Endothelial_Vascular,Vascular_Endothelial_Cells,NA,CDH5,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Endothelial_Vascular,Vascular_Endothelial_Cells,NA,CLDN5,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Endothelial_Vascular,Vascular_Endothelial_Cells,NA,SELE,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Endothelial_Vascular,Vascular_Endothelial_Cells,NA,VWF,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Eosinophils,Eosinophils,NA,CCR3,NA,Mary_Tomayko,Human,Skin,NA,NA
+Eosinophils,Eosinophils,NA,IL5RA,NA,Mary_Tomayko,Human,Skin,NA,NA
+Epidermis,Epidermal_Cells,NA,ABCC3,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Epidermis,Epidermal_Cells,NA,ITGA6,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Epidermis,Epidermal_Cells,NA,ITGB1,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Epidermis,Epidermal_Cells,NA,KRT1,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Epidermis,Epidermal_Cells,NA,KRT10,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Epidermis,Epidermal_Cells,NA,KRT14,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Epidermis,Epidermal_Cells,NA,KRT5,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Epithelial,Epithelial_Cells,NA,CCL19,NA,CellTypist,Human,Thymus,CL:0000066,highly specialised cells which are located in the outer layer of stroma and form the cellular components of the epithelium
+Epithelial,Epithelial_Cells,NA,KRT15,NA,CellTypist,Human,Thymus,CL:0000066,highly specialised cells which are located in the outer layer of stroma and form the cellular components of the epithelium
+Epithelial,Epithelial_Cells,NA,KRT17,NA,CellTypist,Human,Thymus,CL:0000066,highly specialised cells which are located in the outer layer of stroma and form the cellular components of the epithelium
+Epithelial_Secretory,Secretory_Epithelial_Cells,NA,AQP5,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Epithelial_Secretory,Secretory_Epithelial_Cells,NA,CA6,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Erythrocytes,Erythroid_Cells,Erythroid_Cell,AHSP,NA,Azimuth,Human,NA,CL_0000764,Human PBMCs reference
+Erythrocytes,Erythroid_Cells,Erythroid_Cell,ALAS2,NA,Azimuth,Human,NA,CL_0000764,Human PBMCs reference
+Erythrocytes,Erythroid_Cells,Early_Erythroid,APOC1,NA,CellTypist,Human,"Bone marrow, Liver",CL:0000764,early erythroid cells which are committed to erythroid lineage cells
+Erythrocytes,Erythroid_Cells,Erythroid_Cell,CA1,NA,Azimuth,Human,NA,CL_0000764,Human PBMCs reference
+Erythrocytes,Erythroid_Cells,Early_Erythroid,GATA2,NA,CellTypist,Human,"Bone marrow, Liver",CL:0000764,early erythroid cells which are committed to erythroid lineage cells
+Erythrocytes,Erythroid_Cells,Late_Erythroid,GYPA,NA,CellTypist,Human,Blood,CL:0000764,late erythroid cells following early and middle erythroid cells
+Erythrocytes,Erythroid_Cells,Mid_Erythroid,GYPA,NA,CellTypist,Human,"Blood, Bone marrow, Liver",CL:0000764,"middle erythroid cells in fetal liver, blood and bone marrow following early erythroid cells and maturing into late erythroid cells"
+Erythrocytes,Erythroid_Cells,Erythrocytes,GYPA,NA,CellTypist,Human,"Thymus, Trachea",CL:0000232,biconcave enucleated red blood cells filled with hemoglobin to transport oxygen and carbon dioxide between the lungs and tissues
+Erythrocytes,Erythroid_Cells,Late_Erythroid,GYPB,NA,CellTypist,Human,Blood,CL:0000764,late erythroid cells following early and middle erythroid cells
+Erythrocytes,Erythroid_Cells,Late_Erythroid,HBA1,NA,CellTypist,Human,Blood,CL:0000764,late erythroid cells following early and middle erythroid cells
+Erythrocytes,Erythroid_Cells,Erythrocytes,HBA1,NA,Mary_Tomayko,Human,Skin,NA,NA
+Erythrocytes,Erythroid_Cells,Erythrocytes,HBA2,NA,Mary_Tomayko,Human,Skin,NA,NA
+Erythrocytes,Erythroid_Cells,Erythrocytes,HBB,NA,Mary_Tomayko,Human,Skin,NA,NA
+Erythrocytes,Erythroid_Cells,Erythroid_Cell,HBD,NA,Azimuth,Human,NA,CL_0000764,Human PBMCs reference
+Erythrocytes,Erythroid_Cells,Erythroid_Cell,HBM,NA,Azimuth,Human,NA,CL_0000764,Human PBMCs reference
+Erythrocytes,Erythroid_Cells,Erythrocytes,HBM,NA,CellTypist,Human,"Thymus, Trachea",CL:0000232,biconcave enucleated red blood cells filled with hemoglobin to transport oxygen and carbon dioxide between the lungs and tissues
+Erythrocytes,Erythroid_Cells,Erythrocytes,HBQ1,NA,CellTypist,Human,"Thymus, Trachea",CL:0000232,biconcave enucleated red blood cells filled with hemoglobin to transport oxygen and carbon dioxide between the lungs and tissues
+Erythrocytes,Erythroid_Cells,Erythroid_Cell,IFIT1B,NA,Azimuth,Human,NA,CL_0000764,Human PBMCs reference
+Erythrocytes,Erythroid_Cells,Mid_Erythroid,KCNH2,NA,CellTypist,Human,"Blood, Bone marrow, Liver",CL:0000764,"middle erythroid cells in fetal liver, blood and bone marrow following early erythroid cells and maturing into late erythroid cells"
+Erythrocytes,Erythroid_Cells,Mid_Erythroid,PRDX2,NA,CellTypist,Human,"Blood, Bone marrow, Liver",CL:0000764,"middle erythroid cells in fetal liver, blood and bone marrow following early erythroid cells and maturing into late erythroid cells"
+Erythrocytes,Erythroid_Cells,Erythroid_Cell,SELENBP1,NA,Azimuth,Human,NA,CL_0000764,Human PBMCs reference
+Erythrocytes,Erythroid_Cells,Erythroid_Cell,SLC4A1,NA,Azimuth,Human,NA,CL_0000764,Human PBMCs reference
+Erythrocytes,Erythroid_Cells,Erythroid_Cell,SNCA,NA,Azimuth,Human,NA,CL_0000764,Human PBMCs reference
+Erythrocytes,Erythroid_Cells,Early_Erythroid,TESPA1,NA,CellTypist,Human,"Bone marrow, Liver",CL:0000764,early erythroid cells which are committed to erythroid lineage cells
+Erythrocytes,Erythroid_Cells,Erythroid_Cell,TMCC2,NA,Azimuth,Human,NA,CL_0000764,Human PBMCs reference
+Erythrocytes,Erythroid_Cells,Erythroid_Cell,TRIM58,NA,Azimuth,Human,NA,CL_0000764,Human PBMCs reference
+Fibroblasts,Fibroblasts,NA,MME,CD10,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Fibroblasts,Fibroblasts,NA,MME,CD10,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Fibroblasts,Fibroblasts,NA,COL1A1,NA,CellTypist,Human,Thymus,CL:0000057,the most common cells of connective tissues which synthesize the extracellular matrix and collagen to maintain tissue homeostasis
+Fibroblasts,Fibroblasts,NA,COL1A1,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Fibroblasts,Fibroblasts,NA,COL1A1,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Fibroblasts,Fibroblasts,NA,COL1A2,NA,CellTypist,Human,Thymus,CL:0000057,the most common cells of connective tissues which synthesize the extracellular matrix and collagen to maintain tissue homeostasis
+Fibroblasts,Fibroblasts,NA,COL1A2,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Fibroblasts,Fibroblasts,NA,COL1A2,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Fibroblasts,Fibroblasts,NA,COL1A2,NA,Mary_Tomayko,Human,Skin,NA,NA
+Fibroblasts,Fibroblasts,NA,COL5A1,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Fibroblasts,Fibroblasts,NA,COL5A1,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Fibroblasts,Fibroblasts,NA,COL6A2,NA,Literature,Human,Skin,doi.org/10.1101/689273,NA
+Fibroblasts,Fibroblasts,NA,DCN,NA,CellTypist,Human,Thymus,CL:0000057,the most common cells of connective tissues which synthesize the extracellular matrix and collagen to maintain tissue homeostasis
+Fibroblasts,Fibroblasts,NA,DCN,NA,Mary_Tomayko,Human,Skin,NA,NA
+Fibroblasts,Fibroblasts,NA,DCN,NA,Literature,Human,Skin,doi.org/10.1101/689273,NA
+Fibroblasts,Fibroblasts,NA,LUM,NA,Mary_Tomayko,Human,Skin,NA,NA
+Fibroblasts,Fibroblasts,NA,MME,CD10,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Fibroblasts,Fibroblasts,NA,MME,CD10,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Fibroblasts,Fibroblasts,NA,PDGFRA,NA,Mary_Tomayko,Human,Skin,NA,NA
+Fibroblasts,Fibroblasts,NA,VIM,NA,Mary_Tomayko,Human,Skin,NA,NA
+Fibroblasts_Myo,Myofibroblasts,NA,ACTA2,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+Fibroblasts_Myo,Myofibroblasts,NA,ACTA2,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Fibroblasts_Myo,Myofibroblasts,NA,COL1A1,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+Fibroblasts_Myo,Myofibroblasts,NA,COL1A1,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Fibroblasts_Myo,Myofibroblasts,NA,COL1A2,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+Fibroblasts_Myo,Myofibroblasts,NA,COL1A2,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Fibroblasts_Myo,Myofibroblasts,NA,COL3A1,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+Fibroblasts_Myo,Myofibroblasts,NA,COL3A1,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Granulocytes,Granulocytes,NA,CPA3,NA,CellTypist,Human,Decidua,CL:0000094,"cells of innate immune system with specific granules in the cytoplasm including neutrophils, eosinophils and basophils"
+Granulocytes,Granulocytes,NA,KIT,NA,CellTypist,Human,Decidua,CL:0000094,"cells of innate immune system with specific granules in the cytoplasm including neutrophils, eosinophils and basophils"
+Granulocytes,Neutrophils,NA,LCN2,NA,CellTypist,Human,Spleen,CL:0000775,the most abundant type of granulocytes that contains distinctive cytoplasmic granules and forms an essential part of the innate immune system
+Granulocytes,Neutrophils,NA,MMP8,NA,CellTypist,Human,Spleen,CL:0000775,the most abundant type of granulocytes that contains distinctive cytoplasmic granules and forms an essential part of the innate immune system
+Granulocytes,Neutrophils,NA,ORM1,NA,CellTypist,Human,Spleen,CL:0000775,the most abundant type of granulocytes that contains distinctive cytoplasmic granules and forms an essential part of the innate immune system
+Granulocytes,Granulocytes,NA,SLC45A3,NA,CellTypist,Human,Decidua,CL:0000094,"cells of innate immune system with specific granules in the cytoplasm including neutrophils, eosinophils and basophils"
+Hair,Hair_Cells,NA,SOX9,NA,Literature,Human,Skin,doi.org/10.1101/689273,NA
+HSC_MPP,Hematopoietic_Stem_Cells_and_Multipotent_Progenitor_Cells,NA,CD34,NA,CellTypist,Human,"Blood, Bone marrow, Liver",CL:0000837,hematopoietic stem cells and multipotent progenitor cells with the potential of differentiating into different blood cells
+HSC_MPP,Hematopoietic_Stem_Cells_and_Multipotent_Progenitor_Cells,NA,CRHBP,NA,CellTypist,Human,"Blood, Bone marrow, Liver",CL:0000837,hematopoietic stem cells and multipotent progenitor cells with the potential of differentiating into different blood cells
+HSC_MPP,Cmp,NA,CTSG,NA,CellTypist,Human,Bone marrow,CL:0000049,highly proliferative common myeloid progenitors which later give rise to granulocyte-monocyte progenitors and megakaryocyte-erythroid progenitors
+HSC_MPP,Gmp,NA,ELANE,NA,CellTypist,Human,Bone marrow,CL:0000557,hematopoietic granulocyte-monocyte progenitors that are committed to the granulocyte and monocyte lineage cells
+HSC_MPP,Early_Lymphoid/T_Lymphoid,NA,ETS1,NA,CellTypist,Human,Liver,CL:0000936,early lymphoid/T lymphocytes with lymphocyte potential in the fetal liver before T cells emerged from the thymus
+HSC_MPP,Megakaryocyte-Erythroid-Mast_Cell_Progenitor,NA,FCER1A,NA,CellTypist,Human,Liver,CL:0000050,"shared progenitors in the fetal liver which originate from common myeloid progenitors and differentiate into megakaryocytes, erythroid cells or mast cells"
+HSC_MPP,Cmp,NA,FLT3,NA,CellTypist,Human,Bone marrow,CL:0000049,highly proliferative common myeloid progenitors which later give rise to granulocyte-monocyte progenitors and megakaryocyte-erythroid progenitors
+HSC_MPP,Elp,NA,FLT3,NA,CellTypist,Human,Bone marrow,CL:0000936,early lymphoid progenitors which originate from hematopoietic stem cells of the bone marrow and migrate to the thymus
+HSC_MPP,Memp,NA,GATA1,NA,CellTypist,Human,"Blood, Bone marrow",CL:0000050,"shared progenitors which are derived from common myeloid progenitors and will differentiate into megakaryocytes, erythroid cells or mast cells"
+HSC_MPP,Megakaryocyte-Erythroid-Mast_Cell_Progenitor,NA,GATA1,NA,CellTypist,Human,Liver,CL:0000050,"shared progenitors in the fetal liver which originate from common myeloid progenitors and differentiate into megakaryocytes, erythroid cells or mast cells"
+HSC_MPP,Memp,NA,GATA2,NA,CellTypist,Human,"Blood, Bone marrow",CL:0000050,"shared progenitors which are derived from common myeloid progenitors and will differentiate into megakaryocytes, erythroid cells or mast cells"
+HSC_MPP,Megakaryocyte-Erythroid-Mast_Cell_Progenitor,NA,GATA2,NA,CellTypist,Human,Liver,CL:0000050,"shared progenitors in the fetal liver which originate from common myeloid progenitors and differentiate into megakaryocytes, erythroid cells or mast cells"
+HSC_MPP,Early_Lymphoid/T_Lymphoid,NA,GATA3,NA,CellTypist,Human,Liver,CL:0000936,early lymphoid/T lymphocytes with lymphocyte potential in the fetal liver before T cells emerged from the thymus
+HSC_MPP,Early_Lymphoid/T_Lymphoid,NA,IL32,NA,CellTypist,Human,Liver,CL:0000936,early lymphoid/T lymphocytes with lymphocyte potential in the fetal liver before T cells emerged from the thymus
+HSC_MPP,Memp,NA,ITGA2B,NA,CellTypist,Human,"Blood, Bone marrow",CL:0000050,"shared progenitors which are derived from common myeloid progenitors and will differentiate into megakaryocytes, erythroid cells or mast cells"
+HSC_MPP,Elp,NA,LTB,NA,CellTypist,Human,Bone marrow,CL:0000936,early lymphoid progenitors which originate from hematopoietic stem cells of the bone marrow and migrate to the thymus
+HSC_MPP,Neutrophil-Myeloid_Progenitor,NA,LYZ,NA,CellTypist,Human,"Liver, Thymus",CL:0000834,progenitors of neutrophils and myeloid cells which are transitioned from hematopoietic stem cells and multipotent progenitors
+HSC_MPP,Cmp,NA,MPO,NA,CellTypist,Human,Bone marrow,CL:0000049,highly proliferative common myeloid progenitors which later give rise to granulocyte-monocyte progenitors and megakaryocyte-erythroid progenitors
+HSC_MPP,Gmp,NA,MPO,NA,CellTypist,Human,Bone marrow,CL:0000557,hematopoietic granulocyte-monocyte progenitors that are committed to the granulocyte and monocyte lineage cells
+HSC_MPP,Neutrophil-Myeloid_Progenitor,NA,MPO,NA,CellTypist,Human,"Liver, Thymus",CL:0000834,progenitors of neutrophils and myeloid cells which are transitioned from hematopoietic stem cells and multipotent progenitors
+HSC_MPP,Gmp,NA,PRTN3,NA,CellTypist,Human,Bone marrow,CL:0000557,hematopoietic granulocyte-monocyte progenitors that are committed to the granulocyte and monocyte lineage cells
+HSC_MPP,Elp,NA,RUNX2,NA,CellTypist,Human,Bone marrow,CL:0000936,early lymphoid progenitors which originate from hematopoietic stem cells of the bone marrow and migrate to the thymus
+HSC_MPP,Neutrophil-Myeloid_Progenitor,NA,SERPINB1,NA,CellTypist,Human,"Liver, Thymus",CL:0000834,progenitors of neutrophils and myeloid cells which are transitioned from hematopoietic stem cells and multipotent progenitors
+HSC_MPP,Hematopoietic_Stem_Cells_and_Multipotent_Progenitor_Cells,NA,SPINK2,NA,CellTypist,Human,"Blood, Bone marrow, Liver",CL:0000837,hematopoietic stem cells and multipotent progenitor cells with the potential of differentiating into different blood cells
+HSPC,Hematopoietic_Stem_And_Progenitor_Cell,NA,ANKRD28,NA,Azimuth,Human,NA,CL_0008001,Human PBMCs reference
+HSPC,Hematopoietic_Stem_And_Progenitor_Cell,NA,AVP,NA,Azimuth,Human,NA,CL_0008001,Human PBMCs reference
+HSPC,Hematopoietic_Stem_And_Progenitor_Cell,NA,CD34,NA,Azimuth,Human,NA,CL_0008001,Human PBMCs reference
+HSPC,Hematopoietic_Stem_And_Progenitor_Cell,NA,CDK6,NA,Azimuth,Human,NA,CL_0008001,Human PBMCs reference
+HSPC,Hematopoietic_Stem_And_Progenitor_Cell,NA,CYTL1,NA,Azimuth,Human,NA,CL_0008001,Human PBMCs reference
+HSPC,Hematopoietic_Stem_And_Progenitor_Cell,NA,EGFL7,NA,Azimuth,Human,NA,CL_0008001,Human PBMCs reference
+HSPC,Hematopoietic_Stem_And_Progenitor_Cell,NA,FAM30A,NA,Azimuth,Human,NA,CL_0008001,Human PBMCs reference
+HSPC,Hematopoietic_Stem_And_Progenitor_Cell,NA,GATA2,NA,Azimuth,Human,NA,CL_0008001,Human PBMCs reference
+HSPC,Hematopoietic_Stem_And_Progenitor_Cell,NA,LAPTM4B,NA,Azimuth,Human,NA,CL_0008001,Human PBMCs reference
+HSPC,Hematopoietic_Stem_And_Progenitor_Cell,NA,MYB,NA,Azimuth,Human,NA,CL_0008001,Human PBMCs reference
+HSPC,Hematopoietic_Stem_And_Progenitor_Cell,NA,PRSS57,NA,Azimuth,Human,NA,CL_0008001,Human PBMCs reference
+HSPC,Hematopoietic_Stem_And_Progenitor_Cell,NA,SMIM24,NA,Azimuth,Human,NA,CL_0008001,Human PBMCs reference
+HSPC,Hematopoietic_Stem_And_Progenitor_Cell,NA,SOX4,NA,Azimuth,Human,NA,CL_0008001,Human PBMCs reference
+HSPC,Hematopoietic_Stem_And_Progenitor_Cell,NA,SPINK2,NA,Azimuth,Human,NA,CL_0008001,Human PBMCs reference
+ILC,Innate_Lymphoid_Cells,NA,AREG,NA,CellTypist,Human,"Intestine, Mesenteric lymph node, Spleen",CL:0001065,specialised innate immune cells from the lymphoid lineage but without antigen-specific T-cell receptors on the surface
+ILC,Transitional_NK,NA,CCL5,NA,CellTypist,Human,Bone marrow,CL:0000823,immature natural killer cells which originate from natural killer cell precursors and are committed to mature natural killer cells
+ILC,CD16-_NK_Cells,NA,CD160,NA,CellTypist,Human,"Blood, Bone marrow, Decidua, Intestine, Kidney, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Skeletal muscle, Spleen, Thymus, Tonsil, Trachea",CL:0000623,CD16- granular lymphocytes that play protective roles against both infectious pathogens and cancer using antibody-dependent cell-mediated cytotoxicity
+ILC,Innate_Lymphoid_Cells_1,NA,CD3D,NA,CellTypist,Human,Tonsil,CL:0001077,innate lymphoid cell subpopulation I that is non-cytotoxic and has overlapping phenotypes and functions with natural killer cells
+ILC,Innate_Lymphoid_Cells_1,NA,CXCR3,NA,CellTypist,Human,Tonsil,CL:0001077,innate lymphoid cell subpopulation I that is non-cytotoxic and has overlapping phenotypes and functions with natural killer cells
+ILC,Innate_Lymphoid_Cell,NA,FCER1G,NA,Azimuth,Human,NA,CL_0001065,Human PBMCs reference
+ILC,CD16+_NK_Cells,NA,FCGR3A,CD16,CellTypist,Human,"Blood, Bone marrow, Decidua, Intestine, Kidney, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Omentum, Skeletal muscle, Spleen, Thymus, Tonsil",CL:0000623,CD16+ granular lymphocytes that play protective roles against both infectious pathogens and cancer using antibody-dependent cell-mediated cytotoxicity
+ILC,Transitional_NK,NA,FCGR3A,CD16,CellTypist,Human,Bone marrow,CL:0000823,immature natural killer cells which originate from natural killer cell precursors and are committed to mature natural killer cells
+ILC,Innate_Lymphoid_Cell,NA,GATA3,NA,Azimuth,Human,NA,CL_0001065,Human PBMCs reference
+ILC,Innate_Lymphoid_Cells_2,NA,GATA3,NA,CellTypist,Human,Tonsil,CL:0001081,innate lymphoid cell subpopulation II that promotes type 2 inflammation and is involved in immune response against large extracellular pathogens
+ILC,CD16+_NK_Cells,NA,GNLY,NA,CellTypist,Human,"Blood, Bone marrow, Decidua, Intestine, Kidney, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Omentum, Skeletal muscle, Spleen, Thymus, Tonsil",CL:0000623,CD16+ granular lymphocytes that play protective roles against both infectious pathogens and cancer using antibody-dependent cell-mediated cytotoxicity
+ILC,CD16-_NK_Cells,NA,GNLY,NA,CellTypist,Human,"Blood, Bone marrow, Decidua, Intestine, Kidney, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Skeletal muscle, Spleen, Thymus, Tonsil, Trachea",CL:0000623,CD16- granular lymphocytes that play protective roles against both infectious pathogens and cancer using antibody-dependent cell-mediated cytotoxicity
+ILC,NK_Cells,NA,GNLY,NA,CellTypist,Human,"Blood, Bone marrow, Decidua, Intestine, Kidney, Liver, Lung, Mesenteric lymph node, Spleen, Thymus, Tonsil, Trachea",CL:0000623,granular lymphocytes that play protective roles against both infectious pathogens and cancer using antibody-dependent cell-mediated cytotoxicity
+ILC,Transitional_NK,NA,GZMK,NA,CellTypist,Human,Bone marrow,CL:0000823,immature natural killer cells which originate from natural killer cell precursors and are committed to mature natural killer cells
+ILC,Innate_Lymphoid_Cell,NA,HPGDS,NA,Azimuth,Human,NA,CL_0001065,Human PBMCs reference
+ILC,Innate_Lymphoid_Cells_2,NA,HPGDS,NA,CellTypist,Human,Tonsil,CL:0001081,innate lymphoid cell subpopulation II that promotes type 2 inflammation and is involved in immune response against large extracellular pathogens
+ILC,Innate_Lymphoid_Cells_1,NA,IKZF3,NA,CellTypist,Human,Tonsil,CL:0001077,innate lymphoid cell subpopulation I that is non-cytotoxic and has overlapping phenotypes and functions with natural killer cells
+ILC,Innate_Lymphoid_Cell,NA,IL1R1,NA,Azimuth,Human,NA,CL_0001065,Human PBMCs reference
+ILC,Innate_Lymphoid_Cell,NA,IL2RA,NA,Azimuth,Human,NA,CL_0001065,Human PBMCs reference
+ILC,Innate_Lymphoid_Cells_3,NA,IL4I1,NA,CellTypist,Human,"Bone marrow, Decidua, Intestine, Lung, Lung-draining lymph node, Mesenteric lymph node, Spleen, Thymus, Tonsil",CL:0001078,innate lymphoid cell subpopulation III that is required for host defense against specific extracellular bacteria and fungi
+ILC,Innate_Lymphoid_Cell,NA,KIT,NA,Azimuth,Human,NA,CL_0001065,Human PBMCs reference
+ILC,Innate_Lymphoid_Cells_3,NA,KIT,NA,CellTypist,Human,"Bone marrow, Decidua, Intestine, Lung, Lung-draining lymph node, Mesenteric lymph node, Spleen, Thymus, Tonsil",CL:0001078,innate lymphoid cell subpopulation III that is required for host defense against specific extracellular bacteria and fungi
+ILC,Innate_Lymphoid_Cell,NA,KLRB1,NA,Azimuth,Human,NA,CL_0001065,Human PBMCs reference
+ILC,Innate_Lymphoid_Cells_2,NA,KLRG1,NA,CellTypist,Human,Tonsil,CL:0001081,innate lymphoid cell subpopulation II that promotes type 2 inflammation and is involved in immune response against large extracellular pathogens
+ILC,Innate_Lymphoid_Cell,NA,LINC01229,NA,Azimuth,Human,NA,CL_0001065,Human PBMCs reference
+ILC,CD16+_NK_Cells,NA,NKG7,NA,CellTypist,Human,"Blood, Bone marrow, Decidua, Intestine, Kidney, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Omentum, Skeletal muscle, Spleen, Thymus, Tonsil",CL:0000623,CD16+ granular lymphocytes that play protective roles against both infectious pathogens and cancer using antibody-dependent cell-mediated cytotoxicity
+ILC,CD16-_NK_Cells,NA,NKG7,NA,CellTypist,Human,"Blood, Bone marrow, Decidua, Intestine, Kidney, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Skeletal muscle, Spleen, Thymus, Tonsil, Trachea",CL:0000623,CD16- granular lymphocytes that play protective roles against both infectious pathogens and cancer using antibody-dependent cell-mediated cytotoxicity
+ILC,NK_Cells,NA,NKG7,NA,CellTypist,Human,"Blood, Bone marrow, Decidua, Intestine, Kidney, Liver, Lung, Mesenteric lymph node, Spleen, Thymus, Tonsil, Trachea",CL:0000623,granular lymphocytes that play protective roles against both infectious pathogens and cancer using antibody-dependent cell-mediated cytotoxicity
+ILC,Innate_Lymphoid_Cells_3,NA,RORC,NA,CellTypist,Human,"Bone marrow, Decidua, Intestine, Lung, Lung-draining lymph node, Mesenteric lymph node, Spleen, Thymus, Tonsil",CL:0001078,innate lymphoid cell subpopulation III that is required for host defense against specific extracellular bacteria and fungi
+ILC,Innate_Lymphoid_Cells,NA,S100A13,NA,CellTypist,Human,"Intestine, Mesenteric lymph node, Spleen",CL:0001065,specialised innate immune cells from the lymphoid lineage but without antigen-specific T-cell receptors on the surface
+ILC,Innate_Lymphoid_Cell,NA,SOX4,NA,Azimuth,Human,NA,CL_0001065,Human PBMCs reference
+ILC,Innate_Lymphoid_Cells,NA,TLE1,NA,CellTypist,Human,"Intestine, Mesenteric lymph node, Spleen",CL:0001065,specialised innate immune cells from the lymphoid lineage but without antigen-specific T-cell receptors on the surface
+ILC,Innate_Lymphoid_Cell,NA,TNFRSF18,NA,Azimuth,Human,NA,CL_0001065,Human PBMCs reference
+ILC,Innate_Lymphoid_Cell,NA,TNFRSF4,NA,Azimuth,Human,NA,CL_0001065,Human PBMCs reference
+ILC,Innate_Lymphoid_Cell,NA,TRDC,NA,Azimuth,Human,NA,CL_0001065,Human PBMCs reference
+ILC,Innate_Lymphoid_Cell,NA,TTLL10,NA,Azimuth,Human,NA,CL_0001065,Human PBMCs reference
+ILC,Innate_Lymphoid_Cell,NA,TYROBP,NA,Azimuth,Human,NA,CL_0001065,Human PBMCs reference
+ILC,NK_Cells,NA,XCL2,NA,CellTypist,Human,"Blood, Bone marrow, Decidua, Intestine, Kidney, Liver, Lung, Mesenteric lymph node, Spleen, Thymus, Tonsil, Trachea",CL:0000623,granular lymphocytes that play protective roles against both infectious pathogens and cancer using antibody-dependent cell-mediated cytotoxicity
+ILC_Precursor,Precursor_Innate_Lymphoid_Cells,NA,HPN,NA,CellTypist,Human,Liver,CL:0001082,innate lymphoid cell precursors which give rise to innate lymphoid cells and lack the characteristics of their mature progenies
+ILC_Precursor,Precursor_Innate_Lymphoid_Cells,NA,LST1,NA,CellTypist,Human,Liver,CL:0001082,innate lymphoid cell precursors which give rise to innate lymphoid cells and lack the characteristics of their mature progenies
+ILC_Precursor,Precursor_Innate_Lymphoid_Cells,NA,SCN1B,NA,CellTypist,Human,Liver,CL:0001082,innate lymphoid cell precursors which give rise to innate lymphoid cells and lack the characteristics of their mature progenies
+Keratinocytes,Keratinocytes,NA,FLG,FLG1,Mary_Tomayko,Human,Skin,NA,NA
+Keratinocytes,Keratinocytes,NA,GJB6,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Keratinocytes,Keratinocytes,NA,IVL,NA,Mary_Tomayko,Human,Skin,NA,NA
+Keratinocytes,Keratinocytes,NA,KRT1,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Keratinocytes,Keratinocytes,NA,KRT1,NA,Mary_Tomayko,Human,Skin,NA,NA
+Keratinocytes,Keratinocytes,NA,KRT1,NA,Literature,Human,Skin,doi.org/10.1101/689273,NA
+Keratinocytes,Keratinocytes,NA,KRT10,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Keratinocytes,Keratinocytes,NA,KRT10,NA,Mary_Tomayko,Human,Skin,NA,NA
+Keratinocytes,Keratinocytes,NA,KRT14,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Keratinocytes,Keratinocytes,NA,KRT14,NA,Mary_Tomayko,Human,Skin,NA,NA
+Keratinocytes,Keratinocytes,NA,KRT16,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Keratinocytes,Keratinocytes,NA,KRT2,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Keratinocytes,Keratinocytes,NA,KRT23,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Keratinocytes,Keratinocytes,NA,KRT5,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Keratinocytes,Keratinocytes,NA,KRT5,NA,Mary_Tomayko,Human,Skin,NA,NA
+Keratinocytes,Keratinocytes,NA,KRT5,NA,Literature,Human,Skin,doi.org/10.1101/689273,NA
+Keratinocytes,Keratinocytes,NA,KRT6B,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Keratinocytes,Keratinocytes,NA,KRT77,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Keratinocytes,Keratinocytes,NA,KRTDAP,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Keratinocytes,Keratinocytes,NA,SBSN,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Langerhans,Langerhans_Migratory,NA,CCR7,NA,Literature,Human,Skin,10.1016/j.immuni.2021.08.012,Paper sent by Alexia Belperron
+Langerhans,Langerhans,NA,CD1A,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Langerhans,Langerhans,NA,CD1A,NA,Literature,Human,Skin,10.1016/j.immuni.2021.08.012,Paper sent by Alexia Belperron
+Langerhans,Langerhans,NA,CD1A,NA,Mary_Tomayko,Human,Skin,NA,NA
+Langerhans,Langerhans,NA,CD1B,NA,Literature,Human,Skin,10.1016/j.immuni.2021.08.012,Paper sent by Alexia Belperron
+Langerhans,Langerhans,NA,CD1C,NA,Literature,Human,Skin,10.1016/j.immuni.2021.08.012,Paper sent by Alexia Belperron
+Langerhans,Langerhans,NA,CD207,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Langerhans,Langerhans,NA,CD207,NA,Literature,Human,Skin,10.1016/j.immuni.2021.08.012,Paper sent by Alexia Belperron
+Langerhans,Langerhans,NA,CD207,NA,Mary_Tomayko,Human,Skin,NA,NA
+Langerhans,Langerhans,NA,CD74,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Langerhans,Langerhans_Activated,NA,CD83,NA,Literature,Human,Skin,10.1016/j.immuni.2021.08.012,Paper sent by Alexia Belperron
+Langerhans,Langerhans,NA,HLA-DRA,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Langerhans,Langerhans,NA,SRGN,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Macrophages,Macrophages,Alveolar_Macrophages,BHLHE41,NA,CellTypist,Human,"Bone marrow, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Omentum, Spleen",CL:0000583,resident macrophages in the alveoli of the lungs responsible for removal of particles and regulation of immune responses
+Macrophages,Macrophages,Macrophages,C1QA,NA,CellTypist,Human,"Decidua, Eye, Intestine, Lung, Mesenteric lymph node, Placenta, Spleen, Thymus, Trachea, Upper airway",CL:0000235,"specialised mononuclear phagocytic cells which recognise, engulf and degrade cellular debris and pathogens in various tissues"
+Macrophages,Macrophages,Intermediate_Macrophages,CCL2,NA,CellTypist,Human,"Bone marrow, Liver, Lung, Lung-draining lymph node",CL:0000235,TNIP3+ CCL2+ macrophages which are largely restricted to the lung and related to lung pathology
+Macrophages,Macrophages,Macrophages,CD14,NA,Mary_Tomayko,Human,Skin,NA,NA
+Macrophages,Macrophages,Macrophages,CD163,NA,Mary_Tomayko,Human,Skin,NA,NA
+Macrophages,Macrophages,Intestinal_Macrophages,CD209,NA,CellTypist,Human,"Intestine, Lung, Lung-draining lymph node, Omentum, Spleen",CL:0000235,mature macrophages specifically present in the gut important for intestinal homeostasis and inflammation
+Macrophages,Macrophages,Erythrophagocytic_Macrophages,CD5L,NA,CellTypist,Human,"Bone marrow, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Omentum, Spleen",CL:0000235,erythrophagocytosis-related macrophages including red pulp macrophages and Kupffer cells that mainly populate the spleen and liver
+Macrophages,Macrophages,Kupffer_Cells,CD5L,NA,CellTypist,Human,Liver,CL:0000091,resident macrophages in liver under non-inflammatory conditions which line the hepatic sinusoids and are involved in erythrocyte clearance
+Macrophages,Macrophages,Macrophages,CD68,NA,CellTypist,Human,"Decidua, Eye, Intestine, Lung, Mesenteric lymph node, Placenta, Spleen, Thymus, Trachea, Upper airway",CL:0000235,"specialised mononuclear phagocytic cells which recognise, engulf and degrade cellular debris and pathogens in various tissues"
+Macrophages,Macrophages,Macrophages,CD68,NA,Literature,Human,Skin,doi.org/10.1101/689273,NA
+Macrophages,Macrophages,Kidney-Resident_Macrophages,CD74,NA,CellTypist,Human,Kidney,CL:1000698,long-lived macrophages resident in the kidney under non-inflammatory conditions and maintaining homeostasis and resolving inflammation
+Macrophages,Macrophages,Kupffer_Cells,CETP,NA,CellTypist,Human,Liver,CL:0000091,resident macrophages in liver under non-inflammatory conditions which line the hepatic sinusoids and are involved in erythrocyte clearance
+Macrophages,Macrophages,Macrophages,CSF1R,NA,Mary_Tomayko,Human,Skin,NA,NA
+Macrophages,Macrophages,Kidney-Resident_Macrophages,CSF2RA,NA,CellTypist,Human,Kidney,CL:1000698,long-lived macrophages resident in the kidney under non-inflammatory conditions and maintaining homeostasis and resolving inflammation
+Macrophages,Macrophages,Macrophages,CTSS,NA,Literature,Human,Skin,doi.org/10.1101/689273,NA
+Macrophages,Macrophages,Hofbauer_Cells,F13A1,NA,CellTypist,Human,"Decidua, Placenta",CL:3000001,primitive placental resident macrophages with granules and vacuoles found in placenta particularly during early pregnancy
+Macrophages,Macrophages,Alveolar_Macrophages,GPNMB,NA,CellTypist,Human,"Bone marrow, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Omentum, Spleen",CL:0000583,resident macrophages in the alveoli of the lungs responsible for removal of particles and regulation of immune responses
+Macrophages,Macrophages,Intestinal_Macrophages,IGF1,NA,CellTypist,Human,"Intestine, Lung, Lung-draining lymph node, Omentum, Spleen",CL:0000235,mature macrophages specifically present in the gut important for intestinal homeostasis and inflammation
+Macrophages,Macrophages,Hofbauer_Cells,LYVE1,NA,CellTypist,Human,"Decidua, Placenta",CL:3000001,primitive placental resident macrophages with granules and vacuoles found in placenta particularly during early pregnancy
+Macrophages,Macrophages,Hofbauer_Cells,SCIN,NA,CellTypist,Human,"Decidua, Placenta",CL:3000001,primitive placental resident macrophages with granules and vacuoles found in placenta particularly during early pregnancy
+Macrophages,Macrophages,Erythrophagocytic_Macrophages,SCL40A1,NA,CellTypist,Human,"Bone marrow, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Omentum, Spleen",CL:0000235,erythrophagocytosis-related macrophages including red pulp macrophages and Kupffer cells that mainly populate the spleen and liver
+Macrophages,Macrophages,Intestinal_Macrophages,SDS,NA,CellTypist,Human,"Intestine, Lung, Lung-draining lymph node, Omentum, Spleen",CL:0000235,mature macrophages specifically present in the gut important for intestinal homeostasis and inflammation
+Macrophages,Macrophages,Kidney-Resident_Macrophages,SELENOP,SEPP1,CellTypist,Human,Kidney,CL:1000698,long-lived macrophages resident in the kidney under non-inflammatory conditions and maintaining homeostasis and resolving inflammation
+Macrophages,Macrophages,Erythrophagocytic_Macrophages,SPIC,NA,CellTypist,Human,"Bone marrow, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Omentum, Spleen",CL:0000235,erythrophagocytosis-related macrophages including red pulp macrophages and Kupffer cells that mainly populate the spleen and liver
+Macrophages,Macrophages,Intermediate_Macrophages,SPP1,NA,CellTypist,Human,"Bone marrow, Liver, Lung, Lung-draining lymph node",CL:0000235,TNIP3+ CCL2+ macrophages which are largely restricted to the lung and related to lung pathology
+Macrophages,Macrophages,Intermediate_Macrophages,TNIP3,NA,CellTypist,Human,"Bone marrow, Liver, Lung, Lung-draining lymph node",CL:0000235,TNIP3+ CCL2+ macrophages which are largely restricted to the lung and related to lung pathology
+Macrophages,Macrophages,Alveolar_Macrophages,TREM2,NA,CellTypist,Human,"Bone marrow, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Omentum, Spleen",CL:0000583,resident macrophages in the alveoli of the lungs responsible for removal of particles and regulation of immune responses
+Macrophages,Macrophages,Macrophages,TREM2,NA,CellTypist,Human,"Decidua, Eye, Intestine, Lung, Mesenteric lymph node, Placenta, Spleen, Thymus, Trachea, Upper airway",CL:0000235,"specialised mononuclear phagocytic cells which recognise, engulf and degrade cellular debris and pathogens in various tissues"
+Macrophages,Macrophages,Kupffer_Cells,VCAM1,NA,CellTypist,Human,Liver,CL:0000091,resident macrophages in liver under non-inflammatory conditions which line the hepatic sinusoids and are involved in erythrocyte clearance
+Mast,Mast_Cells,NA,CPA3,NA,CellTypist,Human,"Blood, Bone marrow, Eye, Intestine, Liver, Lung, Lung-draining lymph node, Oesophagus, Spleen, Thymus",CL:0000097,long-lived innate migrant cells found in most tissues with many large basophilic granules rich in histamine and heparin
+Mast,Mast_Cells,NA,CPA3,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+Mast,Mast_Cells,NA,CPA3,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Mast,Mast_Cells,NA,CPA3,NA,Literature,Human,Skin,doi.org/10.1101/689273,NA
+Mast,Mast_Cells,NA,CXCL3,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+Mast,Mast_Cells,NA,CXCL3,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Mast,Mast_Cells,NA,FCER1A,NA,Mary_Tomayko,Human,Skin,NA,NA
+Mast,Mast_Cells,NA,IL1RL1,NA,Literature,Human,Skin,doi.org/10.1101/689273,NA
+Mast,Mast_Cells,NA,MUC5AC,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+Mast,Mast_Cells,NA,MUC5AC,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Mast,Mast_Cells,NA,TPSAB1,NA,CellTypist,Human,"Blood, Bone marrow, Eye, Intestine, Liver, Lung, Lung-draining lymph node, Oesophagus, Spleen, Thymus",CL:0000097,long-lived innate migrant cells found in most tissues with many large basophilic granules rich in histamine and heparin
+Mast,Mast_Cells,NA,TPSAB1,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+Mast,Mast_Cells,NA,TPSAB1,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Mast,Mast_Cells,NA,TPSB2,NA,CellTypist,Human,"Blood, Bone marrow, Eye, Intestine, Liver, Lung, Lung-draining lymph node, Oesophagus, Spleen, Thymus",CL:0000097,long-lived innate migrant cells found in most tissues with many large basophilic granules rich in histamine and heparin
+Megakaryocyte_Early,Early_Megakaryocytes,NA,CMTM5,NA,CellTypist,Human,"Blood, Bone marrow",CL:0000553,early megakaryocytes which are committed to megakaryocyte lineage cells
+Megakaryocyte_Early,Early_Megakaryocytes,NA,PF4,NA,CellTypist,Human,"Blood, Bone marrow",CL:0000553,early megakaryocytes which are committed to megakaryocyte lineage cells
+Megakaryocyte_Early,Early_Megakaryocytes,NA,SELP,NA,CellTypist,Human,"Blood, Bone marrow",CL:0000553,early megakaryocytes which are committed to megakaryocyte lineage cells
+Megakaryocyte_Precursor,Megakaryocyte_Precursor,NA,CAVIN1,NA,CellTypist,Human,Bone marrow,CL:0000553,megakaryocyte precursors in the bone marrow that are committed to megakaryocytes
+Megakaryocyte_Precursor,Megakaryocyte_Precursor,NA,GATA2,NA,CellTypist,Human,Bone marrow,CL:0000553,megakaryocyte precursors in the bone marrow that are committed to megakaryocytes
+Megakaryocyte_Precursor,Megakaryocyte_Precursor,NA,PRSS57,NA,CellTypist,Human,Bone marrow,CL:0000553,megakaryocyte precursors in the bone marrow that are committed to megakaryocytes
+Megakaryocytes,Megakaryocytes,NA,ITGA2B,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+Megakaryocytes_Platelets,Megakaryocytes_Platelets,NA,CMTM5,NA,CellTypist,Human,"Blood, Bone marrow, Liver, Spleen",CL:0000556,large multinucleated cells with numerous azurophilic granules and with mature blood platelets released from the cytoplasm
+Megakaryocytes_Platelets,Megakaryocytes_Platelets,NA,ITGA2B,NA,CellTypist,Human,"Blood, Bone marrow, Liver, Spleen",CL:0000556,large multinucleated cells with numerous azurophilic granules and with mature blood platelets released from the cytoplasm
+Megakaryocytes_Platelets,Megakaryocytes_Platelets,NA,PF4,NA,CellTypist,Human,"Blood, Bone marrow, Liver, Spleen",CL:0000556,large multinucleated cells with numerous azurophilic granules and with mature blood platelets released from the cytoplasm
+Melanocytes,Melanocytes,NA,DCT,NA,Mary_Tomayko,Human,Skin,NA,NA
+Melanocytes,Melanocytes,NA,MLANA,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Melanocytes,Melanocytes,NA,MLANA,NA,Mary_Tomayko,Human,Skin,NA,NA
+Melanocytes,Melanocytes,NA,PMEL,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Melanocytes,Melanocytes,NA,PMEL,NA,Mary_Tomayko,Human,Skin,NA,NA
+Melanocytes,Melanocytes,NA,TYRP1,NA,Mary_Tomayko,Human,Skin,NA,NA
+Monocytes,Monocytes,NA,AIF1,NA,Azimuth,Human,NA,CL_0000576,Human PBMCs reference
+Monocytes,Monocytes,Classical_Monocytes,CD14,NA,CellTypist,Human,"Blood, Bone marrow, Intestine, Kidney, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Omentum, Skeletal muscle, Spleen, Thymus, Upper airway",CL:0000860,CD14+ myeloid mononuclear recirculating leukocytes that are capable of differentiating into macrophages and myeloid lineage dendritic cells
+Monocytes,Monocytes,NA,CTSS,NA,Azimuth,Human,NA,CL_0000576,Human PBMCs reference
+Monocytes,Monocytes,NA,FCN1,NA,Azimuth,Human,NA,CL_0000576,Human PBMCs reference
+Monocytes,Monocytes,NA,FCN1,NA,CellTypist,Human,"Blood, Bone marrow, Intestine, Liver, Lung, Spleen, Thymus, Upper airway",CL:0000576,myeloid mononuclear recirculating leukocytes that are capable of differentiating into macrophages and myeloid lineage dendritic cells
+Monocytes,Monocytes,NA,LYZ,NA,Azimuth,Human,NA,CL_0000576,Human PBMCs reference
+Monocytes,Monocytes,NA,LYZ,NA,CellTypist,Human,"Blood, Bone marrow, Intestine, Liver, Lung, Spleen, Thymus, Upper airway",CL:0000576,myeloid mononuclear recirculating leukocytes that are capable of differentiating into macrophages and myeloid lineage dendritic cells
+Monocytes,Monocytes,NA,MNDA,NA,Azimuth,Human,NA,CL_0000576,Human PBMCs reference
+Monocytes,Monocytes,NA,NEAT1,NA,Azimuth,Human,NA,CL_0000576,Human PBMCs reference
+Monocytes,Monocytes,NA,PSAP,NA,Azimuth,Human,NA,CL_0000576,Human PBMCs reference
+Monocytes,Monocytes,Classical_Monocytes,S100A12,NA,CellTypist,Human,"Blood, Bone marrow, Intestine, Kidney, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Omentum, Skeletal muscle, Spleen, Thymus, Upper airway",CL:0000860,CD14+ myeloid mononuclear recirculating leukocytes that are capable of differentiating into macrophages and myeloid lineage dendritic cells
+Monocytes,Monocytes,NA,S100A9,NA,Azimuth,Human,NA,CL_0000576,Human PBMCs reference
+Monocytes,Monocytes,Classical_Monocytes,S100A9,NA,CellTypist,Human,"Blood, Bone marrow, Intestine, Kidney, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Omentum, Skeletal muscle, Spleen, Thymus, Upper airway",CL:0000860,CD14+ myeloid mononuclear recirculating leukocytes that are capable of differentiating into macrophages and myeloid lineage dendritic cells
+Monocytes,Monocytes,NA,S100A9,NA,CellTypist,Human,"Blood, Bone marrow, Intestine, Liver, Lung, Spleen, Thymus, Upper airway",CL:0000576,myeloid mononuclear recirculating leukocytes that are capable of differentiating into macrophages and myeloid lineage dendritic cells
+Monocytes,Monocytes,NA,SERPINA1,NA,Azimuth,Human,NA,CL_0000576,Human PBMCs reference
+Monocytes,Monocytes,NA,TYROBP,NA,Azimuth,Human,NA,CL_0000576,Human PBMCs reference
+Monocytes_CD14,CD14_Monocytes,NA,CD14,NA,Azimuth,Human,NA,CL_0002057,Human PBMCs reference
+Monocytes_CD14,CD14_Monocytes,NA,CD14,NA,Ira_Fleming,Human,Skin,NA,NA
+Monocytes_CD14,CD14_Monocytes,NA,CD68,NA,Ira_Fleming,Human,Skin,NA,NA
+Monocytes_CD14,CD14_Monocytes,NA,CTSD,NA,Azimuth,Human,NA,CL_0002057,Human PBMCs reference
+Monocytes_CD14,CD14_Monocytes,NA,CTSS,NA,Azimuth,Human,NA,CL_0002057,Human PBMCs reference
+Monocytes_CD14,CD14_Monocytes,NA,FCGR3A,CD16,Ira_Fleming,Human,Skin,NA,NA
+Monocytes_CD14,CD14_Monocytes,NA,FCN1,NA,Azimuth,Human,NA,CL_0002057,Human PBMCs reference
+Monocytes_CD14,CD14_Monocytes,NA,G0S2,NA,Azimuth,Human,NA,CL_0002057,Human PBMCs reference
+Monocytes_CD14,CD14_Monocytes,NA,IL1B,NA,Azimuth,Human,NA,CL_0002057,Human PBMCs reference
+Monocytes_CD14,CD14_Monocytes,NA,LYZ,NA,Azimuth,Human,NA,CL_0002057,Human PBMCs reference
+Monocytes_CD14,CD14_Monocytes,NA,LYZ,NA,Ira_Fleming,Human,Skin,NA,NA
+Monocytes_CD14,CD14_Monocytes,NA,MS4A6A,NA,Azimuth,Human,NA,CL_0002057,Human PBMCs reference
+Monocytes_CD14,CD14_Monocytes,NA,S100A12,NA,Azimuth,Human,NA,CL_0002057,Human PBMCs reference
+Monocytes_CD14,CD14_Monocytes,NA,S100A8,NA,Azimuth,Human,NA,CL_0002057,Human PBMCs reference
+Monocytes_CD14,CD14_Monocytes,NA,S100A9,NA,Azimuth,Human,NA,CL_0002057,Human PBMCs reference
+Monocytes_CD14,CD14_Monocytes,NA,S100A9,NA,Ira_Fleming,Human,Skin,NA,NA
+Monocytes_CD14,CD14_Monocytes,NA,VCAN,NA,Azimuth,Human,NA,CL_0002057,Human PBMCs reference
+Monocytes_CD16,CD16_Monocytes,NA,AIF1,NA,Azimuth,Human,NA,CL_0002396,Human PBMCs reference
+Monocytes_CD16,CD16_Monocytes,NA,CD68,NA,Ira_Fleming,Human,Skin,NA,NA
+Monocytes_CD16,CD16_Monocytes,NA,CDKN1C,NA,Azimuth,Human,NA,CL_0002396,Human PBMCs reference
+Monocytes_CD16,CD16_Monocytes,NA,COTL1,NA,Azimuth,Human,NA,CL_0002396,Human PBMCs reference
+Monocytes_CD16,CD16_Monocytes,NA,FCER1G,NA,Azimuth,Human,NA,CL_0002396,Human PBMCs reference
+Monocytes_CD16,CD16_Monocytes,NA,FCGR3A,CD16,Azimuth,Human,NA,CL_0002396,Human PBMCs reference
+Monocytes_CD16,CD16_Monocytes,NA,FCGR3A,CD16,Ira_Fleming,Human,Skin,NA,NA
+Monocytes_CD16,CD16_Monocytes,NA,HES4,NA,Azimuth,Human,NA,CL_0002396,Human PBMCs reference
+Monocytes_CD16,CD16_Monocytes,NA,IER5,NA,Azimuth,Human,NA,CL_0002396,Human PBMCs reference
+Monocytes_CD16,CD16_Monocytes,NA,IFITM3,NA,Azimuth,Human,NA,CL_0002396,Human PBMCs reference
+Monocytes_CD16,CD16_Monocytes,NA,LST1,NA,Azimuth,Human,NA,CL_0002396,Human PBMCs reference
+Monocytes_CD16,CD16_Monocytes,NA,LYZ,NA,Ira_Fleming,Human,Skin,NA,NA
+Monocytes_CD16,CD16_Monocytes,NA,MS4A7,NA,Azimuth,Human,NA,CL_0002396,Human PBMCs reference
+Monocytes_CD16,CD16_Monocytes,NA,MS4A7,NA,Ira_Fleming,Human,Skin,NA,NA
+Monocytes_CD16,CD16_Monocytes,NA,NAP1L1,NA,Azimuth,Human,NA,CL_0002396,Human PBMCs reference
+Monocytes_CD16,CD16_Monocytes,NA,PTPRC,NA,Azimuth,Human,NA,CL_0002396,Human PBMCs reference
+Monocytes_CD16,CD16_Monocytes,NA,RHOC,NA,Azimuth,Human,NA,CL_0002396,Human PBMCs reference
+Monocytes_CD16,CD16_Monocytes,NA,S100A9,NA,Ira_Fleming,Human,Skin,NA,NA
+Monocytes_CD16,CD16_Monocytes,NA,TCF7L2,NA,Azimuth,Human,NA,CL_0002396,Human PBMCs reference
+Monocytes_CD16,CD16_Monocytes,NA,YBX1,NA,Azimuth,Human,NA,CL_0002396,Human PBMCs reference
+Monocytes_Macrophages,Monocytes_or_Macrophages,NA,C1QC,NA,CellTypist,Human,"Bone marrow, Liver, Oesophagus",CL:0000113,mononuclear phagocytes including monocytes and macrophages that are involved in the regulation of innate and adaptive immunity
+Monocytes_Macrophages,Monocytes_or_Macrophages,NA,CD14,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+Monocytes_Macrophages,Monocytes_or_Macrophages,NA,CD14,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Monocytes_Macrophages,Monocytes_or_Macrophages,NA,CD68,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+Monocytes_Macrophages,Monocytes_or_Macrophages,NA,CD68,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Monocytes_Macrophages,Monocytes_or_Macrophages,NA,CSF1R,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+Monocytes_Macrophages,Monocytes_or_Macrophages,NA,CSF1R,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Monocytes_Macrophages,Monocytes_or_Macrophages,NA,CST3,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+Monocytes_Macrophages,Monocytes_or_Macrophages,NA,CST3,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Monocytes_Macrophages,Monocytes_or_Macrophages,NA,FABP4,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+Monocytes_Macrophages,Monocytes_or_Macrophages,NA,FABP4,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Monocytes_Macrophages,Monocytes_or_Macrophages,NA,HMOX1,NA,CellTypist,Human,"Bone marrow, Liver, Oesophagus",CL:0000113,mononuclear phagocytes including monocytes and macrophages that are involved in the regulation of innate and adaptive immunity
+Monocytes_Macrophages,Monocytes_or_Macrophages,NA,MMP9,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+Monocytes_Macrophages,Monocytes_or_Macrophages,NA,MMP9,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Monocytes_Macrophages,Monocytes_or_Macrophages,NA,TYROBP,NA,CellTypist,Human,"Bone marrow, Liver, Oesophagus",CL:0000113,mononuclear phagocytes including monocytes and macrophages that are involved in the regulation of innate and adaptive immunity
+Monocytes_Non_Classical,Non_Classical_Monocytes,Non-Classical_Monocytes,C1QA,NA,CellTypist,Human,"Blood, Bone marrow, Decidua, Intestine, Kidney, Liver, Lung, Omentum, Skeletal muscle, Spleen, Thymus, Upper airway",CL:0000875,CD16+ myeloid mononuclear recirculating leukocytes that are capable of differentiating into macrophages and myeloid lineage dendritic cells
+Monocytes_Non_Classical,Non_Classical_Monocytes,Non-Classical_Monocytes,CX3CR1,NA,CellTypist,Human,"Blood, Bone marrow, Decidua, Intestine, Kidney, Liver, Lung, Omentum, Skeletal muscle, Spleen, Thymus, Upper airway",CL:0000875,CD16+ myeloid mononuclear recirculating leukocytes that are capable of differentiating into macrophages and myeloid lineage dendritic cells
+Monocytes_Non_Classical,Non_Classical_Monocytes,Non-Classical_Monocytes,FCGR3A,CD16,CellTypist,Human,"Blood, Bone marrow, Decidua, Intestine, Kidney, Liver, Lung, Omentum, Skeletal muscle, Spleen, Thymus, Upper airway",CL:0000875,CD16+ myeloid mononuclear recirculating leukocytes that are capable of differentiating into macrophages and myeloid lineage dendritic cells
+Monocytes_Precursor,Monocyte_Precursor,NA,LYZ,NA,CellTypist,Human,Liver,CL:0000576,monocyte precursors that are committed to the monocytes
+Monocytes_Precursor,Monocyte_Precursor,NA,S100A9,NA,CellTypist,Human,Liver,CL:0000576,monocyte precursors that are committed to the monocytes
+Monocytes_Precursor,Monocyte_Precursor,NA,VCAN,NA,CellTypist,Human,Liver,CL:0000576,monocyte precursors that are committed to the monocytes
+Muscle,Muscle_Cells,NA,KCNQ1OT1,NA,Literature,Human,Skin,doi.org/10.1101/689273,NA
+Muscle,Muscle_Cells,NA,NEAT1,NA,Literature,Human,Skin,doi.org/10.1101/689273,NA
+Myelocytes,Myelocytes,NA,CSTA,NA,CellTypist,Human,"Blood, Bone marrow",CL:0002193,early granulocyte precursors that are derive from promyelocytes and later mature into metamyelocytes
+Myelocytes,Myelocytes,NA,FTL,NA,CellTypist,Human,"Blood, Bone marrow",CL:0002193,early granulocyte precursors that are derive from promyelocytes and later mature into metamyelocytes
+Myelocytes,Myelocytes,NA,S100A8,NA,CellTypist,Human,"Blood, Bone marrow",CL:0002193,early granulocyte precursors that are derive from promyelocytes and later mature into metamyelocytes
+Myelocytes_Pro,Promyelocytes,NA,CTSG,NA,CellTypist,Human,Bone marrow,CL:0000836,early granulocyte progenitors in the bone marrow which are derived from the myeloblasts and develop into the myelocytes
+Myelocytes_Pro,Promyelocytes,NA,ELANE,NA,CellTypist,Human,Bone marrow,CL:0000836,early granulocyte progenitors in the bone marrow which are derived from the myeloblasts and develop into the myelocytes
+Myelocytes_Pro,Promyelocytes,NA,MPO,NA,CellTypist,Human,Bone marrow,CL:0000836,early granulocyte progenitors in the bone marrow which are derived from the myeloblasts and develop into the myelocytes
+Neutrophils,Neutrophils,NA,CXCR2,NA,Ira_Fleming,Human,Skin,NA,NA
+Neutrophils,Neutrophils,NA,FCGR3A,CD16,Mary_Tomayko,Human,Skin,NA,NA
+Neutrophils,Neutrophils,NA,FCGR3B,NA,Ira_Fleming,Human,Skin,NA,NA
+Neutrophils,Neutrophils,NA,ITGAM,NA,Mary_Tomayko,Human,Skin,NA,NA
+Neutrophils,Neutrophils,NA,LY6G6D,NA,Mary_Tomayko,Human,Skin,NA,NA
+Neutrophils,Neutrophils,NA,SOD2,NA,Ira_Fleming,Human,Skin,NA,NA
+NK,Natural_Killers,NA,CD247,NA,Azimuth,Human,NA,CL_0000623,Human PBMCs reference
+NK,Natural_Killers,NA,CD3D,NA,Ira_Fleming,Human,Skin,NA,NA
+NK,Natural_Killers,NA,CD3E,NA,Ira_Fleming,Human,Skin,NA,NA
+NK,Natural_Killers,NA,CST7,NA,Azimuth,Human,NA,CL_0000623,Human PBMCs reference
+NK,Natural_Killers,NA,FCER1G,NA,Azimuth,Human,NA,CL_0000623,Human PBMCs reference
+NK,Natural_Killers,NA,FCGR3A,CD16,Ira_Fleming,Human,Skin,NA,NA
+NK,Natural_Killers,NA,GNLY,NA,Azimuth,Human,NA,CL_0000623,Human PBMCs reference
+NK,Natural_Killers,NA,GNLY,NA,Ira_Fleming,Human,Skin,NA,NA
+NK,Natural_Killers,NA,GZMA,NA,Ira_Fleming,Human,Skin,NA,NA
+NK,Natural_Killers,NA,GZMB,NA,Azimuth,Human,NA,CL_0000623,Human PBMCs reference
+NK,Natural_Killers,NA,IFNG,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+NK,Natural_Killers,NA,IFNG,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+NK,Natural_Killers,NA,KLRB1,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+NK,Natural_Killers,NA,KLRB1,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+NK,Natural_Killers,NA,KLRC1,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+NK,Natural_Killers,NA,KLRC1,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+NK,Natural_Killers,NA,KLRC2,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+NK,Natural_Killers,NA,KLRC2,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+NK,Natural_Killers,NA,KLRD1,NA,Azimuth,Human,NA,CL_0000623,Human PBMCs reference
+NK,Natural_Killers,NA,KLRD1,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+NK,Natural_Killers,NA,KLRD1,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+NK,Natural_Killers,NA,KLRF1,NA,Azimuth,Human,NA,CL_0000623,Human PBMCs reference
+NK,Natural_Killers,NA,NKG7,NA,Azimuth,Human,NA,CL_0000623,Human PBMCs reference
+NK,Natural_Killers,NA,NKG7,NA,Ira_Fleming,Human,Skin,NA,NA
+NK,Natural_Killers,NA,PRF1,NA,Azimuth,Human,NA,CL_0000623,Human PBMCs reference
+NK,Natural_Killers,NA,TRAC,NA,Ira_Fleming,Human,Skin,NA,NA
+NK,Natural_Killers,NA,TYROBP,NA,Azimuth,Human,NA,CL_0000623,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_2,B2M,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_3,CCL5,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_1,CD3E,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Bright_Natural_Killers,NK_CD1656bright,CD44,NA,Azimuth,Human,NA,CL_0000938,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_3,CMC1,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_1,CST7,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_2,CST7,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Bright_Natural_Killers,NK_CD1656bright,FCER1G,NA,Azimuth,Human,NA,CL_0000938,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer,FCER1G,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_2,FCER1G,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer,FGFBP2,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_1,FGFBP2,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_2,FGFBP2,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer,GNLY,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_1,GNLY,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Bright_Natural_Killers,NK_CD1656bright,GPR183,NA,Azimuth,Human,NA,CL_0000938,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer,GZMB,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_1,GZMB,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_2,GZMB,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Bright_Natural_Killers,NK_CD1656bright,GZMK,NA,Azimuth,Human,NA,CL_0000938,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_4,GZMK,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_2,IGFBP7,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Bright_Natural_Killers,NK_CD1656bright,IL2RB,NA,Azimuth,Human,NA,CL_0000938,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_3,IL2RB,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_4,IL2RB,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_2,KLRB1,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_3,KLRB1,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Bright_Natural_Killers,NK_CD1656bright,KLRC1,NA,Azimuth,Human,NA,CL_0000938,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_3,KLRC1,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_4,KLRC1,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_1,KLRC2,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_3,KLRD1,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Bright_Natural_Killers,NK_CD1656bright,KLRF1,NA,Azimuth,Human,NA,CL_0000938,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer,KLRF1,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_3,KLRF1,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_4,KLRF1,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_1,LGALS1,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Bright_Natural_Killers,NK_CD1656bright,NCAM1,CD56,Azimuth,Human,NA,CL_0000938,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer,NKG7,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_1,NKG7,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_2,NKG7,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Bright_Natural_Killers,NK_CD1656bright,PPP1R9A,NA,Azimuth,Human,NA,CL_0000938,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer,PRF1,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_1,PRF1,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_2,PRF1,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_1,S100A4,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Bright_Natural_Killers,NK_CD1656bright,SELL,CD62L,Azimuth,Human,NA,CL_0000938,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_4,SELL,CD62L,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Bright_Natural_Killers,NK_CD1656bright,SPINK2,NA,Azimuth,Human,NA,CL_0000938,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer,SPON2,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_2,SPON2,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Bright_Natural_Killers,NK_CD1656bright,SPTSSB,NA,Azimuth,Human,NA,CL_0000938,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_4,SPTSSB,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_3,SYNE2,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_4,TCF7,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Bright_Natural_Killer,NK_CD1656bright,TNFRSF11A,NA,Azimuth,Human,NA,CL_0000938,Human PBMCs reference
+NK_CD56,CD56-Bright_Natural_Killers,NK_CD1656bright,TPT1,NA,Azimuth,Human,NA,CL_0000938,Human PBMCs reference
+NK_CD56,CD56-Bright_Natural_Killers,NK_CD1656bright,TRDC,NA,Azimuth,Human,NA,CL_0000938,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer,TRDC,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_3,TRDC,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_4,TRDC,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer,TYROBP,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Bright_Natural_Killers,NK_CD1656bright,XCL1,NA,Azimuth,Human,NA,CL_0000938,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_4,XCL1,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Bright_Natural_Killers,NK_CD1656bright,XCL2,NA,Azimuth,Human,NA,CL_0000938,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_3,XCL2,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_CD56,CD56-Dim_Natural_Killers,CD56-Dim_Natural_Killer_4,XCL2,NA,Azimuth,Human,NA,CL_0000939,Human PBMCs reference
+NK_Proliferating,Proliferating_Natural_Killers,NA,ASPM,NA,Azimuth,Human,NA,CL_0000623,Human PBMCs reference
+NK_Proliferating,Proliferating_Natural_Killers,NA,CD247,NA,Azimuth,Human,NA,CL_0000623,Human PBMCs reference
+NK_Proliferating,Proliferating_Natural_Killers,NA,CLSPN,NA,Azimuth,Human,NA,CL_0000623,Human PBMCs reference
+NK_Proliferating,Proliferating_Natural_Killers,NA,FCER1G,NA,Azimuth,Human,NA,CL_0000623,Human PBMCs reference
+NK_Proliferating,Proliferating_Natural_Killers,NA,KLRF1,NA,Azimuth,Human,NA,CL_0000623,Human PBMCs reference
+NK_Proliferating,Proliferating_Natural_Killers,NA,MKI67,Ki-67,Azimuth,Human,NA,CL_0000623,Human PBMCs reference
+NK_Proliferating,Proliferating_Natural_Killers,NA,PCLAF,NA,Azimuth,Human,NA,CL_0000623,Human PBMCs reference
+NK_Proliferating,Proliferating_Natural_Killers,NA,PCNA,NA,Azimuth,Human,NA,CL_0000623,Human PBMCs reference
+NK_Proliferating,Proliferating_Natural_Killers,NA,SMC2,NA,Azimuth,Human,NA,CL_0000623,Human PBMCs reference
+NK_Proliferating,Proliferating_Natural_Killers,NA,STMN1,NA,Azimuth,Human,NA,CL_0000623,Human PBMCs reference
+NK_Proliferating,Proliferating_Natural_Killers,NA,TOP2A,NA,Azimuth,Human,NA,CL_0000623,Human PBMCs reference
+NK_Proliferating,Proliferating_Natural_Killers,NA,TRDC,NA,Azimuth,Human,NA,CL_0000623,Human PBMCs reference
+NK_Proliferating,Proliferating_Natural_Killers,NA,TYMS,NA,Azimuth,Human,NA,CL_0000623,Human PBMCs reference
+NK_Proliferating,Proliferating_Natural_Killers,NA,TYROBP,NA,Azimuth,Human,NA,CL_0000623,Human PBMCs reference
+PB/PC,Plasmablasts_and_Plasma_Cells,NA,PRDM1,BLIMP1,Mary_Tomayko,Human,Skin,NA,NA
+PB/PC,Plasmablasts_and_Plasma_Cells,NA,CD19,NA,Mary_Tomayko,Human,Skin,NA,NA
+PB/PC,Plasmablasts_and_Plasma_Cells,NA,CD27,NA,Mary_Tomayko,Human,Skin,NA,NA
+PB/PC,Plasmablasts_and_Plasma_Cells,NA,CD38,NA,Mary_Tomayko,Human,Skin,NA,NA
+PB/PC,Plasmablasts_and_Plasma_Cells,NA,XBP1,NA,Mary_Tomayko,Human,Skin,NA,NA
+Pericytes,Pericytes,NA,ACTA2,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Pericytes,Pericytes,NA,CCL2,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Pericytes,Pericytes,NA,IL6,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Pericytes,Pericytes,NA,PDGFRB,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Pericytes,Pericytes,NA,RGS5,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Phagocytes_Mononuclear,Mononuclear_Phagocytes,MNP,FLG2,NA,CellTypist,Human,Intestine,CL:0000113,"mononuclear phagocytes including dendritic cells, monocytes and macrophages that have in common the property of phagocytosis"
+Phagocytes_Mononuclear,Mononuclear_Phagocytes,MNP,HLA-DPA1,NA,CellTypist,Human,Intestine,CL:0000113,"mononuclear phagocytes including dendritic cells, monocytes and macrophages that have in common the property of phagocytosis"
+Phagocytes_Mononuclear,Mononuclear_Phagocytes,MNP,HLA-DQA1,NA,CellTypist,Human,Intestine,CL:0000113,"mononuclear phagocytes including dendritic cells, monocytes and macrophages that have in common the property of phagocytosis"
+Plasma,Plasma_Cells,NA,CD79A,NA,Azimuth,Human,NA,CL_0000786,Human PBMCs reference
+Plasma,Plasma_Cells,NA,DERL3,NA,Azimuth,Human,NA,CL_0000786,Human PBMCs reference
+Plasma,Plasma_Cells,NA,IGHA1,NA,Azimuth,Human,NA,CL_0000786,Human PBMCs reference
+Plasma,Plasma_Cells,NA,IGHG1,NA,Ira_Fleming,Human,Skin,NA,NA
+Plasma,Plasma_Cells,NA,IGHG1,NA,Literature,Human,Skin,doi.org/10.1101/689273,NA
+Plasma,Plasma_Cells,NA,JCHAIN,IGJ,Ira_Fleming,Human,Skin,NA,NA
+Plasma,Plasma_Cells,NA,IGKC,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+Plasma,Plasma_Cells,NA,IGKC,NA,Ira_Fleming,Human,Skin,NA,NA
+Plasma,Plasma_Cells,NA,ITM2C,NA,Azimuth,Human,NA,CL_0000786,Human PBMCs reference
+Plasma,Plasma_Cells,NA,JCHAIN,NA,Azimuth,Human,NA,CL_0000786,Human PBMCs reference
+Plasma,Plasma_Cells,NA,JCHAIN,NA,CellTypist,Human,"Blood, Bone marrow, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Spleen, Thymus",CL:0000786,B-lymphocyte white blood cells capable of secreting large quantities of immunoglobulins or antibodies
+Plasma,Plasma_Cells,NA,JCHAIN,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+Plasma,Plasma_Cells,NA,MKI67,Ki-67,CellTypist,Human,"Blood, Bone marrow, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Spleen",CL:0000980,short-lived B cells that differ from plasma cells in their proliferation capability
+Plasma,Plasma_Cells,NA,MZB1,NA,Azimuth,Human,NA,CL_0000786,Human PBMCs reference
+Plasma,Plasma_Cells,NA,MZB1,NA,CellTypist,Human,"Blood, Bone marrow, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Spleen, Thymus",CL:0000786,B-lymphocyte white blood cells capable of secreting large quantities of immunoglobulins or antibodies
+Plasma,Plasma_Cells,NA,POU2AF1,NA,Azimuth,Human,NA,CL_0000786,Human PBMCs reference
+Plasma,Plasma_Cells,NA,SDC1,CD138,CellTypist,Human,"Blood, Bone marrow, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Spleen",CL:0000980,short-lived B cells that differ from plasma cells in their proliferation capability
+Plasma,Plasma_Cells,NA,SLAMF7,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+Plasma,Plasma_Cells,NA,TNFRSF17,CD269,Azimuth,Human,NA,CL_0000786,Human PBMCs reference
+Plasma,Plasma_Cells,NA,TXNDC11,NA,Azimuth,Human,NA,CL_0000786,Human PBMCs reference
+Plasma,Plasma_Cells,NA,TXNDC5,NA,Azimuth,Human,NA,CL_0000786,Human PBMCs reference
+Plasma,Plasma_Cells,NA,XBP1,NA,CellTypist,Human,"Blood, Bone marrow, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Spleen, Thymus",CL:0000786,B-lymphocyte white blood cells capable of secreting large quantities of immunoglobulins or antibodies
+Plasma,Plasma_Cells,NA,XBP1,NA,CellTypist,Human,"Blood, Bone marrow, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Spleen",CL:0000980,short-lived B cells that differ from plasma cells in their proliferation capability
+Plasmablasts,Plasmablasts,NA,ASPM,NA,Azimuth,Human,NA,CL_0000980,Human PBMCs reference
+Plasmablasts,Plasmablasts,NA,BIRC5,NA,Azimuth,Human,NA,CL_0000980,Human PBMCs reference
+Plasmablasts,Plasmablasts,NA,CPNE5,NA,Azimuth,Human,NA,CL_0000980,Human PBMCs reference
+Plasmablasts,Plasmablasts,NA,DERL3,NA,Azimuth,Human,NA,CL_0000980,Human PBMCs reference
+Plasmablasts,Plasmablasts,NA,PLAAT2,HRASLS2,Azimuth,Human,NA,CL_0000980,Human PBMCs reference
+Plasmablasts,Plasmablasts,NA,IGHA2,NA,Azimuth,Human,NA,CL_0000980,Human PBMCs reference
+Plasmablasts,Plasmablasts,NA,KNL1,NA,Azimuth,Human,NA,CL_0000980,Human PBMCs reference
+Plasmablasts,Plasmablasts,NA,MZB1,NA,Azimuth,Human,NA,CL_0000980,Human PBMCs reference
+Plasmablasts,Plasmablasts,NA,NT5DC2,NA,Azimuth,Human,NA,CL_0000980,Human PBMCs reference
+Plasmablasts,Plasmablasts,NA,POU2AF1,NA,Azimuth,Human,NA,CL_0000980,Human PBMCs reference
+Plasmablasts,Plasmablasts,NA,RRM2,NA,Azimuth,Human,NA,CL_0000980,Human PBMCs reference
+Plasmablasts,Plasmablasts,NA,SHCBP1,NA,Azimuth,Human,NA,CL_0000980,Human PBMCs reference
+Plasmablasts,Plasmablasts,NA,TK1,NA,Azimuth,Human,NA,CL_0000980,Human PBMCs reference
+Plasmablasts,Plasmablasts,NA,TNFRSF13B,CD267,Azimuth,Human,NA,CL_0000980,Human PBMCs reference
+Plasmablasts,Plasmablasts,NA,TNFRSF17,CD269,Azimuth,Human,NA,CL_0000980,Human PBMCs reference
+Plasmablasts,Plasmablasts,NA,TPX2,NA,Azimuth,Human,NA,CL_0000980,Human PBMCs reference
+Plasmablasts,Plasmablasts,NA,TXNDC5,NA,Azimuth,Human,NA,CL_0000980,Human PBMCs reference
+Plasmablasts,Plasmablasts,NA,TYMS,NA,Azimuth,Human,NA,CL_0000980,Human PBMCs reference
+Platelets,Platelets,NA,CAVIN2,NA,Azimuth,Human,NA,CL_0000233,Human PBMCs reference
+Platelets,Platelets,NA,CLU,NA,Azimuth,Human,NA,CL_0000233,Human PBMCs reference
+Platelets,Platelets,NA,F13A1,NA,Azimuth,Human,NA,CL_0000233,Human PBMCs reference
+Platelets,Platelets,NA,GNG11,NA,Azimuth,Human,NA,CL_0000233,Human PBMCs reference
+Platelets,Platelets,NA,GP9,NA,Azimuth,Human,NA,CL_0000233,Human PBMCs reference
+Platelets,Platelets,NA,HIST1H2AC,NA,Azimuth,Human,NA,CL_0000233,Human PBMCs reference
+Platelets,Platelets,NA,NRGN,NA,Azimuth,Human,NA,CL_0000233,Human PBMCs reference
+Platelets,Platelets,NA,PF4,NA,Azimuth,Human,NA,CL_0000233,Human PBMCs reference
+Platelets,Platelets,NA,PF4,NA,Ira_Fleming,Human,Skin,NA,NA
+Platelets,Platelets,NA,PPBP,NA,Azimuth,Human,NA,CL_0000233,Human PBMCs reference
+Platelets,Platelets,NA,PPBP,NA,Ira_Fleming,Human,Skin,NA,NA
+Platelets,Platelets,NA,PRKAR2B,NA,Azimuth,Human,NA,CL_0000233,Human PBMCs reference
+Platelets,Platelets,NA,RGS18,NA,Azimuth,Human,NA,CL_0000233,Human PBMCs reference
+Platelets,Platelets,NA,TUBB1,NA,Azimuth,Human,NA,CL_0000233,Human PBMCs reference
+Platelets,Platelets,NA,TUBB1,NA,Ira_Fleming,Human,Skin,NA,NA
+Progenitors_Early_Thymic,Early_Thymic_Progenitors,ETP,ACY3,NA,CellTypist,Human,Thymus,CL:0000893,early thymic progenitors migrated to the thymus before turning into double-negative thymocytes or other cells
+Progenitors_Early_Thymic,Early_Thymic_Progenitors,ETP,CD34,NA,CellTypist,Human,Thymus,CL:0000893,early thymic progenitors migrated to the thymus before turning into double-negative thymocytes or other cells
+Progenitors_Early_Thymic,Early_Thymic_Progenitors,ETP,SPINK2,NA,CellTypist,Human,Thymus,CL:0000893,early thymic progenitors migrated to the thymus before turning into double-negative thymocytes or other cells
+Proliferating,Proliferating,NA,MKI67,Ki-67,Ira_Fleming,Human,Skin,NA,NA
+Proliferating,Proliferating,NA,TOP2A,NA,Ira_Fleming,Human,Skin,NA,NA
+Schwann,Schwann_Cells,NA,MPZ,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Schwann,Schwann_Cells,NA,S100B,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+Schwann,Schwann_Cells,NA,SCN7A,NA,Literature,Human,Skin,doi.org/10.1101/689273,NA
+T,TEM/TRM_Cytotoxic_T_Cells,NA,CCL5,NA,CellTypist,Human,"Blood, Bone marrow, Decidua, Eye, Intestine, Kidney, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Omentum, Skeletal muscle, Spleen, Thymus",CL:0000913,"CD8+ cytotoxic T lymphocytes mainly localized in lymphoid and peripheral tissues and presenting an immediate, but not sustained, immune defense"
+T,TCM/Naive_Helper_T_Cells,NA,CCR7,NA,CellTypist,Human,"Blood, Bone marrow, Decidua, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Skeletal muscle, Spleen, Thymus",CL:0000904,CD4+ helper T lymphocytes mainly localized in secondary lymphoid tissues and sustaining the responses by proliferating and producing new effectors
+T,TCM/Naive_Cytotoxic_T_Cells,NA,CCR7,NA,CellTypist,Human,"Blood, Bone marrow, Decidua, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Spleen, Thymus",CL:0000907,CD8+ cytotoxic T lymphocytes mainly localized in secondary lymphoid tissues and sustaining the responses by proliferating and producing new effectors
+T,T_Cells,NA,CCR7,NA,Mary_Tomayko,Human,Skin,NA,NA
+T,T_Cells,NA,CD2,NA,Mary_Tomayko,Human,Skin,NA,NA
+T,T_Cells,NA,CD3D,NA,Mary_Tomayko,Human,Skin,NA,NA
+T,T_Cells,NA,CD3D,NA,Literature,Human,Skin,doi.org/10.1101/689273,NA
+T,T_Cells,NA,CD3E,NA,Mary_Tomayko,Human,Skin,NA,NA
+T,T_Cells,NA,CD3G,NA,Mary_Tomayko,Human,Skin,NA,NA
+T,TCM/Naive_Helper_T_Cells,NA,CD4,NA,CellTypist,Human,"Blood, Bone marrow, Decidua, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Skeletal muscle, Spleen, Thymus",CL:0000904,CD4+ helper T lymphocytes mainly localized in secondary lymphoid tissues and sustaining the responses by proliferating and producing new effectors
+T,T_Cells,NA,CD4,NA,Mary_Tomayko,Human,Skin,NA,NA
+T,T_Cells,NA,CD6,NA,Mary_Tomayko,Human,Skin,NA,NA
+T,TEM/TRM_Cytotoxic_T_Cells,NA,CD8A,NA,CellTypist,Human,"Blood, Bone marrow, Decidua, Eye, Intestine, Kidney, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Omentum, Skeletal muscle, Spleen, Thymus",CL:0000913,"CD8+ cytotoxic T lymphocytes mainly localized in lymphoid and peripheral tissues and presenting an immediate, but not sustained, immune defense"
+T,TCM/Naive_Cytotoxic_T_Cells,NA,CD8A,NA,CellTypist,Human,"Blood, Bone marrow, Decidua, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Spleen, Thymus",CL:0000907,CD8+ cytotoxic T lymphocytes mainly localized in secondary lymphoid tissues and sustaining the responses by proliferating and producing new effectors
+T,T_Cells,NA,CD8A,NA,Mary_Tomayko,Human,Skin,NA,NA
+T,T_Cells,NA,CD8B,NA,Mary_Tomayko,Human,Skin,NA,NA
+T,TEM/TEMra_Cytotoxic_T_Cells,NA,CX3CR1,NA,CellTypist,Human,"Blood, Bone marrow, Decidua, Eye, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Omentum, Skeletal muscle, Spleen, Thymus",CL:0001062,terminally differentiated CD8+ cytotoxic T lymphocytes with effector memory phenotypes that re-express CD45RA
+T,TRM_Cytotoxic_T_Cells,NA,CXCR6,NA,CellTypist,Human,"Intestine, Mesenteric lymph node, Spleen",CL:0000913,tissue resident CD8+ cytotoxic T lymphocytes mainly localized in epithelial tissues such as gut
+T,TEM/TEMra_Cytotoxic_T_Cells,NA,GNLY,NA,CellTypist,Human,"Blood, Bone marrow, Decidua, Eye, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Omentum, Skeletal muscle, Spleen, Thymus",CL:0001062,terminally differentiated CD8+ cytotoxic T lymphocytes with effector memory phenotypes that re-express CD45RA
+T,TEM/TEMra_Cytotoxic_T_Cells,NA,GZMB,NA,CellTypist,Human,"Blood, Bone marrow, Decidua, Eye, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Omentum, Skeletal muscle, Spleen, Thymus",CL:0001062,terminally differentiated CD8+ cytotoxic T lymphocytes with effector memory phenotypes that re-express CD45RA
+T,TEM/TRM_Cytotoxic_T_Cells,NA,GZMK,NA,CellTypist,Human,"Blood, Bone marrow, Decidua, Eye, Intestine, Kidney, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Omentum, Skeletal muscle, Spleen, Thymus",CL:0000913,"CD8+ cytotoxic T lymphocytes mainly localized in lymphoid and peripheral tissues and presenting an immediate, but not sustained, immune defense"
+T,T_Cells,NA,IL7R,NA,Mary_Tomayko,Human,Skin,NA,NA
+T,TRM_Cytotoxic_T_Cells,NA,ITGA1,NA,CellTypist,Human,"Intestine, Mesenteric lymph node, Spleen",CL:0000913,tissue resident CD8+ cytotoxic T lymphocytes mainly localized in epithelial tissues such as gut
+T,TRM_Cytotoxic_T_Cells,NA,ITGAE,NA,CellTypist,Human,"Intestine, Mesenteric lymph node, Spleen",CL:0000913,tissue resident CD8+ cytotoxic T lymphocytes mainly localized in epithelial tissues such as gut
+T,T_Cells,NA,NKG7,NA,Mary_Tomayko,Human,Skin,NA,NA
+T,TCM/Naive_Helper_T_Cells,NA,SELL,CD62L,CellTypist,Human,"Blood, Bone marrow, Decidua, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Skeletal muscle, Spleen, Thymus",CL:0000904,CD4+ helper T lymphocytes mainly localized in secondary lymphoid tissues and sustaining the responses by proliferating and producing new effectors
+T,TCM/Naive_Cytotoxic_T_Cells,NA,SELL,CD62L,CellTypist,Human,"Blood, Bone marrow, Decidua, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Spleen, Thymus",CL:0000907,CD8+ cytotoxic T lymphocytes mainly localized in secondary lymphoid tissues and sustaining the responses by proliferating and producing new effectors
+T,T_Cells,NA,TRBC2,NA,Literature,Human,Skin,doi.org/10.1101/689273,NA
+T_Activated,Activated_T_Cells,NA,IL2RA,NA,Literature,Human,NA,doi.org/10.1101/2022.08.13.503873,NA
+T_Agonist,Agonist_T_Cells,T(Agonist),BIRC3,NA,CellTypist,Human,Thymus,CL:0000815,unconventional T cell subpopulation in the thymus which expresses MIR155HG and shares some signatures with differentiating regulatory T cells
+T_Agonist,Agonist_T_Cells,T(Agonist),MIR155HG,NA,CellTypist,Human,Thymus,CL:0000815,unconventional T cell subpopulation in the thymus which expresses MIR155HG and shares some signatures with differentiating regulatory T cells
+T_Agonist,Agonist_T_Cells,T(Agonist),SMS,NA,CellTypist,Human,Thymus,CL:0000815,unconventional T cell subpopulation in the thymus which expresses MIR155HG and shares some signatures with differentiating regulatory T cells
+T_CD4,CD4_T_Cells,NA,CCR7,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+T_CD4,CD4_T_Cells,NA,CCR7,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+T_CD4,CD4_T_Cells,NA,CD28,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+T_CD4,CD4_T_Cells,NA,CD28,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+T_CD4,CD4_T_Cells,NA,CD3D,NA,Azimuth,Human,NA,CL_0000624,Human PBMCs reference
+T_CD4,CD4_T_Cells,NA,CD3D,NA,Ira_Fleming,Human,Skin,NA,NA
+T_CD4,CD4_T_Cells,NA,CD3E,NA,Ira_Fleming,Human,Skin,NA,NA
+T_CD4,CD4_T_Cells,NA,CD3G,NA,Azimuth,Human,NA,CL_0000624,Human PBMCs reference
+T_CD4,CD4_T_Cells,NA,CD4,NA,Azimuth,Human,NA,CL_0000624,Human PBMCs reference
+T_CD4,CD4_T_Cells,NA,CD4,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+T_CD4,CD4_T_Cells,NA,CD4,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+T_CD4,CD4_T_Cells,NA,CD4,NA,Ira_Fleming,Human,Skin,NA,NA
+T_CD4,CD4_T_Cells,NA,CD6,NA,Ira_Fleming,Human,Skin,NA,NA
+T_CD4,CD4_T_Cells,NA,IL7R,NA,Azimuth,Human,NA,CL_0000624,Human PBMCs reference
+T_CD4,CD4_T_Cells,NA,IL7R,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+T_CD4,CD4_T_Cells,NA,IL7R,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+T_CD4,CD4_T_Cells,NA,IL7R,NA,Ira_Fleming,Human,Skin,NA,NA
+T_CD4,CD4_T_Cells,NA,LDHB,NA,Azimuth,Human,NA,CL_0000624,Human PBMCs reference
+T_CD4,CD4_T_Cells,NA,LTB,NA,Azimuth,Human,NA,CL_0000624,Human PBMCs reference
+T_CD4,CD4_T_Cells,NA,MAL,NA,Azimuth,Human,NA,CL_0000624,Human PBMCs reference
+T_CD4,CD4_T_Cells,NA,TCF7,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+T_CD4,CD4_T_Cells,NA,TCF7,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+T_CD4,CD4_T_Cells,NA,TCF7,NA,Ira_Fleming,Human,Skin,NA,NA
+T_CD4,CD4_T_Cells,NA,TMSB10,NA,Azimuth,Human,NA,CL_0000624,Human PBMCs reference
+T_CD4,CD4_T_Cells,NA,TPT1,NA,Azimuth,Human,NA,CL_0000624,Human PBMCs reference
+T_CD4,CD4_T_Cells,NA,TRAC,NA,Azimuth,Human,NA,CL_0000624,Human PBMCs reference
+T_CD4,CD4_T_Cells,NA,TRAC,NA,Ira_Fleming,Human,Skin,NA,NA
+T_CD8,CD8_T_Cells,CD8a/B(Entry),CCR9,NA,CellTypist,Human,Thymus,CL:0002430,T lymphocytes with CD8 alpha/beta heterodimers in the late double-positive (entry) stage during T cell development
+T_CD8,CD8_T_Cells,NA,CD3D,NA,Azimuth,Human,NA,CL_0000625,Human PBMCs reference
+T_CD8,CD8_T_Cells,NA,CD3D,NA,Ira_Fleming,Human,Skin,NA,NA
+T_CD8,CD8_T_Cells,NA,CD3E,NA,Azimuth,Human,NA,CL_0000625,Human PBMCs reference
+T_CD8,CD8_T_Cells,NA,CD3E,NA,Ira_Fleming,Human,Skin,NA,NA
+T_CD8,CD8_T_Cells,NA,CD3G,NA,Azimuth,Human,NA,CL_0000625,Human PBMCs reference
+T_CD8,CD8_T_Cells,NA,CD6,NA,Ira_Fleming,Human,Skin,NA,NA
+T_CD8,CD8_T_Cells,NA,CD8A,NA,Azimuth,Human,NA,CL_0000625,Human PBMCs reference
+T_CD8,CD8_T_Cells,NA,CD8A,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+T_CD8,CD8_T_Cells,NA,CD8A,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+T_CD8,CD8_T_Cells,NA,CD8A,NA,Ira_Fleming,Human,Skin,NA,NA
+T_CD8,CD8_T_Cells,NA,CD8B,NA,Azimuth,Human,NA,CL_0000625,Human PBMCs reference
+T_CD8,CD8_T_Cells,NA,CD8B,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+T_CD8,CD8_T_Cells,NA,CD8B,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+T_CD8,CD8_T_Cells,NA,CD8B,NA,Ira_Fleming,Human,Skin,NA,NA
+T_CD8,CD8_T_Cells,NA,CTSW,NA,Azimuth,Human,NA,CL_0000625,Human PBMCs reference
+T_CD8,CD8_T_Cells,NA,FCGR3A,CD16,Ira_Fleming,Human,Skin,NA,NA
+T_CD8,CD8_T_Cells,CD8a/A,GNG4,NA,CellTypist,Human,Thymus,CL:0000084,unconventional T lymphocytes with CD8 alpha/alpha homodimers binding MHC molecules
+T_CD8,CD8_T_Cells,NA,GZMA,NA,Ira_Fleming,Human,Skin,NA,NA
+T_CD8,CD8_T_Cells,NA,HCST,NA,Azimuth,Human,NA,CL_0000625,Human PBMCs reference
+T_CD8,CD8_T_Cells,NA,LINC02446,NA,Azimuth,Human,NA,CL_0000625,Human PBMCs reference
+T_CD8,CD8_T_Cells,CD8a/A,PDCD1,CD279,CellTypist,Human,Thymus,CL:0000084,unconventional T lymphocytes with CD8 alpha/alpha homodimers binding MHC molecules
+T_CD8,CD8_T_Cells,CD8a/B(Entry),SATB1,NA,CellTypist,Human,Thymus,CL:0002430,T lymphocytes with CD8 alpha/beta heterodimers in the late double-positive (entry) stage during T cell development
+T_CD8,CD8_T_Cells,NA,TCF7,NA,Ira_Fleming,Human,Skin,NA,NA
+T_CD8,CD8_T_Cells,NA,TMSB10,NA,Azimuth,Human,NA,CL_0000625,Human PBMCs reference
+T_CD8,CD8_T_Cells,CD8a/B(Entry),TOX2,NA,CellTypist,Human,Thymus,CL:0002430,T lymphocytes with CD8 alpha/beta heterodimers in the late double-positive (entry) stage during T cell development
+T_CD8,CD8_T_Cells,NA,TRAC,NA,Azimuth,Human,NA,CL_0000625,Human PBMCs reference
+T_CD8,CD8_T_Cells,NA,TRAC,NA,Ira_Fleming,Human,Skin,NA,NA
+T_CD8,CD8_T_Cells,CD8a/A,ZNF683,NA,CellTypist,Human,Thymus,CL:0000084,unconventional T lymphocytes with CD8 alpha/alpha homodimers binding MHC molecules
+T_CD8_Naive,CD8_Naive_T_Cells,CD8_Naive_T_Cells_2,CCR5,NA,Azimuth,Human,NA,CL_0000900,Human PBMCs reference
+T_CD8_Naive,CD8_Naive_T_Cells,CD8_Naive_T_Cells,CCR7,NA,Azimuth,Human,NA,CL_0000900,Human PBMCs reference
+T_CD8_Naive,CD8_Naive_T_Cells,CD8_Naive_T_Cells_2,CD38,NA,Azimuth,Human,NA,CL_0000900,Human PBMCs reference
+T_CD8_Naive,CD8_Naive_T_Cells,CD8_Naive_T_Cells,CD8A,NA,Azimuth,Human,NA,CL_0000900,Human PBMCs reference
+T_CD8_Naive,CD8_Naive_T_Cells,CD8_Naive_T_Cells_2,CD8A,NA,Azimuth,Human,NA,CL_0000900,Human PBMCs reference
+T_CD8_Naive,CD8_Naive_T_Cells,CD8_Naive_T_Cells,CD8B,NA,Azimuth,Human,NA,CL_0000900,Human PBMCs reference
+T_CD8_Naive,CD8_Naive_T_Cells,CD8_Naive_T_Cells_2,CD8B,NA,Azimuth,Human,NA,CL_0000900,Human PBMCs reference
+T_CD8_Naive,CD8_Naive_T_Cells,CD8_Naive_T_Cells_2,CHI3L2,NA,Azimuth,Human,NA,CL_0000900,Human PBMCs reference
+T_CD8_Naive,CD8_Naive_T_Cells,CD8_Naive_T_Cells,CRTAM,NA,Azimuth,Human,NA,CL_0000900,Human PBMCs reference
+T_CD8_Naive,CD8_Naive_T_Cells,CD8_Naive_T_Cells,ID2,NA,Azimuth,Human,NA,CL_0000900,Human PBMCs reference
+T_CD8_Naive,CD8_Naive_T_Cells,CD8_Naive_T_Cells,LDHB,NA,Azimuth,Human,NA,CL_0000900,Human PBMCs reference
+T_CD8_Naive,CD8_Naive_T_Cells,CD8_Naive_T_Cells,LEF1,NA,Azimuth,Human,NA,CL_0000900,Human PBMCs reference
+T_CD8_Naive,CD8_Naive_T_Cells,CD8_Naive_T_Cells_2,LEF1,NA,Azimuth,Human,NA,CL_0000900,Human PBMCs reference
+T_CD8_Naive,CD8_Naive_T_Cells,CD8_Naive_T_Cells,LINC02446,NA,Azimuth,Human,NA,CL_0000900,Human PBMCs reference
+T_CD8_Naive,CD8_Naive_T_Cells,CD8_Naive_T_Cells_2,LRRN3,NA,Azimuth,Human,NA,CL_0000900,Human PBMCs reference
+T_CD8_Naive,CD8_Naive_T_Cells,CD8_Naive_T_Cells,NOSIP,NA,Azimuth,Human,NA,CL_0000900,Human PBMCs reference
+T_CD8_Naive,CD8_Naive_T_Cells,CD8_Naive_T_Cells,OXNAD1,NA,Azimuth,Human,NA,CL_0000900,Human PBMCs reference
+T_CD8_Naive,CD8_Naive_T_Cells,CD8_Naive_T_Cells,RGS10,NA,Azimuth,Human,NA,CL_0000900,Human PBMCs reference
+T_CD8_Naive,CD8_Naive_T_Cells,CD8_Naive_T_Cells,S100B,NA,Azimuth,Human,NA,CL_0000900,Human PBMCs reference
+T_CD8_Naive,CD8_Naive_T_Cells,CD8_Naive_T_Cells_2,SIRPG,NA,Azimuth,Human,NA,CL_0000900,Human PBMCs reference
+T_CD8_Naive,CD8_Naive_T_Cells,CD8_Naive_T_Cells_2,SOX4,NA,Azimuth,Human,NA,CL_0000900,Human PBMCs reference
+T_CD8_Naive,CD8_Naive_T_Cells,CD8_Naive_T_Cells,TCF7,NA,Azimuth,Human,NA,CL_0000900,Human PBMCs reference
+T_CD8_Naive,CD8_Naive_T_Cells,CD8_Naive_T_Cells_2,TNFRSF9,NA,Azimuth,Human,NA,CL_0000900,Human PBMCs reference
+T_CD8_Naive,CD8_Naive_T_Cells,CD8_Naive_T_Cells,VIM,NA,Azimuth,Human,NA,CL_0000900,Human PBMCs reference
+T_CD8_Proliferating,CD8_Proliferating_T_Cells,NA,CD3D,NA,Azimuth,Human,NA,CL_0000906,Human PBMCs reference
+T_CD8_Proliferating,CD8_Proliferating_T_Cells,NA,CD3G,NA,Azimuth,Human,NA,CL_0000906,Human PBMCs reference
+T_CD8_Proliferating,CD8_Proliferating_T_Cells,NA,CD8B,NA,Azimuth,Human,NA,CL_0000906,Human PBMCs reference
+T_CD8_Proliferating,CD8_Proliferating_T_Cells,NA,CHEK1,NA,Azimuth,Human,NA,CL_0000906,Human PBMCs reference
+T_CD8_Proliferating,CD8_Proliferating_T_Cells,NA,CLSPN,NA,Azimuth,Human,NA,CL_0000906,Human PBMCs reference
+T_CD8_Proliferating,CD8_Proliferating_T_Cells,NA,MKI67,Ki-67,Azimuth,Human,NA,CL_0000906,Human PBMCs reference
+T_CD8_Proliferating,CD8_Proliferating_T_Cells,NA,PCLAF,NA,Azimuth,Human,NA,CL_0000906,Human PBMCs reference
+T_CD8_Proliferating,CD8_Proliferating_T_Cells,NA,RRM2,NA,Azimuth,Human,NA,CL_0000906,Human PBMCs reference
+T_CD8_Proliferating,CD8_Proliferating_T_Cells,NA,TK1,NA,Azimuth,Human,NA,CL_0000906,Human PBMCs reference
+T_CD8_Proliferating,CD8_Proliferating_T_Cells,NA,TRAC,NA,Azimuth,Human,NA,CL_0000906,Human PBMCs reference
+T_CD8_Proliferating,CD8_Proliferating_T_Cells,NA,TYMS,NA,Azimuth,Human,NA,CL_0000906,Human PBMCs reference
+T_Cycling,Cycling_T_Cells,NA,CD3D,NA,CellTypist,Human,"Intestine, Spleen",CL:0000084,proliferating T lymphocytes
+T_Cycling,Cycling_Gamma-Delta_T_Cells,T_CD8RM,MKI67,Ki-67,CellTypist,Human,Intestine,CL:0000798,proliferating gamma-delta (γδ) T lymphocytes
+T_Cycling,Cycling_T_Cells,NA,MKI67,Ki-67,CellTypist,Human,"Intestine, Spleen",CL:0000084,proliferating T lymphocytes
+T_Cycling,Cycling_Gamma-Delta_T_Cells,NA,TOP2A,NA,CellTypist,Human,Intestine,CL:0000798,proliferating gamma-delta (γδ) T lymphocytes
+T_Cycling,Cycling_T_Cells,NA,TOP2A,NA,CellTypist,Human,"Intestine, Spleen",CL:0000084,proliferating T lymphocytes
+T_Cycling,Cycling_Gamma-Delta_T_Cells,NA,TRDC,NA,CellTypist,Human,Intestine,CL:0000798,proliferating gamma-delta (γδ) T lymphocytes
+T_Cytotoxic_CD4,CD4_Cytotoxic_T_Cells,NA,B2M,NA,Azimuth,Human,NA,CL_0000934,Human PBMCs reference
+T_Cytotoxic_CD4,CD4_Cytotoxic_T_Cells,NA,CCL5,NA,Azimuth,Human,NA,CL_0000934,Human PBMCs reference
+T_Cytotoxic_CD4,CD4_Cytotoxic_T_Cells,NA,CD4,NA,Azimuth,Human,NA,CL_0000934,Human PBMCs reference
+T_Cytotoxic_CD4,CD4_Cytotoxic_T_Cells,Memory_CD4+_Cytotoxic_T_Cells,CD4,NA,CellTypist,Human,Thymus,CL:0000934,CD4+ memory T cells which have cytotoxic activities by secreting granzymes and perforin and by killing target cells on the basis of MHC class II
+T_Cytotoxic_CD4,CD4_Cytotoxic_T_Cells,NA,CST7,NA,Azimuth,Human,NA,CL_0000934,Human PBMCs reference
+T_Cytotoxic_CD4,CD4_Cytotoxic_T_Cells,NA,FGFBP2,NA,Azimuth,Human,NA,CL_0000934,Human PBMCs reference
+T_Cytotoxic_CD4,CD4_Cytotoxic_T_Cells,NA,GNLY,NA,Azimuth,Human,NA,CL_0000934,Human PBMCs reference
+T_Cytotoxic_CD4,CD4_Cytotoxic_T_Cells,NA,GZMA,NA,Azimuth,Human,NA,CL_0000934,Human PBMCs reference
+T_Cytotoxic_CD4,CD4_Cytotoxic_T_Cells,NA,GZMH,NA,Azimuth,Human,NA,CL_0000934,Human PBMCs reference
+T_Cytotoxic_CD4,CD4_Cytotoxic_T_Cells,Memory_CD4+_Cytotoxic_T_Cells,GZMK,NA,CellTypist,Human,Thymus,CL:0000934,CD4+ memory T cells which have cytotoxic activities by secreting granzymes and perforin and by killing target cells on the basis of MHC class II
+T_Cytotoxic_CD4,CD4_Cytotoxic_T_Cells,Memory_CD4+_Cytotoxic_T_Cells,IL10,NA,CellTypist,Human,Thymus,CL:0000934,CD4+ memory T cells which have cytotoxic activities by secreting granzymes and perforin and by killing target cells on the basis of MHC class II
+T_Cytotoxic_CD4,CD4_Cytotoxic_T_Cells,NA,IL32,NA,Azimuth,Human,NA,CL_0000934,Human PBMCs reference
+T_Cytotoxic_CD4,CD4_Cytotoxic_T_Cells,NA,IL7R,NA,Azimuth,Human,NA,CL_0000934,Human PBMCs reference
+T_Cytotoxic_CD4,CD4_Cytotoxic_T_Cells,NA,ITGB1,NA,Azimuth,Human,NA,CL_0000934,Human PBMCs reference
+T_Cytotoxic_CD4,CD4_Cytotoxic_T_Cells,NA,NKG7,NA,Azimuth,Human,NA,CL_0000934,Human PBMCs reference
+T_Cytotoxic_CD4,CD4_Cytotoxic_T_Cells,NA,S100A4,NA,Azimuth,Human,NA,CL_0000934,Human PBMCs reference
+T_DN,Double_Negative_T_Cells,Double-Negative_T,AC004585.1,NA,Azimuth,Human,NA,CL_0000935,Human PBMCs reference
+T_DN,Double_Negative_T_Cells,Double-Negative_T_2,AC004585.1,NA,Azimuth,Human,NA,CL_0000935,Human PBMCs reference
+T_DN,Double_Negative_T_Cells,Double-Negative_T_1,C12orf57,NA,Azimuth,Human,NA,CL_0000935,Human PBMCs reference
+T_DN,Double_Negative_T_Cells,Double-Negative_T,CAV1,NA,Azimuth,Human,NA,CL_0000935,Human PBMCs reference
+T_DN,Double_Negative_T_Cells,Double-Negative_T_2,CAV1,NA,Azimuth,Human,NA,CL_0000935,Human PBMCs reference
+T_DN,Double_Negative_T_Cells,Double-Negative_T_2,CD27,NA,Azimuth,Human,NA,CL_0000935,Human PBMCs reference
+T_DN,Double_Negative_T_Cells,Double-Negative_T_1,CD8B,NA,Azimuth,Human,NA,CL_0000935,Human PBMCs reference
+T_DN,Double_Negative_T_Cells,Double-Negative_T,DTHD1,NA,Azimuth,Human,NA,CL_0000935,Human PBMCs reference
+T_DN,Double_Negative_T_Cells,Double-Negative_T_2,FGFR1,NA,Azimuth,Human,NA,CL_0000935,Human PBMCs reference
+T_DN,Double_Negative_T_Cells,Double-Negative_T,FXYD2,NA,Azimuth,Human,NA,CL_0000935,Human PBMCs reference
+T_DN,Double_Negative_T_Cells,Double-Negative_T_2,FXYD2,NA,Azimuth,Human,NA,CL_0000935,Human PBMCs reference
+T_DN,Double_Negative_T_Cells,Double-Negative_T_1,GPR183,NA,Azimuth,Human,NA,CL_0000935,Human PBMCs reference
+T_DN,Double_Negative_T_Cells,Double-Negative_T_2,GPR183,NA,Azimuth,Human,NA,CL_0000935,Human PBMCs reference
+T_DN,Double_Negative_T_Cells,Double-Negative_T,GZMA,NA,Azimuth,Human,NA,CL_0000935,Human PBMCs reference
+T_DN,Double_Negative_T_Cells,Double-Negative_T,GZMK,NA,Azimuth,Human,NA,CL_0000935,Human PBMCs reference
+T_DN,Double_Negative_T_Cells,Double-Negative_T_1,GZMK,NA,Azimuth,Human,NA,CL_0000935,Human PBMCs reference
+T_DN,Double_Negative_T_Cells,Double-Negative_T_2,GZMK,NA,Azimuth,Human,NA,CL_0000935,Human PBMCs reference
+T_DN,Double_Negative_T_Cells,Double-Negative_T_1,LDHB,NA,Azimuth,Human,NA,CL_0000935,Human PBMCs reference
+T_DN,Double_Negative_T_Cells,Double-Negative_T_1,LEF1,NA,Azimuth,Human,NA,CL_0000935,Human PBMCs reference
+T_DN,Double_Negative_T_Cells,Double-Negative_T_1,LYAR,NA,Azimuth,Human,NA,CL_0000935,Human PBMCs reference
+T_DN,Double_Negative_T_Cells,Double-Negative_T_1,MALAT1,NA,Azimuth,Human,NA,CL_0000935,Human PBMCs reference
+T_DN,Double_Negative_T_Cells,Double-Negative_T,MIR4422HG,NA,Azimuth,Human,NA,CL_0000935,Human PBMCs reference
+T_DN,Double_Negative_T_Cells,Double-Negative_T,MYB,NA,Azimuth,Human,NA,CL_0000935,Human PBMCs reference
+T_DN,Double_Negative_T_Cells,Double-Negative_T_2,MYB,NA,Azimuth,Human,NA,CL_0000935,Human PBMCs reference
+T_DN,Double_Negative_T_Cells,Double-Negative_T,NUCB2,NA,Azimuth,Human,NA,CL_0000935,Human PBMCs reference
+T_DN,Double_Negative_T_Cells,Double-Negative_T_1,NUCB2,NA,Azimuth,Human,NA,CL_0000935,Human PBMCs reference
+T_DN,Double_Negative_T_Cells,Double-Negative_T_2,NUCB2,NA,Azimuth,Human,NA,CL_0000935,Human PBMCs reference
+T_DN,Double_Negative_T_Cells,Double-Negative_T,PTPN3,NA,Azimuth,Human,NA,CL_0000935,Human PBMCs reference
+T_DN,Double_Negative_T_Cells,Double-Negative_T_1,TCF7,NA,Azimuth,Human,NA,CL_0000935,Human PBMCs reference
+T_DN,Double_Negative_T_Cells,Double-Negative_T_2,TMSB4X,NA,Azimuth,Human,NA,CL_0000935,Human PBMCs reference
+T_FH,Follicular_Helper_T_Cells,NA,BCL6,NA,Mary_Tomayko,Human,Skin,NA,NA
+T_FH,Follicular_Helper_T_Cells,NA,CD4,NA,Mary_Tomayko,Human,Skin,NA,NA
+T_FH,Follicular_Helper_T_Cells,NA,CXCR5,NA,CellTypist,Human,"Bone marrow, Intestine, Lung, Lung-draining lymph node, Mesenteric lymph node, Omentum, Spleen, Thymus",CL:0002038,specialised CD4+ T cell subpopulation found in the periphery within B cell follicles and stimulating the cognate follicular B cells for class-switching
+T_FH,Follicular_Helper_T_Cells,NA,CXCR5,NA,Mary_Tomayko,Human,Skin,NA,NA
+T_FH,Follicular_Helper_T_Cells,NA,ICOS,NA,CellTypist,Human,"Bone marrow, Intestine, Lung, Lung-draining lymph node, Mesenteric lymph node, Omentum, Spleen, Thymus",CL:0002038,specialised CD4+ T cell subpopulation found in the periphery within B cell follicles and stimulating the cognate follicular B cells for class-switching
+T_FH,Follicular_Helper_T_Cells,NA,PDCD1,CD279,CellTypist,Human,"Bone marrow, Intestine, Lung, Lung-draining lymph node, Mesenteric lymph node, Omentum, Spleen, Thymus",CL:0002038,specialised CD4+ T cell subpopulation found in the periphery within B cell follicles and stimulating the cognate follicular B cells for class-switching
+T_FH,Follicular_Helper_T_Cells,NA,PDCD1,CD279,Mary_Tomayko,Human,Skin,NA,NA
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_3,ARID5B,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma-Delta_T_Cells,CCL5,NA,CellTypist,Human,"Intestine, Mesenteric lymph node",CL:0000798,unconventional T lymphocyte subpopulation expressing a gamma-delta T cell receptor complex on the surface to recognise antigens
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_2,CD3D,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_2,CD3G,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells,CD7,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_4,CMC1,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_3,CRTAM,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_4,CST7,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_1,DUSP2,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_4,FCRL6,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_4,GCSAM,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_1,GNLY,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_2,GZMH,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_3,IKZF2,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_4,IKZF2,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Crtam+_Gamma-Delta_T_Cells,IKZF2,NA,CellTypist,Human,"Blood, Bone marrow, Decidua, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Omentum, Skeletal muscle, Spleen, Thymus",CL:0000798,"CRTAM+ IKZF2+ ITGAD+ gamma-delta T cells that are found primarily in the spleen, bone marrow and liver"
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_1,IL7R,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Crtam+_Gamma-Delta_T_Cells,ITGAD,NA,CellTypist,Human,"Blood, Bone marrow, Decidua, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Omentum, Skeletal muscle, Spleen, Thymus",CL:0000798,"CRTAM+ IKZF2+ ITGAD+ gamma-delta T cells that are found primarily in the spleen, bone marrow and liver"
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_2,KIR3DL2,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells,KLRC1,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_1,KLRC1,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_2,KLRC1,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_2,KLRC2,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_4,KLRC2,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells,KLRD1,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_1,KLRD1,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells,KLRG1,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_1,KLRG1,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_3,LEF1,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells,NKG7,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_3,NUCB2,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_3,RTKN2,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_3,SOX4,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_4,TIGIT,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells,TRDC,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_1,TRDC,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_2,TRDC,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_3,TRDC,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_4,TRDC,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Crtam+_Gamma-Delta_T_Cells,TRDC,NA,CellTypist,Human,"Blood, Bone marrow, Decidua, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Omentum, Skeletal muscle, Spleen, Thymus",CL:0000798,"CRTAM+ IKZF2+ ITGAD+ gamma-delta T cells that are found primarily in the spleen, bone marrow and liver"
+T_GD,Gamma_Delta_T_Cells,Gamma-Delta_T_Cells,TRDC,NA,CellTypist,Human,"Intestine, Mesenteric lymph node",CL:0000798,unconventional T lymphocyte subpopulation expressing a gamma-delta T cell receptor complex on the surface to recognise antigens
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_2,TRDV1,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_4,TRDV1,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells,TRDV2,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_1,TRDV2,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells,TRGC1,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_1,TRGC1,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_2,TRGC1,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma-Delta_T_Cells,TRGC1,NA,CellTypist,Human,"Intestine, Mesenteric lymph node",CL:0000798,unconventional T lymphocyte subpopulation expressing a gamma-delta T cell receptor complex on the surface to recognise antigens
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells,TRGC2,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_3,TRGC2,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_4,TRGC2,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells,TRGV9,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_1,TRGV9,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_3,ZNF331,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_GD,Gamma_Delta_T_Cells,Gamma_Delta_T_Cells_2,ZNF683,NA,Azimuth,Human,NA,CL_0000798,Human PBMCs reference
+T_H1,Helper_1_T_Cells,NA,CCL5,NA,CellTypist,Human,"Bone marrow, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Spleen",CL:0000545,CD4+ helper T lymphocyte subpopulation which is capable of producing interferon-gamma and modulating cell-mediated immune responses
+T_H1,Helper_1_T_Cells,NA,CXCR3,NA,CellTypist,Human,"Bone marrow, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Spleen",CL:0000545,CD4+ helper T lymphocyte subpopulation which is capable of producing interferon-gamma and modulating cell-mediated immune responses
+T_H1,Helper_1_T_Cells,NA,TBX21,NA,CellTypist,Human,"Bone marrow, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Spleen",CL:0000545,CD4+ helper T lymphocyte subpopulation which is capable of producing interferon-gamma and modulating cell-mediated immune responses
+T_H17,Helper_17_T_Cells,NA,CCR6,NA,CellTypist,Human,"Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Spleen, Thymus",CL:0000899,CD4+ helper T lymphocyte subpopulation which is capable of producing interleukin 17 (IL-17) and mediating protective immunity and autoimmunity
+T_H17,Helper_17_T_Cells,NA,IL7R,NA,CellTypist,Human,"Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Spleen, Thymus",CL:0000899,CD4+ helper T lymphocyte subpopulation which is capable of producing interleukin 17 (IL-17) and mediating protective immunity and autoimmunity
+T_H17,Helper_17_T_Cells,NA,ZBTB16,NA,CellTypist,Human,"Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Spleen, Thymus",CL:0000899,CD4+ helper T lymphocyte subpopulation which is capable of producing interleukin 17 (IL-17) and mediating protective immunity and autoimmunity
+T_H22,Helper_22_T_Cells,NA,AHR,NA,Literature,Human,NA,doi.org/10.1101/2022.08.13.503873,NA
+T_HSP,Heat_Shock_Protein_T_Cells,NA,HSPA1A,NA,Literature,Human,NA,doi.org/10.1101/2022.08.13.503876,"“There is a small T cell subset specifically expresses the heat shock protein (HSP) genes such as HSPB1, HSPA1A and HSPA6 (Data S1) (30), which was called as HSPhi T.“"
+T_HSP,Heat_Shock_Protein_T_Cells,NA,HSPA6,NA,Literature,Human,NA,doi.org/10.1101/2022.08.13.503877,"“There is a small T cell subset specifically expresses the heat shock protein (HSP) genes such as HSPB1, HSPA1A and HSPA6 (Data S1) (30), which was called as HSPhi T.“"
+T_HSP,Heat_Shock_Protein_T_Cells,NA,HSPB1,NA,Literature,Human,NA,doi.org/10.1101/2022.08.13.503875,"“There is a small T cell subset specifically expresses the heat shock protein (HSP) genes such as HSPB1, HSPA1A and HSPA6 (Data S1) (30), which was called as HSPhi T.“"
+T_MAIT,Mucosal_Associated_Invariant_T_Cells,MAIT,CEBPD,NA,Azimuth,Human,NA,CL_0000940,Human PBMCs reference
+T_MAIT,Mucosal_Associated_Invariant_T_Cells,MAIT,CTSW,NA,Azimuth,Human,NA,CL_0000940,Human PBMCs reference
+T_MAIT,Mucosal_Associated_Invariant_T_Cells,MAIT,CXCR6,NA,Azimuth,Human,NA,CL_0000940,Human PBMCs reference
+T_MAIT,Mucosal_Associated_Invariant_T_Cells,MAIT,DUSP2,NA,Azimuth,Human,NA,CL_0000940,Human PBMCs reference
+T_MAIT,Mucosal_Associated_Invariant_T_Cells,MAIT,GZMA,NA,Azimuth,Human,NA,CL_0000940,Human PBMCs reference
+T_MAIT,Mucosal_Associated_Invariant_T_Cells,MAIT,GZMK,NA,Azimuth,Human,NA,CL_0000940,Human PBMCs reference
+T_MAIT,Mucosal_Associated_Invariant_T_Cells,MAIT,IL7R,NA,Azimuth,Human,NA,CL_0000940,Human PBMCs reference
+T_MAIT,Mucosal_Associated_Invariant_T_Cells,MAIT,KLRB1,NA,Azimuth,Human,NA,CL_0000940,Human PBMCs reference
+T_MAIT,Mucosal_Associated_Invariant_T_Cells,NA,KLRB1,NA,CellTypist,Human,"Blood, Bone marrow, Decidua, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Spleen",CL:0000940,mucosal-associated invariant T cells which have semi-invariant T-cell receptors and are restricted by the MHC I-like molecule MR1
+T_MAIT,Mucosal_Associated_Invariant_T_Cells,MAIT,KLRG1,NA,Azimuth,Human,NA,CL_0000940,Human PBMCs reference
+T_MAIT,Mucosal_Associated_Invariant_T_Cells,MAIT,NCR3,NA,Azimuth,Human,NA,CL_0000940,Human PBMCs reference
+T_MAIT,Mucosal_Associated_Invariant_T_Cells,MAIT,NKG7,NA,Azimuth,Human,NA,CL_0000940,Human PBMCs reference
+T_MAIT,Mucosal_Associated_Invariant_T_Cells,MAIT,PRSS35,NA,Azimuth,Human,NA,CL_0000940,Human PBMCs reference
+T_MAIT,Mucosal_Associated_Invariant_T_Cells,MAIT,RBM24,NA,Azimuth,Human,NA,CL_0000940,Human PBMCs reference
+T_MAIT,Mucosal_Associated_Invariant_T_Cells,MAIT,SLC4A10,NA,Azimuth,Human,NA,CL_0000940,Human PBMCs reference
+T_MAIT,Mucosal_Associated_Invariant_T_Cells,NA,SLC4A10,NA,CellTypist,Human,"Blood, Bone marrow, Decidua, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Spleen",CL:0000940,mucosal-associated invariant T cells which have semi-invariant T-cell receptors and are restricted by the MHC I-like molecule MR1
+T_MAIT,Mucosal_Associated_Invariant_T_Cells,NA,TRAV1-2,NA,CellTypist,Human,"Blood, Bone marrow, Decidua, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Spleen",CL:0000940,mucosal-associated invariant T cells which have semi-invariant T-cell receptors and are restricted by the MHC I-like molecule MR1
+T_Naive,Naive_T_Cells,NA,KLF2,NA,Literature,Human,NA,doi.org/10.1101/2022.08.13.503874,NA
+T_Naive_CD4,CD4_Naive_T_Cells,NA,CCR7,NA,Azimuth,Human,NA,CL_0000895,Human PBMCs reference
+T_Naive_CD4,CD4_Naive_T_Cells,NA,CD4,NA,Azimuth,Human,NA,CL_0000895,Human PBMCs reference
+T_Naive_CD4,CD4_Naive_T_Cells,NA,FHIT,NA,Azimuth,Human,NA,CL_0000895,Human PBMCs reference
+T_Naive_CD4,CD4_Naive_T_Cells,NA,IL7R,NA,Azimuth,Human,NA,CL_0000895,Human PBMCs reference
+T_Naive_CD4,CD4_Naive_T_Cells,NA,LDHB,NA,Azimuth,Human,NA,CL_0000895,Human PBMCs reference
+T_Naive_CD4,CD4_Naive_T_Cells,NA,LEF1,NA,Azimuth,Human,NA,CL_0000895,Human PBMCs reference
+T_Naive_CD4,CD4_Naive_T_Cells,NA,MAL,NA,Azimuth,Human,NA,CL_0000895,Human PBMCs reference
+T_Naive_CD4,CD4_Naive_T_Cells,NA,NOSIP,NA,Azimuth,Human,NA,CL_0000895,Human PBMCs reference
+T_Naive_CD4,CD4_Naive_T_Cells,NA,NUCB2,NA,Azimuth,Human,NA,CL_0000895,Human PBMCs reference
+T_Naive_CD4,CD4_Naive_T_Cells,NA,PIK3IP1,NA,Azimuth,Human,NA,CL_0000895,Human PBMCs reference
+T_Naive_CD4,CD4_Naive_T_Cells,NA,SARAF,NA,Azimuth,Human,NA,CL_0000895,Human PBMCs reference
+T_Naive_CD4,CD4_Naive_T_Cells,NA,TCF7,NA,Azimuth,Human,NA,CL_0000895,Human PBMCs reference
+T_Naive_CD4,CD4_Naive_T_Cells,NA,TRAT1,NA,Azimuth,Human,NA,CL_0000895,Human PBMCs reference
+T_NK,Natural_Killer_T_Cells,NA,CD8A,NA,CellTypist,Human,"Kidney, Thymus",CL:0000814,distinct T lymphocyte subpopulation that expresses both alpha/beta T-cell receptors and surface receptors of natural killer cells
+T_NK,Natural_Killer_T_Cells,NA,GNLY,NA,CellTypist,Human,"Kidney, Thymus",CL:0000814,distinct T lymphocyte subpopulation that expresses both alpha/beta T-cell receptors and surface receptors of natural killer cells
+T_NK,Natural_Killer_T_Cells,NA,NKG7,NA,CellTypist,Human,"Kidney, Thymus",CL:0000814,distinct T lymphocyte subpopulation that expresses both alpha/beta T-cell receptors and surface receptors of natural killer cells
+T_Other,Other_T_Cells,NA,CD3D,NA,Azimuth,Human,NA,CL_0002419,Human PBMCs reference
+T_Other,Other_T_Cells,NA,CST7,NA,Azimuth,Human,NA,CL_0002419,Human PBMCs reference
+T_Other,Other_T_Cells,NA,GZMA,NA,Azimuth,Human,NA,CL_0002419,Human PBMCs reference
+T_Other,Other_T_Cells,NA,GZMK,NA,Azimuth,Human,NA,CL_0002419,Human PBMCs reference
+T_Other,Other_T_Cells,NA,KLRB1,NA,Azimuth,Human,NA,CL_0002419,Human PBMCs reference
+T_Other,Other_T_Cells,NA,KLRG1,NA,Azimuth,Human,NA,CL_0002419,Human PBMCs reference
+T_Other,Other_T_Cells,NA,LYAR,NA,Azimuth,Human,NA,CL_0002419,Human PBMCs reference
+T_Other,Other_T_Cells,NA,NKG7,NA,Azimuth,Human,NA,CL_0002419,Human PBMCs reference
+T_Other,Other_T_Cells,NA,TRDC,NA,Azimuth,Human,NA,CL_0002419,Human PBMCs reference
+T_Other,Other_T_Cells,NA,TRGC2,NA,Azimuth,Human,NA,CL_0002419,Human PBMCs reference
+T_Proliferating_CD4,CD4_Proliferating_T_Cells,NA,ASPM,NA,Azimuth,Human,NA,CL_0000896,Human PBMCs reference
+T_Proliferating_CD4,CD4_Proliferating_T_Cells,NA,BIRC5,NA,Azimuth,Human,NA,CL_0000896,Human PBMCs reference
+T_Proliferating_CD4,CD4_Proliferating_T_Cells,NA,CENPF,NA,Azimuth,Human,NA,CL_0000896,Human PBMCs reference
+T_Proliferating_CD4,CD4_Proliferating_T_Cells,NA,CENPM,NA,Azimuth,Human,NA,CL_0000896,Human PBMCs reference
+T_Proliferating_CD4,CD4_Proliferating_T_Cells,NA,MKI67,Ki-67,Azimuth,Human,NA,CL_0000896,Human PBMCs reference
+T_Proliferating_CD4,CD4_Proliferating_T_Cells,NA,NUSAP1,NA,Azimuth,Human,NA,CL_0000896,Human PBMCs reference
+T_Proliferating_CD4,CD4_Proliferating_T_Cells,NA,PCLAF,NA,Azimuth,Human,NA,CL_0000896,Human PBMCs reference
+T_Proliferating_CD4,CD4_Proliferating_T_Cells,NA,PTTG1,NA,Azimuth,Human,NA,CL_0000896,Human PBMCs reference
+T_Proliferating_CD4,CD4_Proliferating_T_Cells,NA,RRM2,NA,Azimuth,Human,NA,CL_0000896,Human PBMCs reference
+T_Proliferating_CD4,CD4_Proliferating_T_Cells,NA,TOP2A,NA,Azimuth,Human,NA,CL_0000896,Human PBMCs reference
+T_Proliferating_CD4,CD4_Proliferating_T_Cells,NA,TPX2,NA,Azimuth,Human,NA,CL_0000896,Human PBMCs reference
+T_Proliferating_CD4,CD4_Proliferating_T_Cells,NA,TYMS,NA,Azimuth,Human,NA,CL_0000896,Human PBMCs reference
+T_Proliferating_CD4,CD4_Proliferating_T_Cells,NA,ZWINT,NA,Azimuth,Human,NA,CL_0000896,Human PBMCs reference
+T_Reg,Regulatory_T_Cells,NA,AC133644.2,NA,Azimuth,Human,NA,CL_0000815,Human PBMCs reference
+T_Reg,Regulatory_T_Cells,Differentiating_Regulatory_T_Cells,CCR7,NA,CellTypist,Human,Thymus,CL:0000815,unconventional T lymphocyte subpopulation in the thymus which connects αβ T cells and canonical regulatory T cells and is still differentiating
+T_Reg,Regulatory_T_Cells,Differentiating_Regulatory_T_Cells,CD27,NA,CellTypist,Human,Thymus,CL:0000815,unconventional T lymphocyte subpopulation in the thymus which connects αβ T cells and canonical regulatory T cells and is still differentiating
+T_Reg,Regulatory_T_Cells,NA,CD4,NA,Azimuth,Human,NA,CL_0000815,Human PBMCs reference
+T_Reg,Regulatory_T_Cells,NA,CTLA4,NA,Azimuth,Human,NA,CL_0000815,Human PBMCs reference
+T_Reg,Regulatory_T_Cells,NA,CTLA4,NA,CellTypist,Human,"Blood, Bone marrow, Decidua, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Omentum, Skin, Spleen, Thymus",CL:0000815,T cell subpopulation which modulates immune responses and regulates other cells through direct cell-cell contact and cytokine release
+T_Reg,Regulatory_T_Cells,NA,CTLA4,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+T_Reg,Regulatory_T_Cells,NA,CTLA4,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+T_Reg,Regulatory_T_Cells,NA,FCRL3,NA,Azimuth,Human,NA,CL_0000815,Human PBMCs reference
+T_Reg,Regulatory_T_Cells,NA,FOXP3,NA,Azimuth,Human,NA,CL_0000815,Human PBMCs reference
+T_Reg,Regulatory_T_Cells,NA,FOXP3,NA,CellTypist,Human,"Blood, Bone marrow, Decidua, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Omentum, Skin, Spleen, Thymus",CL:0000815,T cell subpopulation which modulates immune responses and regulates other cells through direct cell-cell contact and cytokine release
+T_Reg,Regulatory_T_Cells,NA,FOXP3,NA,HUSCH,Human,Blood,husch.comp-genomics.org/#/info_tissue/Blood,NA
+T_Reg,Regulatory_T_Cells,NA,FOXP3,NA,HUSCH,Human,Skin,husch.comp-genomics.org/#/info_tissue/Skin,NA
+T_Reg,Regulatory_T_Cells,NA,FOXP3,NA,Mary_Tomayko,Human,Skin,NA,NA
+T_Reg,Regulatory_T_Cells,NA,IKZF2,NA,Azimuth,Human,NA,CL_0000815,Human PBMCs reference
+T_Reg,Regulatory_T_Cells,Differentiating_Regulatory_T_Cells,IKZF4,NA,CellTypist,Human,Thymus,CL:0000815,unconventional T lymphocyte subpopulation in the thymus which connects αβ T cells and canonical regulatory T cells and is still differentiating
+T_Reg,Regulatory_T_Cells,Differentiating_Regulatory_T_Cells,IL2RA,NA,Azimuth,Human,NA,CL_0000815,Human PBMCs reference
+T_Reg,Regulatory_T_Cells,NA,IL2RA,NA,CellTypist,Human,"Blood, Bone marrow, Decidua, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Omentum, Skin, Spleen, Thymus",CL:0000815,T cell subpopulation which modulates immune responses and regulates other cells through direct cell-cell contact and cytokine release
+T_Reg,Regulatory_T_Cells,NA,IL2RA,NA,Mary_Tomayko,Human,Skin,NA,NA
+T_Reg,Regulatory_T_Cells,NA,LAIR2,NA,Azimuth,Human,NA,CL_0000815,Human PBMCs reference
+T_Reg,Regulatory_T_Cells,NA,RTKN2,NA,Azimuth,Human,NA,CL_0000815,Human PBMCs reference
+T_Reg,Regulatory_T_Cells,NA,TIGIT,NA,Azimuth,Human,NA,CL_0000815,Human PBMCs reference
+T_Reg_Memory,Memory_Regulatory_T_Cells,NA,AC133644.2,NA,Azimuth,Human,NA,CL_0000815,Human PBMCs reference
+T_Reg_Memory,Memory_Regulatory_T_Cells,NA,B2M,NA,Azimuth,Human,NA,CL_0000815,Human PBMCs reference
+T_Reg_Memory,Memory_Regulatory_T_Cells,NA,CTLA4,NA,Azimuth,Human,NA,CL_0000815,Human PBMCs reference
+T_Reg_Memory,Memory_Regulatory_T_Cells,NA,FCRL3,NA,Azimuth,Human,NA,CL_0000815,Human PBMCs reference
+T_Reg_Memory,Memory_Regulatory_T_Cells,NA,FOXP3,NA,Azimuth,Human,NA,CL_0000815,Human PBMCs reference
+T_Reg_Memory,Memory_Regulatory_T_Cells,NA,IKZF2,NA,Azimuth,Human,NA,CL_0000815,Human PBMCs reference
+T_Reg_Memory,Memory_Regulatory_T_Cells,NA,RTKN2,NA,Azimuth,Human,NA,CL_0000815,Human PBMCs reference
+T_Reg_Memory,Memory_Regulatory_T_Cells,NA,S100A4,NA,Azimuth,Human,NA,CL_0000815,Human PBMCs reference
+T_Reg_Memory,Memory_Regulatory_T_Cells,NA,TIGIT,NA,Azimuth,Human,NA,CL_0000815,Human PBMCs reference
+T_Reg_Memory,Memory_Regulatory_T_Cells,NA,TRAC,NA,Azimuth,Human,NA,CL_0000815,Human PBMCs reference
+T_Reg_Naive,Naive_Regulatory_T_Cells,NA,C12orf57,NA,Azimuth,Human,NA,CL_0000815,Human PBMCs reference
+T_Reg_Naive,Naive_Regulatory_T_Cells,NA,CCR7,NA,Azimuth,Human,NA,CL_0000815,Human PBMCs reference
+T_Reg_Naive,Naive_Regulatory_T_Cells,NA,CD4,NA,Azimuth,Human,NA,CL_0000815,Human PBMCs reference
+T_Reg_Naive,Naive_Regulatory_T_Cells,NA,FOXP3,NA,Azimuth,Human,NA,CL_0000815,Human PBMCs reference
+T_Reg_Naive,Naive_Regulatory_T_Cells,NA,IL2RA,NA,Azimuth,Human,NA,CL_0000815,Human PBMCs reference
+T_Reg_Naive,Naive_Regulatory_T_Cells,NA,LDHB,NA,Azimuth,Human,NA,CL_0000815,Human PBMCs reference
+T_Reg_Naive,Naive_Regulatory_T_Cells,NA,LEF1,NA,Azimuth,Human,NA,CL_0000815,Human PBMCs reference
+T_Reg_Naive,Naive_Regulatory_T_Cells,NA,RTKN2,NA,Azimuth,Human,NA,CL_0000815,Human PBMCs reference
+T_Reg_Naive,Naive_Regulatory_T_Cells,NA,TOMM7,NA,Azimuth,Human,NA,CL_0000815,Human PBMCs reference
+T_Reg_Naive,Naive_Regulatory_T_Cells,NA,TRAC,NA,Azimuth,Human,NA,CL_0000815,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells_1,AP3M2,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells,AQP3,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells_3,AQP3,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells_2,CD27,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells_2,CD28,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells,CD4,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells_1,CD4,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells_2,CDCA7,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells_2,CTLA4,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells_1,FYB1,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells_3,HOPX,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells,IL32,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells_3,IL32,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells,IL7R,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells_1,IL7R,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells_3,IL7R,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells,ITGB1,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells_3,ITGB1,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells_2,ITM2A,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells,LDHB,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells_1,LIMS1,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells,LTB,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells_1,LTB,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells_3,LTB,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells_2,MAF,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells,MAL,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells_1,MAL,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells_2,MIR4435-2HG,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells_3,PDE4D,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells_3,S100A4,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells,TMSB10,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells_2,TMSB10,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells_1,TMSB4X,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells_2,TMSB4X,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells_3,TNFRSF4,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells_3,TOB1,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells,TRAC,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells_1,TRAC,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells_2,TRAC,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD4,CD4_Central_Memory_T_Cells,CD4_Central_Memory_T_Cells_1,TSHZ2,NA,Azimuth,Human,NA,CL_0000897,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells,ANXA1,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells_2,C1orf162,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells_1,CCL5,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells_3,CCL5,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells,CD8A,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells_1,CD8A,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells_2,CD8A,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells_3,CD8A,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells,CD8B,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells_1,CD8B,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells_2,CD8B,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells_3,CD8B,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells_2,CTSW,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells_1,DUSP2,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells_2,GATA3,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells_3,HOPX,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells,IL7R,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells_1,IL7R,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells_2,IL7R,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells_3,IL7R,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells_2,INPP4B,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells_1,ITGB1,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells_3,KLRB1,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells_3,KLRD1,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells,KRT1,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells_2,KRT1,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells,LDHB,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells_1,LINC01871,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells,LINC02446,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells_3,LINC02446,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells_2,LTB,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells_1,LYAR,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells,NELL2,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells_1,NELL2,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells_3,SCML4,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells_1,SELL,CD62L,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells,TRAC,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells_3,TRAC,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells,YBX3,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TCM_CD8,CD4_Central_Memory_T_Cells,CD8_Central_Memory_T_Cells_2,YBX3,NA,Azimuth,Human,NA,CL_0000909,Human PBMCs reference
+TEM,Effector_Memory_T_Cells,TEM/Effector_Helper_T_Cells,AQP3,NA,CellTypist,Human,"Blood, Bone marrow, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Omentum, Skeletal muscle, Spleen, Thymus, Upper airway",CL:0000905,"CD4+ helper T lymphocytes mainly localized in lymphoid and peripheral tissues and presenting an immediate, but not sustained, immune defense"
+TEM,Effector_Memory_T_Cells,TEM/Effector_Helper_T_Cells_Pd1+,CD4,NA,CellTypist,Human,Thymus,CL:0000905,CD4+ helper T lymphocyte subpopulation in the thymus which features the expression of programmed cell death protein 1 (PD-1)
+TEM,Effector_Memory_T_Cells,TEM/Effector_Helper_T_Cells_Pd1+,CTLA4,NA,CellTypist,Human,Thymus,CL:0000905,CD4+ helper T lymphocyte subpopulation in the thymus which features the expression of programmed cell death protein 1 (PD-1)
+TEM,Effector_Memory_T_Cells,TEM/Effector_Helper_T_Cells,ITGB1,NA,CellTypist,Human,"Blood, Bone marrow, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Omentum, Skeletal muscle, Spleen, Thymus, Upper airway",CL:0000905,"CD4+ helper T lymphocytes mainly localized in lymphoid and peripheral tissues and presenting an immediate, but not sustained, immune defense"
+TEM,Effector_Memory_T_Cells,TEM/Effector_Helper_T_Cells,KLRB1,NA,CellTypist,Human,"Blood, Bone marrow, Intestine, Liver, Lung, Lung-draining lymph node, Mesenteric lymph node, Omentum, Skeletal muscle, Spleen, Thymus, Upper airway",CL:0000905,"CD4+ helper T lymphocytes mainly localized in lymphoid and peripheral tissues and presenting an immediate, but not sustained, immune defense"
+TEM,Effector_Memory_T_Cells,TEM/Effector_Helper_T_Cells_Pd1+,PDCD1,CD279,CellTypist,Human,Thymus,CL:0000905,CD4+ helper T lymphocyte subpopulation in the thymus which features the expression of programmed cell death protein 1 (PD-1)
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells,AQP3,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_3,AQP3,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_1,B2M,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells,CCL5,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_1,CCL5,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_3,CCL5,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_4,CCR9,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_4,CD244,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_2,CD3D,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4+_Effector_Memory_T_2,CD3E,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_2,CD3G,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_2,CD4,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_2,CD40LG,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_4,CD40LG,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_4,DPP4,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_1,DUSP2,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells,FYB1,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells,GZMA,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_1,GZMA,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells,GZMK,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_1,GZMK,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_2,GZMK,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_2,IFNG-AS1,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells,IL32,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_1,IL32,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_3,IL32,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells,IL7R,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_1,IL7R,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_3,IL7R,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_4,IL7R,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_3,ITGA4,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_1,ITGB1,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_4,KDF1,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells,KLRB1,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_1,KLRB1,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_3,KLRB1,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_4,KLRB1,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells,LTB,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_3,LTB,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_2,MALAT1,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_3,NOSIP,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_4,ODF2L,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_3,SERINC5,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_4,SLC4A4,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_1,SYNE2,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_2,TIGIT,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_4,TMIGD2,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells,TRAC,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_2,TRAC,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD4,CD4_Effector_Memory_T_Cells,CD4_Effector_Memory_T_Cells_3,TRAC,NA,Azimuth,Human,NA,CL_0001044,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells,CCL5,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_1,CCL5,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_2,CCL5,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_3,CCL5,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_2,CD160,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_4,CD2,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells,CD8A,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_1,CD8A,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_2,CD8A,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_3,CD8A,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_4,CD8A,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_5,CD8A,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_6,CD8A,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells,CD8B,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_1,CD8B,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_2,CD8B,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_3,CD8B,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_4,CD8B,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_5,CD8B,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_6,CD8B,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_2,CMC1,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells,CST7,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_1,CST7,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_2,CST7,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_1,DUSP2,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_6,DUSP2,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_4,FGFBP2,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_3,GNLY,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_4,GNLY,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_5,GNLY,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_4,GZMB,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_5,GZMB,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells,GZMH,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_2,GZMH,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_4,GZMH,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_5,GZMH,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells,GZMK,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_1,GZMK,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_3,GZMK,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_3,HOPX,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_6,IFNG-AS1,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_6,IKZF2,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_1,IL32,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_3,ITGB1,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_4,ITGB1,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_5,KLRC2,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_6,KLRC2,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells,KLRD1,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_2,KLRD1,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_3,KLRD1,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_4,KLRD1,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_2,KLRG1,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_6,NCR3,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells,NKG7,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_1,NKG7,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_3,NKG7,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_6,RTKN2,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_4,THEMIS,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_2,TIGIT,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells,TRAC,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_5,TRAC,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells,TRGC2,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_5,TRGC2,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_6,TRGC2,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_5,TYROBP,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_3,YBX3,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_5,ZNF683,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEM_CD8,CD8_Effector_Memory_T_Cells,CD8_Effector_Memory_T_Cells_6,ZNF683,NA,Azimuth,Human,NA,CL_0001050,Human PBMCs reference
+TEMRA,Effector_Memory_Re-expressing_CD45RA_T_Cells,NA,EOMES,NA,Donna_Farber,Human,NA,NA,NA
+TEMRA,Effector_Memory_Re-expressing_CD45RA_T_Cells,NA,ITGAE,CD103,Donna_Farber,Human,NA,NA,NA
+TEMRA,Effector_Memory_Re-expressing_CD45RA_T_Cells,NA,KLRG1,NA,Donna_Farber,Human,NA,NA,NA
+Thymocytes_Double_Negative,Double-Negative_Thymocytes,NA,CD99,NA,CellTypist,Human,Thymus,CL:0002489,the early immature thymocytes from the thymus in the double negative (co-receptors CD4- and CD8-) stage
+Thymocytes_Double_Negative,Double-Negative_Thymocytes,NA,FXYD2,NA,CellTypist,Human,Thymus,CL:0002489,the early immature thymocytes from the thymus in the double negative (co-receptors CD4- and CD8-) stage
+Thymocytes_Double_Negative,Double-Negative_Thymocytes,NA,HES1,NA,CellTypist,Human,Thymus,CL:0002489,the early immature thymocytes from the thymus in the double negative (co-receptors CD4- and CD8-) stage
+Thymocytes_Double_Positive,Double-Positive_Thymocytes,NA,CD1A,NA,CellTypist,Human,Thymus,CL:0000809,immature thymocytes capable of binding MHC class I or II in the double positive (co-receptors CD4+ and CD8+) stage
+Thymocytes_Double_Positive,Double-Positive_Thymocytes,NA,CD8A,NA,CellTypist,Human,Thymus,CL:0000809,immature thymocytes capable of binding MHC class I or II in the double positive (co-receptors CD4+ and CD8+) stage
+Thymocytes_Double_Positive,Double-Positive_Thymocytes,NA,SMPD3,NA,CellTypist,Human,Thymus,CL:0000809,immature thymocytes capable of binding MHC class I or II in the double positive (co-receptors CD4+ and CD8+) stage
+TRM,Resident_Memory_T_Cells,NA,CXCR6,NA,Mary_Tomayko,Human,Skin,NA,NA
+TRM,Resident_Memory_T_Cells,NA,ITGA1,NA,Mary_Tomayko,Human,Skin,NA,NA
