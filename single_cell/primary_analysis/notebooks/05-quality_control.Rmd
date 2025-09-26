@@ -103,7 +103,7 @@ Directly from [10x Genomics (v6.1) [Gene Expression]](https://support.10xgenomic
 The `cellranger count` and `multi` pipelines output _metrics_summary.csv_ which contains a number of key metrics about the barcoding and sequencing process.
 
 ```{r unaggr-10x-count-info}
-print_kable(read_csv(file.path(path_base, "primary_analysis",
+print_kable(read_csv(file.path(path_base, "primary_analysis", "tables",
                                "cellranger", "10x_Genomics_count.csv"),
                      show_col_types = FALSE))
 ```
@@ -118,7 +118,7 @@ The `cellranger vdj` pipeline outputs _metrics_summary.csv_ which contains a num
 - References to quality scores exclude very low quality/no-call (Q ≤ 2) bases.
 
 ```{r unaggr-10x-vdj-info}
-print_kable(read_csv(file.path(path_base, "primary_analysis",
+print_kable(read_csv(file.path(path_base, "primary_analysis", "tables",
                                "cellranger", "10x_Genomics_vdj.csv"),
                      show_col_types = FALSE))
 ```
@@ -355,7 +355,7 @@ Directly from [10x Genomics (v6.1)](https://support.10xgenomics.com/single-cell-
 The `cellranger aggr` pipeline outputs _summary.json_ which contains metrics relating to the aggregated datasets. Note: square brackets denote a variable that depends on the pipeline input, e.g. _[library_id]_frac_reads_kept_ means that if your aggregation contains two libraries with IDs _sample123_ and _sample456_, there will be two output metrics _sample123_frac_reads_kept_ and _sample456_frac_reads_kept._
 
 ```{r aggr-10x-info}
-print_kable(read_csv(file.path(path_base, "primary_analysis",
+print_kable(read_csv(file.path(path_base, "primary_analysis", "tables",
                                "cellranger", "10x_Genomics_aggr.csv"),
                      show_col_types = FALSE),
             kable_height = NULL)
@@ -370,8 +370,8 @@ Full list of JSON information:
 
 # read in the summary file
 # you have to specify `file =` for this to run
-aggr_results <- rjson::fromJSON(file = file.path(path_data_root, "aggr",
-                                          "outs", "count", "summary.json"))
+aggr_results <- rjson::fromJSON(file = file.path(path_data_root, "aggr", "outs",
+                                                 "count", "summary.json"))
 
 str(aggr_results)
 ```

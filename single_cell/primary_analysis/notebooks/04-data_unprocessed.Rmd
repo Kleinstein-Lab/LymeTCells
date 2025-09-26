@@ -89,12 +89,16 @@ If you don't have access to the Seurat objects, are creating them for the first 
 
 ## Read in aggregated data
 
-Aggregation was done to help deal with the significant differences in read depth identified in the QC.
-
-The full run details can be found in the "generate_aggr_csv.R" and "cellranger_aggr.sh" files within the cellranger subdirectory in the lyme repository. This is the actual script that was run:
+Aggregation was done to help deal with the significant differences in read depth identified in the QC. This is the actual script that was run:
 
 ```{r cellranger-command}
-readLines(file.path(path_base, "primary_analysis", "cellranger",
+# generate the input csv file for `cellranger aggr`
+# readLines(file.path(path_base, "primary_analysis", "scripts",
+#                     "generate_aggr_csv.R")) %>%
+#   paste0(collapse = "\n") %>% cat
+
+# run Cell Ranger
+readLines(file.path(path_base, "primary_analysis", "scripts",
                     "cellranger_aggr.sh")) %>%
   paste0(collapse = "\n") %>% cat
 ```

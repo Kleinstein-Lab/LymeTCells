@@ -1,0 +1,14 @@
+Dataset,Participant Number,Age (years),Sex,EM Lesion(s),Lesion Size (cm),Lesion Site(s),Paired Control
+1,192561,68,F,Single,9,Left popliteal fossa,Yes
+1,192563,63,F,Single,4,Right proximal triceps,No
+1,192564,68,F,Single,6.5,Left axilla,Yes
+1,192565,70,F,Single,5,Right popliteal fossa,Yes
+1,192566,40,M,Multiple,10,"Left upper back, anterior abdomen",Yes
+1,192567,72,F,Single,10,Right ankle,Yes
+2,202936,31,M,Single,7,Left flank,Yes
+2,202937,61,M,Single,20,Right abdomen,Yes
+2,202938,65,F,Single,4,Right thigh,Yes
+3,202939,72,F,Single,9,Left axilla,No
+3,202940,64,F,Single,15,Right shoulder,Yes
+3,202941,70,F,Single,12,Left back,Yes
+3,202943,76,M,Single,20,Left thigh,No

@@ -1,8 +1,0 @@
-Metric,Description
- filtered_bcs_transcriptome_union ," The estimated number of barcodes associated with cell-containing partitions, summed across all input libraries. "
- total_reads ," Total number of sequenced reads, summed across all input libraries. "
- multi_transcriptome_total_raw_reads_per_filtered_bc , total_reads divided by filtered_bcs_transcriptome_union. 
- [library_id]_pre_normalization_raw_reads_per_filtered_bc ," The mean total reads per cell prior to depth normalization, for the library denoted by library_id. "
- [library_id]_pre_normalization_cmb_reads_per_filtered_bc ," The mean confidently mapped and barcoded (CMB) reads per cell prior to depth normalization, for the library denoted by library_id. "
- [library_id]_frac_reads_kept , The fraction of reads that were retained after depth normalization for the library denoted by library_id. 
- lowest_frac_reads_kept ," The lowest fraction of reads retained, corresponding to the library which lost the most reads during normalization. A low value may indicate a large disparity in the initial depth of the input libraries. "

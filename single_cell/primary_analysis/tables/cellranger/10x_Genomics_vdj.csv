@@ -1,0 +1,22 @@
+ Type,Name,Description
+ int , Estimated Number of Cells , The number of barcodes estimated to correspond to GEMs containing cells. See VDJ Cell Calling Algorithm. 
+ int , Mean Read Pairs per Cell , Number of input read pairs divided by the estimated number of cells. 
+ int , Number of Cells With Productive V-J Spanning Pair ," Number of cell barcodes for which at least one productive sequence was found for each of TRA and TRB (or heavy and light chains, for Ig). "
+ int , Number of Read Pairs , Total number of read pairs that were assigned to this library in demultiplexing. 
+ float , Valid Barcodes , Fraction of reads with barcodes that match the whitelist after barcode correction. 
+ float , Q30 Bases in Barcode , Fraction of cell barcode bases with Q-score ≥ 30. 
+ float , Q30 Bases in RNA Read 1 , Fraction of read 1 bases with Q-score ≥ 30. (Likewise for read 2.) 
+ float , Q30 Bases in Sample Index , Fraction of sample index bases with Q-score ≥ 30. 
+ float , Q30 Bases in UMI , Fraction of UMI bases with Q-score ≥ 30. 
+ float , Reads Mapped to Any V(D)J Gene , Fraction of reads that partially or wholly map to a V(D)J gene segment. 
+ float , Reads Mapped to TRA , Fraction of reads that map partially or wholly to a TRA gene segment. 
+ int , Mean Used Read Pairs per Cell ," Mean number of read pairs used in assembly per cell barcode. These reads must have a cell barcode, map to a V(D)J gene, and have a UMI with sufficient read support, counted after subsampling. "
+ float , Fraction Reads in Cells , Number of reads with cell barcodes divided by the number of reads with valid barcodes. 
+ float , Median TRA UMIs per Cell , Median number of UMIs assigned to a TRA contig per cell. 
+ float , Paired Clonotype Diversity ," Effective diversity of the paired clonotypes, computed as the Inverse Simpson Index of the clonotype frequencies. A value of 1 indicates a minimally diverse sample - only one distinct clonotype was detected. A value equal to the estimated number of cells indicates a maximally diverse sample. "
+ float , Cells With TRA Contig , Fraction of cell barcodes with at least one TRA contig annotated as a full or partial V(D)J gene. 
+ float , Cells With CDR3-annotated TRA Contig , Fraction of cell barcodes with at least one TRA contig where a CDR3 was detected. 
+ float , Cells With V-J Spanning Contig , Fraction of cell barcodes with at least one full-length contig. 
+ float , Cells With V-J Spanning TRA Contig , Fraction of cell barcodes with at least one full-length TRA contig. 
+ float , Cells With Productive TRA Contig , Fraction of cell barcodes with at least one full-length TRA contig that is productive. 
+ float , Cells With Productive V-J Spanning Pair , Fraction of cell barcodes with at least one contig for each chain of the receptor pair that is productive. 
