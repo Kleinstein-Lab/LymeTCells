@@ -103,7 +103,7 @@ colors_annotated_skin <- combined_skin@misc$colors_annotated
 
 ```{r setup-airr}
 combined_tcr <-
-  readRDS(file.path(path_objs, "airr", "combined_airrflow_bulk_tcr.rds"))
+  readRDS(file.path(path_objs, "airr", "combined_bulk_tcr.rds"))
 ```
 
 ------------------------------------------------------------------------

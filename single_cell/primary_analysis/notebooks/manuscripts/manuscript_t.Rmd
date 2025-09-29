@@ -184,8 +184,8 @@ Use the airrflow objects:
 
 ```{r setup-airr}
 combined_tcr <-
-  readRDS(file.path(path_objs_airrflow, "combined_airrflow_tcr.rds"))
-# combined_airrflow_bulk_tcr.rds
+  readRDS(file.path(path_objs_airrflow, "combined_tcr.rds"))
+# combined_bulk_tcr.rds
 ```
 
 ## Differential expression
