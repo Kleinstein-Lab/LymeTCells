@@ -91,7 +91,7 @@ If you don't have access to the Seurat objects, are creating them for the first 
 
 Aggregation was done to help deal with the significant differences in read depth identified in the QC. This is the actual script that was run:
 
-```{r cellranger-command}
+```{r cellranger-script}
 # generate the input csv file for `cellranger aggr`
 # readLines(file.path(path_base, "primary_analysis", "scripts",
 #                     "generate_aggr_csv.R")) %>%

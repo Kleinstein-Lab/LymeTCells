@@ -66,31 +66,11 @@ source(code_meta)
 unlink(c(code_setup, code_functions, code_meta))
 ```
 
-To reconstruct gamma-delta TCRs
+10x Genomics [doesn't support gamma-delta TCRs](https://kb.10xgenomics.com/hc/en-us/articles/360015793931-Can-I-detect-T-cells-with-gamma-delta-chains-in-my-V-D-J-data), so we can try to detect by reconstructing TCR data from GEX data using [TRUST4](https://www.nature.com/articles/s41592-021-01142-2). At the end of this notebook, we also plot some TRG and TRD genes.
 
-> "TRUST4 outputs several files. trust_raw.out, trust_final.out are the contigs and corresponding nucleotide weight. trust_annot.fa is in fasta format for the annotation of the consensus assembly. trust_cdr3.out reports the CDR1,2,3 and gene information for each consensus assemblies. And trust_report.tsv is a report file focusing on CDR3 and is compatible with other repertoire analysis tool such as VDJTools."
-- [GitHub](https://github.com/liulab-dfci/TRUST4)
+*Note that the TRUST4 points (in red) are set to be larger than the TCR overlays (in green) so that they are easier to see.*
 
-Ed says to filter out everything with `consensus_count > 1`. The files ending with "_airr.tsv" should be used. Each samples gets their own directory.
-
-* "Yes. If I remember correctly, the _barcode file has the constructed bcr/tcr sequences for each possible barcode but it hasn't been filtered by whatever score that trust4 uses. So the airr.tsv should be a subset of the barcodeairr file"
-* "But like what if I want to match up the gamma/deltas I found to a cluster in the UMAP? That airr.tsv doesn't have barcodes. Unless I use sequence_id?"
-* "The sequence_id column should contain the 10x barcode... You'll have to remove the extra numbers that trust4 puts at the end of them"
-
-Ed "also included two scripts from the trust4 repo that tries to eliminate some falsely called TCRs/BCRs." He "tried to quickly make a bash script to automate running it on everything" but "couldn’t get it to work. But the usage is basically:"
-
-```{bash, eval = FALSE}
-# use the *_barcode_report.tsv file for each sample
-python3 barcoderep-filter.py -b TRUST_F09_7_GEX_HHT_S8_L001_R1_001_barcode_report.tsv > TRUST_F09_7_filtered.tsv
-
-# use the output of the previous step and the *_annot.fa file, and use the perl script to convert to AIRR format
-perl trust-airr.pl TRUST_F09_7_filtered.tsv \
-        TRUST_F09_7_GEX_HHT_S8_L001_R1_001_annot.fa \
-        --format barcoderep > \
-        TRUST_F09_7_airr_filtered.tsv
-```
-
-The TRUST4 points (in red) are set to be larger than the TCR overlays (in green) so that they are easier to see.
+Thanks to Edward Lee in the Kleinstein lab for running TRUST4 for us!
 
 ------------------------------------------------------------------------
 
@@ -121,16 +101,64 @@ combined_skin_t <- readRDS(file.path(path_objs, "combined_skin_t_ref.rds"))
 ## TRUST4
 
 ```{r setup-trust4}
-trust4_all <- read_tsv(file.path(path_objs, "downstream", "trust4_all.tsv"),
+trust4_all <- read_tsv(file.path(path_tables, "trust4_all.tsv"),
                        show_col_types = FALSE) %>%
                 mutate(Dataset = as.character(Dataset))
 ```
 
 ------------------------------------------------------------------------
 
-# Setup
+# Run the tool
+
+> "TRUST4 outputs several files. trust_raw.out, trust_final.out are the contigs and corresponding nucleotide weight. trust_annot.fa is in fasta format for the annotation of the consensus assembly. trust_cdr3.out reports the CDR1,2,3 and gene information for each consensus assemblies. And trust_report.tsv is a report file focusing on CDR3 and is compatible with other repertoire analysis tool such as VDJTools."
+- [GitHub](https://github.com/liulab-dfci/TRUST4)
 
 ## TRUST4
+
+Make sure that you have the TRUST4 GitHub repository cloned so that you can use their scripts and references (you'll need hg38_bcrtcr.fa and human_IMGT+C.fa).
+
+```{r trust4-example-script}
+# each dataset got their own script for simplicity
+readLines(file.path(path_base, "primary_analysis", "scripts", "trust4",
+                    "trust4_lyme_dataset2.sh")) %>%
+  paste0(collapse = "\n") %>% cat
+
+# example of the output files:
+## TRUST_192561SKL_GEX_HHT_S1_L001_R1_001_airr_align.tsv
+## TRUST_192561SKL_GEX_HHT_S1_L001_R1_001_airr.tsv
+## TRUST_192561SKL_GEX_HHT_S1_L001_R1_001_annot.fa
+## TRUST_192561SKL_GEX_HHT_S1_L001_R1_001_assembled_reads.fa
+## TRUST_192561SKL_GEX_HHT_S1_L001_R1_001_barcode_airr.tsv
+## TRUST_192561SKL_GEX_HHT_S1_L001_R1_001_barcode_report.tsv
+## TRUST_192561SKL_GEX_HHT_S1_L001_R1_001_cdr3.out
+## TRUST_192561SKL_GEX_HHT_S1_L001_R1_001_final.out
+## TRUST_192561SKL_GEX_HHT_S1_L001_R1_001_raw.out
+## TRUST_192561SKL_GEX_HHT_S1_L001_R1_001_report.tsv
+## TRUST_192561SKL_GEX_HHT_S1_L001_R1_001_toassemble_1.fq
+## TRUST_192561SKL_GEX_HHT_S1_L001_R1_001_toassemble_2.fq
+## TRUST_192561SKL_GEX_HHT_S1_L001_R1_001_toassemble_bc.fa
+```
+
+In addition to the bash scripts that processed the raw fastqs from all three datasets, Ed also included two scripts from the TRUST4 repo that try to eliminate some falsely called TCRs from the results. According to him, the usage would basically be:
+
+```{bash, eval = FALSE}
+# use the *_barcode_report.tsv file for each sample
+# for example
+python3 barcoderep-filter.py -b TRUST_192561SKL_GEX_HHT_S1_L001_R1_001_barcode_report.tsv > TRUST_192561SKL_filtered.tsv
+
+# use the output of the previous step and the *_annot.fa file, and use the perl script to convert to AIRR format
+perl trust-airr.pl TRUST_192561SKL_filtered.tsv \
+TRUST_192561SKL_GEX_HHT_S1_L001_R1_001_annot.fa \
+--format barcoderep > TRUST_192561SKL_airr_filtered.tsv
+```
+
+I didn't end up using these scripts though.
+
+## Read in the output
+
+Each sample gets its own directory and only files ending with "...airr.tsv" should be used. The "...barcode_airr.tsv" files have not been filtered by TRUST4's scoring system. They are based upon the constructed TCR sequences for each possible barcode.
+
+The `sequence_id` in the "...airr.tsv" files should contain the usual 10x barcodes (plus additional numbers that TRUST4 adds).
 
 Read through the script outputs:
 
@@ -158,8 +186,10 @@ for (dir in filter(meta, DataType == "GEX")$SampleDir) {
   trust4_all <- bind_rows(trust4_all, df)
 }
 
-write_tsv(trust4_all, file.path(path_objs, "downstream", "trust4_all.tsv"))
+write_tsv(trust4_all, file.path(path_tables, "trust4_all.tsv"))
 ```
+
+Some people think that you should filter out everything with `consensus_count > 1`, but I couldn't find enough support for that so I didn't do that.
 
 ## Plots
 
