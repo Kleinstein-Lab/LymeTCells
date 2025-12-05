@@ -29,8 +29,7 @@ knitr::opts_chunk$set(comment = NA, dpi = 600, fig.align = "center",
                       out.width = "100%", warning = FALSE, error = TRUE,
                       message = FALSE,
                       fig.path = here::here("primary_analysis", "figures",
-                                            "manuscripts", "manuscript_t",
-                                            "manuscript-t-"))
+                                            "manuscripts", "manuscript-"))
 
 # will mess with chunk labels, but needed for parameterized reports
 options(knitr.duplicate.label = "allow")
@@ -99,7 +98,7 @@ The pre-updated objects can be found in the "final" subdirectory (they are the o
 
 ```{r}
 metrics_summary <- create_metrics_summary(meta = meta,
-                                          path_data_specific = path_data_root,
+                                          path_data = path_data_root,
                                           data_types = "GEX",
                                           samples_list = samples)
 
@@ -515,17 +514,17 @@ For GEO:
 
 # blood
 saveRDS(combined_blood,
-        file.path(path_objs, "manuscript_t", "combined_blood.rds"))
+        file.path(path_objs, "manuscript", "combined_blood.rds"))
 saveRDS(combined_blood_t,
-        file.path(path_objs, "manuscript_t", "combined_blood_t.rds"))
+        file.path(path_objs, "manuscript", "combined_blood_t.rds"))
 
 # skin
 saveRDS(combined_skin,
-        file.path(path_objs, "manuscript_t", "combined_skin.rds"))
+        file.path(path_objs, "manuscript", "combined_skin.rds"))
 saveRDS(combined_skin_recombined,
-        file.path(path_objs, "manuscript_t", "combined_skin_recombined.rds"))
+        file.path(path_objs, "manuscript", "combined_skin_recombined.rds"))
 saveRDS(combined_skin_t,
-        file.path(path_objs, "manuscript_t", "combined_skin_t.rds"))
+        file.path(path_objs, "manuscript", "combined_skin_t.rds"))
 ```
 
 ------------------------------------------------------------------------
@@ -559,7 +558,7 @@ kable(x = table_clinical_display, align = "c") %>%
 # ggpubr::ggtexttable(table_clinical_display, rows = NULL, theme = ttheme("light"))
 
 # write_csv(table_clinical_display,
-#           file.path(path_tables, "manuscript_t", "clinical.csv"))
+#           file.path(path_tables, "manuscript", "clinical.csv"))
 ```
 
 ## Counts
@@ -607,7 +606,7 @@ Pull just the TCR info:
 
 ```{r}
 metrics_summary_tcr <-
-  create_metrics_summary(meta = meta, path_data_specific = path_data_root,
+  create_metrics_summary(meta = meta, path_data = path_data_root,
                          data_types = "TCR", samples_list = samples) %>%
   select(SampleName, EstimatedNumberofCells) %>%
   rename(Sample = SampleName, "Cell Count (TCR)" = EstimatedNumberofCells)
@@ -653,7 +652,7 @@ kable(x = table_counts, align = "c") %>%
 # ggpubr::ggtexttable(table_counts, rows = NULL, theme = ttheme("light"))
 
 # write_csv(table_counts %>% mutate_all(as.character),
-#           file.path(path_tables, "manuscript_t", "counts.csv"))
+#           file.path(path_tables, "manuscript", "counts.csv"))
 ```
 
 ------------------------------------------------------------------------
@@ -2049,7 +2048,7 @@ sdv$Supplemental_Figure_10 <-
 #| fig.dim = c(12, 6)
 
 # save for SDV spreadsheet
-sdv$Supplemental_Figure_11 <- metrics_summary %>% select(-Timepoint)
+sdv$Supplemental_Figure_11 <- metrics_summary
 
 # Read Counts for All Samples and GEX Unaggregated Data
 p1 <- (ggplot(metrics_summary,
@@ -2122,7 +2121,7 @@ p4 <- plot_umap(seurat_obj = combined_blood_t,
 # make sure that the spreadsheet doesn't already exist (delete if needed)
 for (df in names(sdv)) {
   write.xlsx(x = as.data.frame(sdv[[df]]),
-             file = file.path(path_tables, "manuscript_t",
+             file = file.path(path_tables, "manuscript",
                               "supporting_data_values.xlsx"),
              sheetName = df,
              col.names = TRUE, row.names = FALSE, append = TRUE)
