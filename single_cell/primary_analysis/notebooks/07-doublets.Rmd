@@ -37,7 +37,6 @@ options(knitr.duplicate.label = "allow")
 ```
 
 **Author(s):** Edel Aron<br>
-**Date Created:** 2023-02-22<br>
 **Last Updated:** `r Sys.Date()`
 
 **R version:** `r R.Version()$version.string`<br>
@@ -558,6 +557,8 @@ Select a doublet rate:
 #| class.source = "fold-show"
 
 doublet_rate_skin <- "0.01"
+
+# we ended up with a doublet rate closer to 4.5%
 ```
 
 ```{r skin-load}

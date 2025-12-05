@@ -37,7 +37,6 @@ options(knitr.duplicate.label = "allow")
 ```
 
 **Author(s):** Edel Aron<br>
-**Date Created:** 2023-05-11<br>
 **Last Updated:** `r Sys.Date()`
 
 **R version:** `r R.Version()$version.string`<br>

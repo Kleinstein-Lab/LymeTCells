@@ -37,7 +37,6 @@ options(knitr.duplicate.label = "allow")
 ```
 
 **Author(s):** Edel Aron<br>
-**Date Created:** 2023-10-04<br>
 **Last Updated:** `r Sys.Date()`
 
 **R version:** `r R.Version()$version.string`<br>
@@ -806,6 +805,8 @@ FeaturePlot(object = trust4_obj, features = c("TRGV9", "TRDV2"),
             pt.size = 0.8, order = TRUE) &
   labels_standard & clean_umap
 ```
+
+Our 4% γδ T cells in the blood fell within the expected range according to the TRUST4 authors (0.5 - 5%).
 
 ### Blood T Cells (Refined)
 

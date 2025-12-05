@@ -36,7 +36,6 @@ options(knitr.duplicate.label = "allow")
 ```
 
 **Author(s):** Edel Aron<br>
-**Date Created:** 2023-04-28<br>
 **Last Updated:** `r Sys.Date()`
 
 **R version:** `r R.Version()$version.string`<br>
@@ -109,12 +108,12 @@ print_kable(read_csv(file.path(path_base, "primary_analysis", "tables",
 ```
 
 <br>
-Directly from [10x Genomics (v6.1) [Immune Profiling]](https://support.10xgenomics.com/single-cell-vdj/software/pipelines/latest/output/metrics):
+Directly from [10x Genomics (v6.1) [Immune Profiling]](https://support.10xgenomics.com/single-cell-vdj/software/pipelines/6.1/what-is-cell-ranger):
 
 The `cellranger vdj` pipeline outputs _metrics_summary.csv_ which contains a number of key metrics about the barcoding and sequencing process. Conventions for these metrics:
 
 - In some cases there is a metric for each chain type. We only show one.
-- "Cells" refers to T or B cells.
+- "Cells" refers to T (or B) cells.
 - References to quality scores exclude very low quality/no-call (Q ≤ 2) bases.
 
 ```{r unaggr-10x-vdj-info}
@@ -127,7 +126,7 @@ print_kable(read_csv(file.path(path_base, "primary_analysis", "tables",
 
 ```{r unaggr-metrics-summary}
 metrics_summary <- create_metrics_summary(meta = meta,
-                                          path_data_specific = path_data_root,
+                                          path_data = path_data_root,
                                           data_types = c("GEX", "TCR"),
                                           samples_list = samples)
 ```
@@ -413,9 +412,6 @@ aggr_results_summary <- tibble(aggr_results_summary) %>%
                           distinct()
 
 print_kable(aggr_results_summary)
-
-# switch rows and columns
-# aggr_results
 ```
 
 ### Read counts

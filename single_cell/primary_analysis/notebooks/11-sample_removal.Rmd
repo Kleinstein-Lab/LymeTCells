@@ -29,7 +29,7 @@ knitr::opts_chunk$set(comment = NA, dpi = 200, fig.align = "center",
                       out.width = "100%", warning = FALSE, error = TRUE,
                       message = FALSE,
                       fig.path = here::here("primary_analysis", "figures",
-                                            "experimental", "label_swap",
+                                            "analysis", "label_swap",
                                             "label-swap-"))
 
 # will mess with chunk labels, but needed for parameterized reports
@@ -37,7 +37,6 @@ options(knitr.duplicate.label = "allow")
 ```
 
 **Author(s):** Edel Aron<br>
-**Date Created:** 2023-10-20<br>
 **Last Updated:** `r Sys.Date()`
 
 **R version:** `r R.Version()$version.string`<br>
@@ -74,7 +73,7 @@ unlink(c(code_setup, code_functions, code_meta))
 
 ```{r setup-qc}
 metrics_summary <- create_metrics_summary(meta = meta,
-                                          path_data_specific = path_data_root,
+                                          path_data = path_data_root,
                                           data_types = c("GEX", "TCR"),
                                           samples_list = samples_skin)
 ```
