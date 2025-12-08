@@ -21,15 +21,15 @@ path_tables <- file.path(path_base, "primary_analysis", "tables")
 
 # nf-core/airrflow specific
 airrflow_version <- "4.1.0" # set the airrflow version that was run
-path_objs_airrflow <-
+path_airrflow_objs <-
   file.path(path_objs, "airr", paste0("airrflow_", airrflow_version))
 
 # list (and install if needed) CRAN packages
 packages <- c(# Immcantation packages
               "alakazam", "scoper", 
               # needed for manuscript figures
-              "APackOfTheClones", "clusterProfiler", "ggpubr", "msigdbr",
-              "SeuratExtend", "xlsx",
+              "APackOfTheClones", "CellChat", "clusterProfiler", "ggpubr",
+              "msigdbr", "SeuratExtend", "xlsx",
               # only for functions
               "circlize", "DESeq2", "DT", "ggsignif", "kableExtra", "knitr",
               "magrittr", "peakRAM", "rlang",
@@ -38,8 +38,8 @@ packages <- c(# Immcantation packages
               # plotting
               "ggrepel", "ggtext", "ggVennDiagram", "hues", "pals", "patchwork",
               # other
-              "clustree", "enrichR", "here", "Matrix", "plyr", "reshape",
-              "rjson", "scales", "Seurat", "tidyverse")
+              "clustree", "here", "Matrix", "plyr", "reshape", "rjson",
+              "scales", "Seurat", "tidyverse")
 new_pkg <- packages[!(packages %in% installed.packages())]
 if (length(new_pkg)) {install.packages(new_pkg)}
 
@@ -85,36 +85,26 @@ t_cell_types_str <- str_c(t_cell_types, collapse = ", ")
 This will help the figures created later on to be more standardized and interpretable. Note that some colors have to be defined in later sections (several "Choose ... colors").
 
 ```{r colors}
+# we had a dataset 1 that was not included in this manuscript
 colors_dataset <- c("2" = "#47D1FF", "3" = "#0096C7", "4" = "#004D66") # shades of blue
 colors_datatype <- c("Bulk" = "#788896", "GEX" = "#0CDD6B", "TCR" = "#007860") # shades of green
-colors_airrflow <- "#00e5b7"
-
-colors_locus <- c("TRB" = "#085b63", "TRA" = "#57410a")
 
 # for data type comparisons
 colors_gex_tcr <- c("GEX" = colors_datatype[["GEX"]], "GEX_TCR" = "black",
                     "TCR" = colors_datatype[["TCR"]])
 
 # tissue and sample types
-colors_tissue_types <- c("Blood" = "#8B1A1A", "Skin" = "#8B7438") # red and brown
 colors_sample_type_blood <- c("Blood" = "#8B1A1A") # red
-colors_sample_type_skin <- c("Control" = "#9f8D60", "Control_EM" = "#00E321", 
-                             "EM" = "#584E36") # shades of brown and a green
-colors_germline <- c("Germline" = "black")
+colors_sample_type_skin <- c("Control" = "#A6CEE3", "Control_EM" = "#00E321", 
+                             "EM" = "#FF7F00") # pale blue, green, orange
 colors_sample_types <- c(colors_sample_type_blood, colors_sample_type_skin)
 
 # QC specific
 colors_chain_tcr <- c("TRBOnly" = "#007F5F", "Paired" = "#55A630",
                       "TRAOnly" = "#DDDF00") # yellow and green
-colors_filt <- c("RawTotal" = "#482785", "PostFiltration" = "#9471D9")
 
 # TRUE vs. FALSE
 colors_binary <- c("TRUE" = "#3FEBC5", "FALSE" = "#C2B497") # turquoise and sand
-colors_binary_clones <- c("TRUE" = "#FFCC00", "FALSE" = "gray75") # yellow and gray
-
-# Seurat plot specific (the default is c("lightgrey", "blue"))
-colors_dot <- "RdBu"
-colors_dot_pos <- c("#FAECE4", "#B5222D") # for when col.min = 0
 
 # for doublet plots
 colors_doublet <- c("Singlet" = "#cbcae3", "Doublet" = "#807DBA")
@@ -124,10 +114,6 @@ colors_clustree <- setNames(stepped2(n = 16),
                             nm = seq(0.1, 1.6, 0.1)) # might need adjusting
 
 # manuscript
-colors_lineages <- c("Dermal" = "#8ab17d", "Endothelial" = "#e76f51",
-                     "Lymphoid" = "#264653", "Megakaryocytes" = "#f4a261",
-                     "Myeloid" = "#2a9d8f", "Lymphoid/Myeloid" = "#287271",
-                     "Stromal" = "#e9c46a")
 colors_immune <- c("Adaptive Immune" = "#006358", "Innate Immune" = "#00B19D",
                    "Immune" = "#008A7B", "Non Immune" = "#3ED55D")
 ```
@@ -135,10 +121,11 @@ colors_immune <- c("Adaptive Immune" = "#006358", "Innate Immune" = "#00B19D",
 These functions aid with ggplot2 plotting:
 
 ```{r ggplot-themes}
+# yes I know that I could have picked a name that wouldn't seem misspelled
 theme_bw <- theme_bw() +
               theme(panel.grid.major.x = element_blank(),
-                    panel.grid.major.y = element_line(color = "grey75",
-                                                      linewidth = 0.2))
+                    panel.grid.major.y =
+                      element_line(color = "grey75", linewidth = 0.2))
 
 labels_rotate_x <- theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
@@ -152,7 +139,8 @@ labels_standard <- theme(plot.title = element_text(size = 12, hjust = 0.5),
                          legend.text = element_text(size = 8))
 
 labels_standard_venn <- theme(plot.title = element_text(size = 12, hjust = 0.5),
-                              plot.subtitle = element_text(size = 9, hjust = 0.5),
+                              plot.subtitle =
+                                element_text(size = 9, hjust = 0.5),
                               legend.title = element_text(size = 10),
                               legend.text = element_text(size = 10))
 
@@ -166,8 +154,8 @@ labels_standard_vln <- labels_standard +
 
 # the label is a little misleading; this rotates the labels back to flat
 labels_standard_vln_rotate <- labels_standard_vln +
-                              theme(axis.text.x = element_text(angle = 0,
-                                                               hjust = 0.5))
+                              theme(axis.text.x =
+                                      element_text(angle = 0, hjust = 0.5))
 
 # just for clustrees
 labels_clustree <- theme(axis.title = element_blank(),
@@ -177,9 +165,9 @@ labels_clustree <- theme(axis.title = element_blank(),
 # sometimes just axis.text doesn't do anything
 # having an aspect ratio messes up patchwork sometimes
 clean_umap <- theme(plot.title = element_text(hjust = 0.5, face = "plain"),
-                    axis.text = element_blank(),
-                    axis.text.x = element_blank(), axis.text.y = element_blank(),
-                    axis.ticks = element_blank(), aspect.ratio = 1)
+                    axis.text = element_blank(), axis.text.x = element_blank(),
+                    axis.text.y = element_blank(), axis.ticks = element_blank(),
+                    aspect.ratio = 1)
 
 legend_bottom <- theme(legend.position = "bottom",
                        legend.justification = "center",
@@ -187,14 +175,6 @@ legend_bottom <- theme(legend.position = "bottom",
 
 # for patchwork plots
 plot_anno <- plot_annotation(tag_levels = "A")
-```
-
-We will be examining these metadata columns throughout the following analyses. Note that these columns **must exist** within the combined Immcantation files for the "AIRR" section.
-
-```{r metadata-groups}
-#| class.source = "fold-show"
-
-meta_group <- c("SampleName", "Subject", "TissueType", "SampleType", "Dataset")
 ```
 
 More plot settings:
@@ -210,6 +190,8 @@ options(ggrepel.max.overlaps = Inf)
 
 ### Features to be filtered out
 
+You shouldn't just pull out genes that begin with "IG" or "TR"
+
 The following show an example of the Ensembl 93 features, the gene biotypes that they use and an example of the genes that we exclude:
 
 ```{r filter-features-load}
@@ -220,6 +202,8 @@ The following show an example of the Ensembl 93 features, the gene biotypes that
 # read in meta data pulled from Ensembl 93 using biomaRt
 load(file.path(path_resources, "QC_features_meta.RData")) # features_meta, features_ensembl, features_readable
 
+# there are some genes that start with "IG" or "TR" that are not immune-related,
+# so you shouldn't just remove genes based upon that
 biotypes_excl <-
   unique(features_meta[["gene_biotype"]])[grepl(pattern = "^IG_|^TR_",
                                                 x = unique(features_meta[["gene_biotype"]]))]
@@ -229,6 +213,65 @@ remove_genes <- features_meta %>%
 
 # remove unnecessary variables
 # rm(biotypes_excl, ensembl, features_meta, mart)
+```
+
+If you want to download an Ensembl database yourself, you can use this code:
+
+```{r}
+#| eval = FALSE
+
+# credit to Edward Lee and Hailong Meng in the Kleinstein lab
+# make sure that you have biomaRt and tidyverse loaded
+
+# define your species and genome of interest (use listDatasets below for other choices)
+species <- "human" # or "mouse"
+genome <- "hsapiens" # or "mmusculus"
+
+# get the current version
+current_version <- listEnsemblArchives() %>%
+                     dplyr::filter(current_release == "*") %>%
+                     pull(name)
+cat(paste("The current version is:", current_version))
+current_version <- str_split(current_version, " ")[[1]][2] # just the number
+# or pick an older version
+
+# search Ensembl's datasets
+ensembl <- useEnsembl(biomart = "ensembl")
+dataset <- searchDatasets(mart = ensembl, pattern = genome)$dataset
+
+# use listEnsembl() for biomart options (we always use genes)
+# you could set mirror = "" but you'd have to remove the version parameter
+ensembl <- useEnsembl(biomart = "genes", dataset = dataset,
+                      version = current_version)
+# could also just do:
+# ensembl <- useMart(biomart = "ensembl", dataset = dataset)
+
+# filter for the features of interest
+filters <- listFilters(ensembl)
+attributes <- listAttributes(ensembl)
+attributes <- dplyr::filter(attributes,
+                            name %in% c("ensembl_gene_id", "external_gene_name",
+                                        "gene_biotype", "hgnc_symbol",
+                                        "description") & page == "feature_page")
+
+# known biotypes
+tr_ig_biotypes <- c("TR_C_gene", "TR_D_gene",
+                    "TR_J_gene", "TR_J_pseudogene",
+                    "TR_V_gene", "TR_V_pseudogene",
+                    "IG_C_gene", "IG_C_pseudogene",
+                    "IG_D_gene", "IG_D_pseudogene",
+                    "IG_J_gene", "IG_LV_gene", "IG_pseudogene",
+                    "IG_V_gene", "IG_V_pseudogene")
+
+features_meta <- getBM(attributes = c("ensembl_gene_id", "external_gene_name",
+                                      "gene_biotype", "hgnc_symbol",
+                                      "description"),
+                       filters = "biotype", values = tr_ig_biotypes,
+                       mart = ensembl)
+
+# save the file (change as desired)
+file_name <- paste0("QC_features_meta_", species, "_v", current_version, ".rds")
+write_rds(features_meta, file = file.path(path_resources, file_name))
 ```
 
 Examples of genes to be excluded:
