@@ -1,6 +1,5 @@
 # -------------------------------------
 # Author: Edel Aron
-# Date Created: 2021-07-26
 # Last Updated: 2022-02-28
 #
 # R version 4.0.5 (2021-03-31)
@@ -20,7 +19,7 @@
 rm(list = ls())
 
 # set the working directory
-path_base <- file.path("~", "git", "Research", "lyme", "single_cell") # Linux
+path_base <- file.path("~", "git", "Research", "LymeTCells") # Linux
 # setwd(path_base)
 
 # set the data directory

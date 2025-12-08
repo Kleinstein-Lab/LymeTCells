@@ -36,7 +36,7 @@ This file include columns ("SampleName" vs. "SampleNameOriginal") which addresse
 **Graphical overview of current Lyme data:**
 
 ```{r, eval = FALSE}
-include_graphics(path = here::here("single_cell", "primary_analysis", "images",
+include_graphics(path = here::here("primary_analysis", "images",
                                    "lyme_data.png"))
 ```
 

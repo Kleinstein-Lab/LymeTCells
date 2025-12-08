@@ -72,7 +72,7 @@ This code represents the primary pipeline for running quality control and proces
 ### Notebook structure
 
 ```{r}
-knitr::include_graphics(path = here::here("single_cell", "primary_analysis",
+knitr::include_graphics(path = here::here("primary_analysis",
                                           "images", "notebook_structure.png"))
 ```
 
@@ -88,7 +88,7 @@ options(knitr.duplicate.label = "allow")
 ```
 
 ```{r}
-#| child = here::here("single_cell", "primary_analysis", "notebooks", "01-setup.Rmd")
+#| child = here::here("primary_analysis", "notebooks", "01-setup.Rmd")
 ```
 
 ------------------------------------------------------------------------
@@ -96,7 +96,7 @@ options(knitr.duplicate.label = "allow")
 # Useful functions
 
 ```{r}
-#| child = here::here("single_cell", "primary_analysis", "notebooks", "02-functions.Rmd"),
+#| child = here::here("primary_analysis", "notebooks", "02-functions.Rmd"),
 #| class.source = "fold-show"
 ```
 
@@ -105,7 +105,7 @@ options(knitr.duplicate.label = "allow")
 # Read in the data
 
 ```{r}
-#| child = here::here("single_cell", "primary_analysis", "notebooks", "03-meta.Rmd")
+#| child = here::here("primary_analysis", "notebooks", "03-meta.Rmd")
 ```
 
 ------------------------------------------------------------------------

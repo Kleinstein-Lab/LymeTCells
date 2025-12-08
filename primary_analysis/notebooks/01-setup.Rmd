@@ -9,7 +9,7 @@ If you are running this Rmd file within RStudio, make sure that "Knit Directory"
 rm(list = ls())
 
 # define the working directory (change as needed)
-path_base <- file.path("~", "git", "Research", "LymeTCells", "single_cell")
+path_base <- file.path("~", "git", "Research", "LymeTCells")
 
 # set the data directory (change as needed)
 path_data_root <- file.path("/media", "edelaron", "Midas", "lyme")

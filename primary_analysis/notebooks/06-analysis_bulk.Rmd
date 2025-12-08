@@ -45,16 +45,13 @@ options(knitr.duplicate.label = "allow")
 ```{r, include = FALSE}
 # load packages, colors and themes and functions (R code only)
 code_setup <-
-  knitr::purl(here::here("single_cell", "primary_analysis", "notebooks",
-                         "01-setup.Rmd"),
+  knitr::purl(here::here("primary_analysis", "notebooks", "01-setup.Rmd"),
               output = tempfile(), documentation = 0)
 code_functions <-
-  knitr::purl(here::here("single_cell", "primary_analysis", "notebooks",
-                         "02-functions.Rmd"),
+  knitr::purl(here::here("primary_analysis", "notebooks", "02-functions.Rmd"),
               output = tempfile(), documentation = 0)
 code_meta <- 
-  knitr::purl(here::here("single_cell", "primary_analysis", "notebooks",
-                         "03-meta.Rmd"),
+  knitr::purl(here::here("primary_analysis", "notebooks", "03-meta.Rmd"),
               output = tempfile(), documentation = 0)
 
 # read in the code, then remove the temp files
@@ -89,7 +86,7 @@ changeo_airr <- filter(changeo_airr, !is.na(airr))
 
 # Published data
 
-We only have bulk data for samples that were [previously published](https://insight.jci.org/articles/view/148035). So for reproducibility, let's pull that data straight from the [official GEO version](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE172225). I downloaded the "RAW" file and extracted it, then extracted all of the files within it with `gunzip` in Unix (e.g. *GSM5244384_192561.airr.txt.gz* became *192561.tsv*). The files were all saved within a "GSE172225" subdirectory.
+We only have bulk data for samples that were [previously published](https://insight.jci.org/articles/view/148035). So for reproducibility, let's pull that data straight from the [official GEO version](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE172225). I downloaded the "RAW" file and extracted it, then extracted all of the files within it with `gunzip` in Unix (e.g. *GSM5244384_192561.airr.txt.gz* became *192561.tsv*). The files were all saved within a "GSE172225" subdirectory. Please see the code for that paper for how the bulk data was processed.
 
 Read in and combine all of the results:
 

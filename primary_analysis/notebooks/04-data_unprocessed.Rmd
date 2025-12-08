@@ -46,16 +46,13 @@ options(knitr.duplicate.label = "allow")
 ```{r, include = FALSE}
 # load packages, colors and themes and functions (R code only)
 code_setup <-
-  knitr::purl(here::here("single_cell", "primary_analysis", "notebooks",
-                         "01-setup.Rmd"),
+  knitr::purl(here::here("primary_analysis", "notebooks", "01-setup.Rmd"),
               output = tempfile(), documentation = 0)
 code_functions <-
-  knitr::purl(here::here("single_cell", "primary_analysis", "notebooks",
-                         "02-functions.Rmd"),
+  knitr::purl(here::here("primary_analysis", "notebooks", "02-functions.Rmd"),
               output = tempfile(), documentation = 0)
 code_meta <- 
-  knitr::purl(here::here("single_cell", "primary_analysis", "notebooks",
-                         "03-meta.Rmd"),
+  knitr::purl(here::here("primary_analysis", "notebooks", "03-meta.Rmd"),
               output = tempfile(), documentation = 0)
 
 # read in the code, then remove the temp files
