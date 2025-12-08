@@ -64,11 +64,6 @@ source(code_meta)
 unlink(c(code_setup, code_functions, code_meta))
 ```
 
-```{r}
-include_graphics(path = here::here("single_cell", "primary_analysis", "images",
-                                   "single_cell_qc_pipeline.png"))
-```
-
 ------------------------------------------------------------------------
 
 # Read in the data

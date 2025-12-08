@@ -64,11 +64,6 @@ source(code_meta)
 unlink(c(code_setup, code_functions, code_meta))
 ```
 
-```{r}
-include_graphics(path = here::here("single_cell", "primary_analysis", "images",
-                                   "single_cell_immune_profiling_pipeline.png"))
-```
-
 [airrflow documentation](https://nf-co.re/airrflow/) and [airrflow GitHub](https://github.com/nf-core/airrflow)
 
 Latest version run:

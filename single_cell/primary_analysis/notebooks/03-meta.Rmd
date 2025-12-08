@@ -31,15 +31,13 @@ print_kable(meta_clinical %>%
 
 ## Read in the metadata
 
-Originally each dataset had their own individual metadata file (e.g. "lyme_dataset2_meta.csv"), but they have since been combined into a single file. This file include columns ("SampleName" vs. "SampleNameOriginal") which addresses issues such as the incorrectly labeled samples in dataset 3.
+This file include columns ("SampleName" vs. "SampleNameOriginal") which addresses issues such as the incorrectly labeled samples in dataset 3. I included the disease in the metadata (although it is all "lyme") in case the resulting Seurat objects are used in a different analysis using multiple datasets/diseases.
 
-I included the disease in the metadata (although it is all "lyme") in case the resulting Seurat objects are used in a different analysis using multiple datasets/diseases.
-
-**Graphical overview of current HIPC Lyme data:**
+**Graphical overview of current Lyme data:**
 
 ```{r, eval = FALSE}
 include_graphics(path = here::here("single_cell", "primary_analysis", "images",
-                                   "hipc_lyme_data.png"))
+                                   "lyme_data.png"))
 ```
 
 ### Full metadata table

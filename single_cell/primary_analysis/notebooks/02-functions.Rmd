@@ -818,7 +818,7 @@ create_seurat_objs <- function(objs_list, meta_file,
     # obj <-
     #   PercentageFeatureSet(obj, pattern = "^RP[SL]", col.name = "percent.ribo")
     obj$SampleName <- meta_sample$SampleName # same as orig.ident
-    obj$Subject <- meta_sample$Subject # HIPC ID
+    obj$Subject <- meta_sample$Subject # de-identified ID
     obj$TissueType <- meta_sample$TissueType # Blood or Skin
     obj$SampleType <- meta_sample$SampleType # Blood, Control, or EM
     obj$Dataset <- meta_sample$Dataset # 2, 3 or 4
