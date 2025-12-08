@@ -308,7 +308,8 @@ DotPlot(combined_blood,
         features = get_features_from_all(markers_df = markers_all,
                                          sources = "Ira_Fleming",
                                          alphabetize_all = FALSE),
-        cols = colors_dot, dot.scale = 3, cluster.idents = TRUE) %>%
+        dot.scale = 3, cluster.idents = TRUE) %>%
+  dot_color_scale() %>%
   add_info_bar(method = "join", info_type = "Cell_Type_Full",
                info = get_cell_types(markers_all %>%
                                        dplyr::filter(Source == "Ira_Fleming")),
@@ -778,7 +779,8 @@ DotPlot(combined_blood,
         features = get_features_from_all(markers_df = markers_all,
                                          sources = "Ira_Fleming",
                                          alphabetize_all = FALSE),
-        cols = colors_dot, dot.scale = 3) %>%
+        dot.scale = 3) %>%
+  dot_color_scale() %>%
   add_info_bar(method = "join", info_type = "Cell_Type_Full",
                info = get_cell_types(markers_all %>%
                                        dplyr::filter(Source == "Ira_Fleming")),
@@ -978,7 +980,8 @@ DotPlot(combined_skin,
                                          sources = "Mary_Tomayko",
                                          tissue_types = "Skin",
                                          alphabetize_all = FALSE),
-        cols = colors_dot, dot.scale = 3, cluster.idents = TRUE) %>%
+        dot.scale = 3, cluster.idents = TRUE) %>%
+  dot_color_scale() %>%
   add_info_bar(method = "join", info_type = "Cell_Type_Full",
                info = get_cell_types(markers_all %>%
                                        dplyr::filter(Source == "Mary_Tomayko",
@@ -1763,7 +1766,8 @@ DotPlot(combined_skin,
                                          sources = "Mary_Tomayko",
                                          tissue_types = "Skin",
                                          alphabetize_all = FALSE),
-        cols = colors_dot, dot.scale = 3) %>%
+        dot.scale = 3) %>%
+  dot_color_scale() %>%
   add_info_bar(method = "join", info_type = "Cell_Type_Full",
                info = get_cell_types(markers_all %>%
                                        dplyr::filter(Source == "Mary_Tomayko",

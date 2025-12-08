@@ -97,7 +97,7 @@ Read in the processed `airrflow` and AIRR objects:
 
 ```{r setup-combined-airrflow}
 combined_tcr <-
-  readRDS(file.path(path_objs_airrflow, "combined_tcr.rds"))
+  readRDS(file.path(path_airrflow_objs, "combined_tcr.rds"))
 # or combined_bulk_tcr.rds directly
 
 # for plotting purpose
@@ -316,7 +316,7 @@ combined_tcr_full <- combined_tcr_full %>%
 
 # takes up less space than a tsv file
 saveRDS(combined_tcr,
-        file.path(path_objs_airrflow, "combined_tcr.rds"))
+        file.path(path_airrflow_objs, "combined_tcr.rds"))
 saveRDS(combined_tcr_full,
         file.path(path_objs, "airr", "combined_bulk_tcr.rds"))
 ```

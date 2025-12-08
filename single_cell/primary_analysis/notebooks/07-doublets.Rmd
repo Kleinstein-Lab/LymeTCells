@@ -36,7 +36,7 @@ knitr::opts_chunk$set(comment = NA, dpi = 200, fig.align = "center",
 options(knitr.duplicate.label = "allow")
 ```
 
-**Author(s):** Edel Aron<br>
+**Author(s):** Edel Aron, Paraskevas Filippidis<br>
 **Last Updated:** `r Sys.Date()`
 
 **R version:** `r R.Version()$version.string`<br>

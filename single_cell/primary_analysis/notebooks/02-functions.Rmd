@@ -228,12 +228,12 @@ calc_pcts <- function(data, meta_group_by = c("SampleName", "Dataset"),
 #' @param label_fill Add a white background for clarity.
 #' @param include_counts Plot the counts on top/bottom.
 #' @param drop_zeroes Remove percentages of zeroes.
-#' @param reverse_order Change the fill order for a stacked plot
-#' @param inverted
-#' @param use_white Use white borders instead of black
+#' @param reverse_order Change the fill order for a stacked plot.
+#' @param inverted Whether to invert the plot orientation.
+#' @param use_white Use white borders instead of black.
 #' @param details The optional subtitle.
 #'
-#' @returns A stacked ggplot bar plot
+#' @returns A stacked ggplot bar plot.
 plot_pcts <- function(pcts, tissue_type = "", clrs_specific,
                       plot_type = "All", plot_value = "Cell Type",
                       x_axis = "SampleName", x_axis_label = "Sample",
@@ -840,44 +840,47 @@ You can provide a specific list of samples or data types to create summaries for
 
 ```{r func-create-metrics-summary}
 #' Create a metrics summary table with some info from 10x's metric summary file
+#' 
+#' @details
+#' Note that if you are looking at read pairs instead of reads, you should multiply by two.
 #'
 #' @param meta The metadata file.
-#' @param path_data_specific Where the data is located.
-#' @param data_types e.g. GEX, TCR
+#' @param path_data Where the data is located.
+#' @param data_types At least one of: GEX, TCR
 #' @param samples_list The samples you would like to examine.
 #'
 #' @returns A data.frame.
-create_metrics_summary <- function(meta, path_data_specific,
-                                   data_types, samples_list) {
+create_metrics_summary <- function(meta, path_data, data_types, samples_list) {
   metrics_summary <- tibble()
-  if (rlang::is_missing(data_types)) data_types <- unique(meta$DataType) # depends on dataset
+  if (rlang::is_missing(data_types)) data_types <- unique(meta$DataType)
   if (rlang::is_missing(samples_list)) samples_list <- sort(unique(meta$SampleName))
 
   for (sample in samples_list) {
     for (data_type in data_types) {
       # metadata info
-      meta_sample <- dplyr::filter(meta, SampleName == sample, DataType == data_type)
-      sample_type <- unique(meta_sample$SampleType) # Blood, Control, or EM
+      meta_sample <-
+        dplyr::filter(meta, SampleName == sample, DataType == data_type)
+      sample_type <- unique(meta_sample$SampleType)
       subject <- unique(meta_sample$Subject)
-      dataset <- unique(meta_sample$Dataset) # 2, 3 or 4
-      timepoint <- unique(meta_sample$Timepoint) # 0, 1 or 2
+      dataset <- unique(meta_sample$Dataset)
 
       # read in the summary table
-      path_data <- file.path(path_data_specific, paste0("dataset", dataset), "default")
-      data <- read_csv(file.path(path_data, meta_sample$SampleDir,
+      path_data_specific <-
+        file.path(path_data, paste0("dataset", dataset), "default")
+      data <- read_csv(file.path(path_data_specific, meta_sample$SampleDir,
                                  "outs", "metrics_summary.csv"),
                        show_col_types = FALSE)
 
-      # set the columns of interest
+      # pull the columns of interest
       estimated_number_of_cells <- data[["Estimated Number of Cells"]]
       num_reads <- data[grepl("Number of Read", colnames(data))][[1]] # Number of Read Pairs (VDJ), Number of Reads (GEX)
-      reads_per_cell <- num_reads %/% estimated_number_of_cells  # mean read pairs per cell is also a col
+      reads_per_cell <- num_reads %/% estimated_number_of_cells  # mean read pairs per cell is also a column
       median_genes <- data[["Median Genes per Cell"]] # GEX only
 
       # update the combined summary table
       metrics_summary <- bind_rows(metrics_summary,
                                    tibble(sample, subject, sample_type,
-                                          data_type, timepoint, dataset,
+                                          data_type, dataset,
                                           estimated_number_of_cells, num_reads,
                                           reads_per_cell, median_genes))
     }
@@ -926,9 +929,9 @@ reformat_vdj_barcode_sample <- function(data, sample_name, barcode_col = "barcod
 #' to create unique cell identifiers.
 #'
 #' @param data A data frame containing sample names and cell barcodes.
-#' @param col_samples The column name containing sample names. Default is "SampleName".
-#' @param col_barcodes The column name containing cell barcodes. Default is "cell_id".
-#' @param col_output The name for the output column. Default is "Cell_ID_Unique".
+#' @param col_samples The column name containing sample names.
+#' @param col_barcodes The column name containing cell barcodes.
+#' @param col_output The name for the output column.
 #'
 #' @returns A character vector of reformatted unique cell identifiers.
 reformat_vdj_barcode <- function(data, col_samples = "SampleName",
@@ -979,17 +982,17 @@ count_barcode_overlaps <- function(barcodes_list1, barcodes_list2,
 ```{r func-plot-counts}
 #' Bar plot of read or cell counts for QC.
 #'
-#' @param summary_df output of create_metrics_summary()
-#' @param data_types e.g. GEX, TCR
-#' @param count_type Read, Cell, Barcode
-#' @param aggregation_state Aggregated or Unaggregated (`cellranger aggr`)
-#' @param samples
-#' @param fill_type_label Data Type, Chain Type
-#' @param x_axis what to plot along the bottom
-#' @param x_axis_label what to call the x axis
-#' @param clrs_datatype must be given in the correct order if plotting barcodes
+#' @param summary_df Output of create_metrics_summary().
+#' @param data_types Data types to include, e.g. GEX, TCR, or "All".
+#' @param count_type The type of count to plot: "Read", "Cell", "reads_per_cell", or "Barcode".
+#' @param aggregation_state Aggregation state, either "Aggregated" or "Unaggregated".
+#' @param samples Description of samples being plotted.
+#' @param fill_type_label The legend label for fill, e.g. "Data Type" or "Chain Type".
+#' @param x_axis What metadata column to plot along the x axis.
+#' @param x_axis_label The label for the x axis.
+#' @param clrs_datatype Named color vector for the fill types (must be given in correct order if plotting barcodes).
 #'
-#' @returns
+#' @returns A ggplot bar plot of the specified count type.
 plot_counts <- function(summary_df, data_types = "All",
                         count_type, aggregation_state = "Unaggregated",
                         samples = "All Samples",
@@ -1062,12 +1065,12 @@ plot_counts <- function(summary_df, data_types = "All",
 #' @param input_matrix the matrix you would like to plot
 #' @param data_types list of 2 values (GEX, TCR), preferably alphanumeric
 #' @param row_cluster if you would like to cluster the rows or not
-#' @param col_cluster if you would like to cluster the columns or not
-#' @param text_size a character vector of the inner text, border text and title text sizes respectively
-#' @param matrix_annos named list of annotations to display along the side if desired
-#' @param by_percent if the input matrix is for percentages or not
+#' @param col_cluster Whether or not to cluster the columns.
+#' @param text_sizes A numeric vector of the inner text, border text, and title text sizes respectively.
+#' @param matrix_annos A named list of annotations to display along the side if desired.
+#' @param by_percent Whether the input matrix contains percentages or counts.
 #'
-#' @returns
+#' @returns A ComplexHeatmap heatmap object showing barcode overlap.
 plot_qc_heatmap <- function(input_matrix, data_types,
                             row_cluster = FALSE, col_cluster = FALSE,
                             text_sizes = c(6, 8, 12), matrix_annos, by_percent) {
@@ -1139,17 +1142,17 @@ This pipeline is loosely based on [Seurat's pipeline](https://satijalab.org/seur
 #' It is highly recommended to save the resulting object as an RDS.
 #' Note that this assumes that subclustered objects were annotated on the "higher" level.
 #'
-#' @param seurat_obj already combined GEX data
-#' @param subcluster Whether or not the data is subclustered
-#' @param nfeatures_RNA minimum number of RNA features
-#' @param perc_mt maximum percentage of mitochondrial genes included
-#' @param num_features desired number of variable features
-#' @param num_pcs number of principal components
-#' @param num_dims number of dimensions to reduce to
-#' @param cluster_res clustering resolution
-#' @param filter_genes Whether or not to filter out IG/TR genes.
+#' @param seurat_obj The Seurat object containing combined GEX data.
+#' @param subcluster Whether the data is subclustered.
+#' @param nfeatures_RNA Minimum number of RNA features.
+#' @param perc_mt Maximum percentage of mitochondrial genes to retain.
+#' @param num_features Desired number of variable features.
+#' @param num_pcs Number of principal components to compute.
+#' @param num_dims Number of dimensions to use for neighbor finding and UMAP.
+#' @param cluster_res Clustering resolution parameter.
+#' @param filter_genes Whether to filter out IG/TR genes.
 #'
-#' @returns description
+#' @returns A processed Seurat object with normalization, scaling, PCA, clustering, and UMAP.
 seurat_pipeline <- function(seurat_obj, subcluster = FALSE,
                             nfeatures_RNA = 200, perc_mt = 15,
                             num_features = 2000, num_pcs = 30, num_dims = 20,
@@ -1223,15 +1226,15 @@ You can also plot other things e.g. sample names.
 ```{r func-plot-counts-cluster}
 #' Visualize how many cells are in each Seurat cluster or cell type.
 #'
-#' @param clusters e.g. combined_blood$seurat_clusters or combined_skin_b$annotated_subclusters
-#' @param tissue_type Blood, Skin
+#' @param clusters A factor or character vector of cluster identities, e.g. seurat_clusters or annotated_subclusters.
+#' @param tissue_type The type of tissue being plotted: "Blood" or "Skin".
 #' @param clrs_specific The specific color palette (should be named).
-#' @param x_axis Cluster, Cell Type
-#' @param x_axis_label description
-#' @param add_zeroes List of clusters to add with zero counts.
-#' @param details The optional subtitle e.g. the subclustering.
+#' @param x_axis What to plot on the x axis: "Cluster" or "Cell Type".
+#' @param x_axis_label The label for the x axis.
+#' @param add_zeroes A character/numeric vector of cluster identities to add with zero counts.
+#' @param details The optional subtitle.
 #'
-#' @returns description
+#' @returns A ggplot bar plot of cell counts.
 plot_counts_cluster <- function(clusters, tissue_type = "", clrs_specific,
                                 x_axis = "Cluster", add_zeroes, details) {
   # if you want to use the default ggplot2 colors
@@ -1319,7 +1322,7 @@ plot_counts_cluster <- function(clusters, tissue_type = "", clrs_specific,
 #' @param x_axis_label A better x axis title if desired.
 #' @param details The optional subtitle.
 #'
-#' @returns description
+#' @returns A ggplot tile plot showing sample distribution across clusters.
 plot_tile <- function(seurat_obj, tissue_type, clrs_specific,
                       y_axis = "SampleName", y_axis_label = "Sample",
                       x_axis = "seurat_clusters",
@@ -1501,7 +1504,9 @@ From Hailong:
 #' @param y_exp_percent The y position of the percentages.
 #' @param num_dec The number of decimal points in the percentages.
 #' @param label_size The font size of cell_count and exp_percent.
-#' @param label_largest_perc
+#' @param label_largest_perc Whether to label the largest percentage.
+#'
+#' @returns A Seurat VlnPlot with cell count and percentage annotations.
 vln_cell_info <- function(seurat_obj, feature, clrs_specific,
                           split_by = "SampleType", pt_size = 0.2,
                           y_exp_percent, num_dec = 2, label_size = 4,
@@ -1641,10 +1646,11 @@ vln_cell_info <- function(seurat_obj, feature, clrs_specific,
 #' @param clusters_col Which column in the object stores the clusters.
 #' @param annotated If the cell types have been identified.
 #' @param annotations_col Which column in the object stores the cell types.
-#' @param doublet_col The column containing the doublets information
+#' @param doublet_col The column containing the doublets information.
+#' @param doublet_package The name of the doublet detection package used.
 #' @param details The optional subtitle.
 #'
-#' @returns
+#' @returns A patchwork plot combining UMAP and bar plots showing doublet identification results.
 layout_doublets <- function(seurat_obj, tissue_type, clrs_specific,
                             clusters_col = "seurat_clusters",
                             annotated = FALSE,
@@ -1749,12 +1755,12 @@ layout_doublets <- function(seurat_obj, tissue_type, clrs_specific,
 #' @param tissue_type The tissue type e.g. Blood, Skin
 #' @param airr_type TCR
 #' @param clrs_specific The specific color palette (should be named).
-#' @param barcode_col barcode, cell_id, Cell_ID_Unique
+#' @param barcode_col The barcode column name: barcode, cell_id, or Cell_ID_Unique.
 #' @param plot_label Whether or not to include the labels.
-#' @param plot_by all samples, by dataset, by sample
-#' @param ncol_sample
+#' @param plot_by The grouping method: all samples, by dataset, by sample, by isotype.
+#' @param ncol_sample The number of columns for sample-wise plots.
 #'
-#' @returns
+#' @returns A Seurat UMAP plot with AIRR cells highlighted by the specified grouping.
 plot_immune_overlay <- function(seurat_obj, tissue_type, airr_type,
                                 clrs_specific, plot_by = "all",
                                 barcode_col = "Cell_ID_Unique",
@@ -2056,19 +2062,22 @@ gex_add_airr <- function(seurat_obj, airr_type = "TCR",
 ### Cluster checks
 
 ```{r func-clusters-gex-airr}
-#' [Description]
+#' Check AIRR and GEX data by cluster.
+#'
+#' @description
+#' Creates a summary table showing percentages of AIRR data and main cell types by cluster.
 #'
 #' @details
 #' * If there are multiple groups in `cell_types`, then their percentages will be summed.
 #'
 #' @param seurat_obj The Seurat object.
 #' @param clusters_col The current column in the Seurat object that you want to annotate on e.g. seurat_clusters or seurat_subclusters.
-#' @param annotations_col
-#' @param airr_type TCR
-#' @param cell_types
-#' @param paired Whether or not to include paired light/alpha information.
+#' @param annotations_col The column with cell type annotations.
+#' @param airr_type Type of immune receptor data.
+#' @param cell_types A character vector of cell types to include in the analysis.
+#' @param paired Whether to include paired light/alpha chain information.
 #'
-#' @returns A table with percentages for the AIRR data and main cell type
+#' @returns A data frame with percentages for the AIRR data and main cell type by cluster.
 clusters_gex_airr <- function(seurat_obj, clusters_col, annotations_col,
                               airr_type = "TCR", cell_types, paired = TRUE) {
   airr_col <- paste0("Has_", airr_type)
@@ -2144,13 +2153,14 @@ subcluster_overview <- function(seurat_obj, seurat_obj_sub,
 ### Match clusters
 
 ```{r func-match-sub-orig}
-#' This function returns the original Seurat clusters from the full tissues that the annotated subclusters map back to
+#' This function returns the original Seurat clusters from the full tissues that the annotated subclusters map back to.
 #'
 #' @param seurat_obj The Seurat object for the full tissue.
 #' @param seurat_obj_sub The Seurat object for the subclustered tissue.
 #' @param cell_types The full tissue cell types that were pulled for subclustering.
+#' @param output_summary Whether to print a summary of the matching results.
 #'
-#' @returns A list of clusters
+#' @returns A character vector of original cluster identities.
 match_sub_orig <- function(seurat_obj, seurat_obj_sub, cell_types,
                            output_summary = TRUE) {
   cluster_info <- left_join(seurat_obj[[]],
@@ -2288,14 +2298,14 @@ recombine_subclusters <- function(seurat_obj,
 #' @param filter_to Filter criteria to apply.
 #' @param highlights Specific elements to highlight in the plot.
 #' @param outlines Specific elements to outline in the plot
-#' @param clrs_outline The outline color
-#' @param include_signif Boolean indicating whether to include significance markers.
-#' @param signif_stars
-#' @param signif_test
-#' @param signif_caption
-#' @param details
+#' @param clrs_outline The outline color.
+#' @param include_signif Whether to include significance test results.
+#' @param signif_stars Whether to use star notation for significance levels.
+#' @param signif_test The statistical test to use for significance.
+#' @param signif_caption Whether to include a caption explaining significance notation.
+#' @param details The optional subtitle.
 #'
-#' @returns
+#' @returns A ggplot faceted plot showing subset frequencies with optional significance markers.
 plot_subsets <- function(seurat_obj, tissue_type, clrs_specific,
                          plot_by = "SampleType",
                          facet_by = "annotated_clusters",
@@ -2505,16 +2515,19 @@ Taken directly from Hailong's "run_de.R" file, which itself pulls from the
 #### Seurat DE
 
 ```{r func-seurat-de}
-#' Run a DE analysis within each cell type using Seurat
+#' Run a DE analysis within each cell type using Seurat.
+#'
+#' @description
+#' Performs differential expression analysis within each cell type using Seurat's FindMarkers function.
 #'
 #' @details
 #' Custom fork of Seurat is available at https://github.com/jordansquair/Seurat
 #'
-#' @param sc
-#' @param de_test
-#' @param params
+#' @param sc A Seurat object with 'cell_type' and 'label' metadata columns.
+#' @param de_test The test to use for differential expression analysis (e.g., 'wilcox', 'bimod').
+#' @param params A list of additional parameters for the DE test.
 #'
-#' @returns
+#' @returns A list of data frames containing differential expression results for each cell type.
 seurat_DE = function(sc, de_test, params = list()) {
   # get classes
   meta = sc@meta.data %>%
@@ -2614,16 +2627,19 @@ seurat_DE = function(sc, de_test, params = list()) {
 #### Pseudobulk
 
 ```{r func-pseudobulk-de}
-#' Run a DE analysis within each cell type using pseudobulk methods
+#' Run a DE analysis within each cell type using pseudobulk methods.
+#'
+#' @description
+#' Performs pseudobulk differential expression analysis using various DE testing methods.
 #'
 #' @details
-#' The reference comparison should be first in the label
+#' The reference comparison should be first in the label. Metadata must contain a 'replicate' column.
 #'
-#' @param sc
-#' @param de_test
-#' @param params
+#' @param sc A Seurat object with 'cell_type', 'label', and 'replicate' metadata columns.
+#' @param de_test The DE testing method: 'pseudobulk_limma', 'pseudobulk_DESeq2', or 'pseudobulk_edgeR'.
+#' @param params A list of additional parameters for the chosen DE test method.
 #'
-#' @returns
+#' @returns A list of data frames containing pseudobulk DE results for each cell type.
 pseudobulk_DE = function(sc,
                          de_test = c("pseudobulk_limma", "pseudobulk_DESeq2",
                                      "pseudobulk_edgeR"),
@@ -2914,11 +2930,15 @@ pseudobulk_DE = function(sc,
 ```{r func-run-de}
 #' Run a scRNAseq differential expression analysis, given a Seurat object.
 #'
-#' @param sc
-#' @param de_test
-#' @param params
+#' @description
+#' Wrapper function that runs differential expression analysis using either Seurat or pseudobulk methods.
 #'
-#' @returns
+#' @param sc A Seurat object with 'cell_type', 'label', and optionally 'replicate' metadata columns.
+#' @param de_test The DE testing method with optional parameters (e.g., 'pseudobulk_limma,mode?trend').
+#' @param params A list of additional parameters for the chosen DE test method.
+#' @param ... Additional arguments passed to the DE testing functions.
+#'
+#' @returns A data frame containing differential expression results for all cell types.
 run_DE = function(sc, de_test, params = list(), ...) {
   # check there are exactly two labels
   meta = sc@meta.data
@@ -2979,28 +2999,28 @@ Modified from Hailong's code.
 #' note that the asterisk will now be on the right side and you'll have to move
 #' the legends
 #'
-#' @param DESeq2_out
-#' @param gene_list
-#' @param FDR_cutoff
-#' @param anno_top
-#' @param clrs_anno_top
-#' @param clr_na
-#' @param clrs_plot
-#' @param nclrs
-#' @param zero_white
-#' @param split_row Must be a data.frame with "Type" and "Gene" columns.
+#' @param DESeq2_out A list of data frames containing DE results from DESeq2 analysis.
+#' @param gene_list A character vector of gene names to display in the heatmap.
+#' @param FDR_cutoff The adjusted p-value cutoff for significance.
+#' @param anno_top An optional data frame for top annotations (e.g., cell type).
+#' @param clrs_anno_top A named list of colors for the top annotations.
+#' @param clr_na The color to use for NA values in the heatmap.
+#' @param clrs_plot A color palette function for the main heatmap values.
+#' @param nclrs The number of colors to generate for the heatmap.
+#' @param zero_white Whether to set zero fold-change values to white color.
+#' @param split_row A data frame with "Type" and "Gene" columns for row grouping.
 #' @param title The title of the heatmap.
-#' @param title_size The size of the title.
+#' @param title_size The font size of the title.
 #' @param plot_legend Whether or not to plot the legend.
-#' @param x_angle The angle of the x axis text.
-#' @param cell_height
-#' @param row_size The size of the text on the right side of the heatmap.
-#' @param col_size The size of the text on the bottom side of the heatmap.
-#' @param number_size The size of the significance asterisks.
-#' @param flip_rows For if you want to rotate the heatmap 90* manually
-#' @param draw You can't use draw when combining heatmaps
+#' @param x_angle The angle of the x-axis text.
+#' @param cell_height The height of each heatmap cell in points.
+#' @param row_size The font size of row names on the right side.
+#' @param col_size The font size of column names on the bottom.
+#' @param number_size The font size of the significance asterisks.
+#' @param flip_rows Whether to flip rows (rotate heatmap 90 degrees).
+#' @param draw Whether to draw the heatmap (set to FALSE when combining heatmaps).
 #'
-#' @returns A pheatmap.
+#' @returns A ComplexHeatmap heatmap object.
 heatmap_DESeq2 <- function(DESeq2_out, gene_list, FDR_cutoff = 0.05,
                            anno_top, clrs_anno_top, clr_na = "grey70", # grey75
                            clrs_plot =

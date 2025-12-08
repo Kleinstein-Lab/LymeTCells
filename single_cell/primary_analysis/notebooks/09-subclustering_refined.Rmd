@@ -537,7 +537,8 @@ DotPlot(combined_blood_t,
         features = get_features_from_all(markers_df = markers_all,
                                          cell_types = blood_t_marker_types,
                                          alphabetize_all = FALSE),
-        cols = colors_dot, dot.scale = 3, cluster.idents = TRUE) %>%
+        dot.scale = 3, cluster.idents = TRUE) %>%
+  dot_color_scale() %>%
   add_info_bar(method = "join", info_type = "Cell_Type_Full",
                info = get_cell_types(markers_all %>%
                                        filter(Cell_Type %in% blood_t_marker_types)),
@@ -1021,7 +1022,8 @@ DotPlot(combined_blood_t,
         features = get_features_from_all(markers_df = markers_all,
                                          cell_types = blood_t_marker_types,
                                          alphabetize_all = FALSE),
-        cols = colors_dot, dot.scale = 3) %>%
+        dot.scale = 3) %>%
+  dot_color_scale() %>%
   add_info_bar(method = "join", info_type = "Cell_Type_Full",
                info = get_cell_types(markers_all %>%
                                        filter(Cell_Type %in% blood_t_marker_types)),
@@ -1045,7 +1047,8 @@ DotPlot(combined_blood_t,
         features = get_features_from_all(markers_df = markers_all,
                                          cell_types = blood_t_marker_types,
                                          alphabetize_all = FALSE),
-        cols = colors_dot, dot.scale = 3) %>%
+        dot.scale = 3) %>%
+  dot_color_scale() %>%
   add_info_bar(method = "join", info_type = "Cell_Type_Full",
                info = get_cell_types(markers_all %>%
                                        filter(Cell_Type %in% blood_t_marker_types)),
@@ -1620,7 +1623,8 @@ DotPlot(combined_skin_t,
         features = get_features_from_all(markers_df = markers_all,
                                          cell_types = skin_t_marker_types,
                                          alphabetize_all = FALSE),
-        cols = colors_dot, dot.scale = 2, cluster.idents = TRUE) %>%
+        dot.scale = 2, cluster.idents = TRUE) %>%
+  dot_color_scale() %>%
   add_info_bar(method = "join", info_type = "Cell_Type_Full",
                info = get_cell_types(markers_all %>%
                                        filter(Cell_Type %in% skin_t_marker_types)),
@@ -2119,7 +2123,8 @@ DotPlot(combined_skin_t,
         features = get_features_from_all(markers_df = markers_all,
                                          cell_types = skin_t_marker_types,
                                          alphabetize_all = FALSE),
-        cols = colors_dot, dot.scale = 3) %>%
+        dot.scale = 3) %>%
+  dot_color_scale() %>%
   add_info_bar(method = "join", info_type = "Cell_Type_Full",
                info = get_cell_types(markers_all %>%
                                        filter(Cell_Type %in% skin_t_marker_types)),
@@ -2143,7 +2148,8 @@ DotPlot(combined_skin_t,
         features = get_features_from_all(markers_df = markers_all,
                                          cell_types = skin_t_marker_types,
                                          alphabetize_all = FALSE),
-        cols = colors_dot, dot.scale = 3) %>%
+        dot.scale = 3) %>%
+  dot_color_scale() %>%
   add_info_bar(method = "join", info_type = "Cell_Type_Full",
                info = get_cell_types(markers_all %>%
                                        filter(Cell_Type %in% skin_t_marker_types)),
