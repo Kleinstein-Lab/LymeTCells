@@ -4,7 +4,7 @@ This repository contains code and analysis pipelines for single-cell transcripto
 
 Please cite [Single cell immunophenotyping identifies CD8\+ GZMK\+ IFNG\+ T cells as a key immune population in cutaneous Lyme disease](https://www.biorxiv.org/content/10.1101/2025.06.09.658661v1?ct=). The graphical abstract is [available here](https://app.biorender.com/citation/68fbc783f68c818efe196e5c). Data is [publicly available on GEO](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE297325).
 
-For questions or comments, contact the Kleinstein Lab at Yale University. 
+For questions or comments, contact the Kleinstein Lab at Yale University or open an issue. 
 
 ## Getting Started
 
