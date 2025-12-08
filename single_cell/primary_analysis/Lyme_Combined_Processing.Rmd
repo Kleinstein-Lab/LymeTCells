@@ -1,0 +1,149 @@
+---
+title: "Lyme Analysis"
+output:
+  html_document:
+    code_download: yes
+    code_folding: hide
+    css: "style.css"
+    dev: "png"
+    df_print: kable
+    fig_caption: yes
+    highlight: kate
+    keep_md: yes
+    theme: yeti
+    toc: yes
+    toc_depth: 2
+    toc_float:
+        collapsed: FALSE
+        smooth_scroll: FALSE
+---
+
+------------------------------------------------------------------------
+
+# Overview and setup
+
+## Analysis overview
+
+### Basics
+
+**Author(s):** Edel Aron<br>
+**Last Updated:** `r Sys.Date()`
+
+**R version:** `r R.Version()$version.string`<br>
+**Platform:** `r R.Version()$platform`<br>
+**Running under:** `r sessionInfo()$running`
+
+**Description:**
+
+This code represents the primary pipeline for running quality control and processing the combined scRNA-Seq data from several Lyme datasets and for finding and annotating clusters within the associated UMAPs, as well as performing downstream analyses.
+
+### Notes
+
+**Notebook**
+
+- There are a few lines of code which are specific to this document being output to an HTML file e.g. `kable()`
+- Be careful if you enable the cache; it can sometimes cause issues
+- If you are running code chunks within the notebook and have previously generated files, you can skip the "Create or load the Seurat objects" section and the QC section and load in the standardized objects instead
+- If you want to exit knitting early, add `knitr::knit_exit()` to the code chunk that you want to knit until
+- To knit this file in the command line (vs. in RStudio), run `Rscript -e "rmarkdown::render('Lyme_Combined_Processing.Rmd')”`
+- I tried to generalize it as much as possible, but a few steps might break depending on the data e.g. color selection using a built-in palette like RColorBrewer was replaced with manual curation when the cell types grew too numerous
+
+**Packages**
+
+- Bioconductor's `GenomicAlignments` is a dependency for `alakazam`, so if you have troubles installing the latter (`install.packages(alakazam)`), make sure you have the former (`BiocManager::install("GenomicAlignments")`)
+  - You will have to have `BiocManager` installed (`install.packages("BiocManager")`)
+- To install a package from GitHub, you will need to have `remotes` installed (`install.packages("remotes")`), then you can run `remotes::install_github()`
+- `SingleCellExperiment` is needed for `SingleR` if you want to try annotating using an automatic method instead of doing them manually
+- Running `lintr::lint(file.path(".", "primary_analysis", "Lyme_Combined_Processing.Rmd"))` helps maintain code standards
+
+**Analysis**
+
+### Data
+
+- The datasets were all processed by the author with Cell Ranger 6.1.2 using *GRCh38-2020-A* (released 2020-07-07) as the GEX reference and *vdj_GRCh38_alts_ensembl-5.0.0* (released 2020-11-19) as the VDJ reference.
+- There was one blood sample taken in **dataset 2** (192566); everything else was skin
+- There were several mislabelings in **dataset 3** (the actual data files were not renamed for reproducibility)
+  - 202936.0SC is in reality EM and 202936.0EM is in reality SC
+  - 202937.0SC is in reality EM and 202937.0EM is in reality SC
+  - U19L202398 should be 202938
+- Samples from subjects 202939, 202940, 202941 and 202943 in dataset 3 were run much later than the first three (202936, 202937, 202938) so we are referring to them as **dataset 4** even though they are from the same cohort year
+- The "Read in the metadata" section under "Read in the data" has a visual representation of all of the current data
+
+### Notebook structure
+
+```{r}
+knitr::include_graphics(path = here::here("single_cell", "primary_analysis",
+                                          "images", "notebook_structure.png"))
+```
+
+## Script setup
+
+```{r setup-options, include = FALSE}
+knitr::opts_chunk$set(comment = NA, dpi = 200, fig.align = "center",
+                      out.width = "100%", message = FALSE,
+                      warning = FALSE, error = TRUE)
+
+# will mess with chunk labels, but needed for parameterized reports
+options(knitr.duplicate.label = "allow")
+```
+
+```{r}
+#| child = here::here("single_cell", "primary_analysis", "notebooks", "01-setup.Rmd")
+```
+
+------------------------------------------------------------------------
+
+# Useful functions
+
+```{r}
+#| child = here::here("single_cell", "primary_analysis", "notebooks", "02-functions.Rmd"),
+#| class.source = "fold-show"
+```
+
+------------------------------------------------------------------------
+
+# Read in the data
+
+```{r}
+#| child = here::here("single_cell", "primary_analysis", "notebooks", "03-meta.Rmd")
+```
+
+------------------------------------------------------------------------
+
+# Initial processing
+
+* <a href="./notebooks/04-data_unprocessed.html" target="_blank">Unprocessed data</a>
+* <a href="./notebooks/05-quality_control.html" target="_blank">Quality control</a>
+
+------------------------------------------------------------------------
+
+# Primary analyses
+
+* <a href="./notebooks/06-analysis_bulk.html" target="_blank">Bulk analysis</a>
+* <a href="./notebooks/06-analysis_gex.html" target="_blank">GEX analysis</a>
+* <a href="./notebooks/06-analysis_airr.html" target="_blank">AIRR analysis</a>
+* <a href="./notebooks/07-doublets.html" target="_blank">Doublet removal</a> with `scDblFinder`
+* <a href="./notebooks/08-analysis_gex_airr.html" target="_blank">GEX & AIRR analysis</a>
+* <a href="./notebooks/09-subclustering.html" target="_blank">Subclustering</a> (round 1) and <a href="./notebooks/09-subclustering_refined.html" target="_blank">subclustering (refined)</a> (round 2)
+* <a href="./notebooks/10-recombination.html" target="_blank">Recombination</a> (adding subclustered labels to the whole tissues)
+* <a href="./notebooks/11-sample_removal.html" target="_blank">Sample removal</a> (removing samples that may be the result of error)
+
+------------------------------------------------------------------------
+
+# Downstream
+
+- <a href="./notebooks/downstream/splicing.html" target="_blank">Signaling</a> (CellChat for ligand-receptor pairing)
+- <a href="./notebooks/downstream/splicing.html" target="_blank">Splicing</a> (to look for TEMRA cells)
+- <a href="./notebooks/downstream/trust4.html" target="_blank">TRUST4</a> (to look for γδ T cells)
+
+------------------------------------------------------------------------
+
+# Manuscripts
+
+* <a href="./notebooks/manuscript.html" target="_blank">Manuscript</a> (figures and text)
+
+------------------------------------------------------------------------
+
+# Other analyses
+
+* <a href="./notebooks/other/resolution_choices.html" target="_blank">Clustering resolution choices</a> (visualization of clusters to choose how many to annotated on)
