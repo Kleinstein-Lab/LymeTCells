@@ -4,7 +4,7 @@ This repository contains code and analysis pipelines for single-cell transcripto
 
 Please cite [Single cell immunophenotyping identifies CD8\+ GZMK\+ IFNG\+ T cells as a key immune population in cutaneous Lyme disease](https://www.biorxiv.org/content/10.1101/2025.06.09.658661v1?ct=). The graphical abstract is [available here](https://app.biorender.com/citation/68fbc783f68c818efe196e5c). Data is [publicly available on GEO](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE297325).
 
-For questions or comments, contact the Kleinstein Lab at Yale University or open an issue. 
+For questions or comments, contact the Kleinstein Lab at Yale University or open an issue on GitHub. 
 
 ## Getting Started
 
@@ -15,17 +15,19 @@ For questions or comments, contact the Kleinstein Lab at Yale University or open
    ```
 	- Note that some images were included with the repository, so be very careful if you clone it and make your own commits as git does not handle binary files well.
 2. Review the README for environment setup and pipeline instructions.
-	* A lot of details were included within the notebooks.
-	* *primary_analysis/Lyme_Combined_Processing.Rmd* will generate a handy HTML file when knit (you will need to knit the other notebooks so that the links within work though).
-	* *primary_analysis/style.css* is just included to make the HTML files prettier; it isn't necessary.
+	- A lot of details were included within the notebooks.
+	- *primary_analysis/Lyme_Combined_Processing.Rmd* will generate a handy HTML file when knit (you will need to knit the other notebooks so that the links within work though).
+	- *primary_analysis/style.css* is just included to make the HTML files prettier; it isn't necessary.
 3. Most analyses require R (≥3.6). Some may involve Python (≥3.7).
-	   * Python is needed for the two included downstream analyses (splicing and TRUST4).
+	- Python is needed for the two included downstream analyses (splicing and TRUST4).
 
 
 ## Details
 ### General
 
 - Metadata and clinical information are in `metadata/`.
+  - `airrflow_tcr.tsv` is the input file needed to run [nf-core/airrflow](https://nf-co.re/airrflow/)
+    - See primary_analysis/notebooks/06-analysis_airr.Rmd for more details.
 	- `meta_bockenstedt_lyme.csv` contains the standardized sample info with the following columns:
 		- SampleDir: The name of the original /raw directory.
 		- SampleDirCleaned: Same as SampleDir, except that the TCR samples have suffixes such as "VDJ\_VHT" and "\_VHT" removed.
@@ -39,7 +41,7 @@ For questions or comments, contact the Kleinstein Lab at Yale University or open
 		- Dataset: The custom defined dataset e.g. 2, 3 or 4.
 		- Year: The year the analysis was run.
 		- Disease: Lyme.
-  - `resources/`: Markers
+	- `meta_clinical_bockenstedt_lyme.csv` contains relevant clinical information for all of the patients.
 
 - Datasets were processed with 10x Genomics' Cell Ranger 6.1.2 (GRCh38-2020-A, vdj_GRCh38_alts_ensembl-5.0.0).
 - Note that the datasets within most of the code and the tables are labelled 2 to 4. In the paper these were renamed to 1 to 3 as we do not include "dataset 1" in this analysis.
@@ -53,6 +55,7 @@ Although the BCR data is not currently made available because we are working on 
 It is possible that cells with both BCRs and TCRs are biologically relevant (e.g. interacting B and T cells), but they are such a teeny tiny fraction that we decided it was best to just remove them.
 
 ### Cell type annotation
+
 - A table of marker genes for plotting is available in `resources/`; add to it as you see fit for your work.
 	- Only human markers have been included.
     - Choose whichever markers you want for the `DotPlot`s.
