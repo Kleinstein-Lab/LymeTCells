@@ -137,20 +137,15 @@ aggr_results <- fromJSON(file.path(path_data_root, "aggr",
 ```{r}
 table_clinical <-
   meta_clinical %>%
-    select("Study ID", "Age", "Gender", "Single EM", "Size (diameter in cm)",
-           "If yes to skin biopsy obtained from the EM,",
-           "If yes to skin biopsy obtained from the EM, location",
-           "Dataset", "Paired") %>%
-    unite("Lesion Site(s)",
-          c("If yes to skin biopsy obtained from the EM,",
-            "If yes to skin biopsy obtained from the EM, location"),
-          sep = " ") %>%
-    rename(Subject = "Study ID", Sex = Gender, EM = "Single EM",
-           Size = "Size (diameter in cm)", "Paired Control" = Paired) %>%
+    select(-c("Year of Enrollment", "Antibiotic Name", "Dosage/duration")) %>%
+    rename(Subject = "Study ID", Sex = Gender, EM = "Number of EM lesions",
+           "Lesion Site(s)" = "Location of EM", Size = "Size (diameter in cm)",
+           "Paired Control" = "Paired uninvolved skin sample") %>%
     mutate(Subject = as.character(Subject), Size = as.character(Size),
-           EM = recode(EM, "Yes" = "Single", "No" = "Multiple"),
+           EM = case_when(EM == 1 ~ "Single", EM > 1 ~ "Multiple"),
            Dataset = as.character(as.integer(Dataset) - 1)) %>%
-    relocate(Dataset, .before = Subject)
+    relocate(Dataset, .before = Subject) %>%
+    relocate(Size, .before = "Lesion Site(s)")
 ```
 
 ## GEX

@@ -1,0 +1,14 @@
+Dataset,Study ID,Year of Enrollment,Age,Gender,Number of EM lesions,Location of EM ,Size (diameter in cm),Paired uninvolved skin sample,Antibiotic Name,Dosage/duration
+2,192561,2019,68,F,1,Left popliteal fossa,9,Yes,Doxycycline,100mg po BID X14d
+2,192563,2019,63,F,1,Right proximal triceps,4,No,Doxycycline,100mg po BID X14d
+2,192564,2019,68,F,1,Left axilla,6.5,Yes,Doxycycline,100mg po BID X14d
+2,192565,2019,70,F,1,Right popliteal fossa,5,Yes,Doxycycline,100mg po BID X10d
+2,192566,2019,40,M,5,"Left upper back, anterior abdomen",10,Yes,Doxycycline,100mg po BID X14d
+2,192567,2019,72,F,1,Right ankle,10,Yes,Doxycycline,100mg po BID X10d
+3,202936,2020,31,M,1,Left flank,7,Yes,Doxycycline,100mg po BID X10d
+3,202937,2020,61,M,1,Right abdomen,20,Yes,Doxycycline,100mg po BID X10d
+3,202938,2020,65,F,1,Right thigh,4,Yes,Doxycycline,100mg po BID X10d
+4,202939,2020,72,F,1,Left axilla,9,Yes,Doxycycline,100mg po BID X10d
+4,202940,2020,64,F,1,Right shoulder,15,Yes,Doxycycline,100mg po BID X10d
+4,202941,2020,70,F,1,Left back,12,Yes,Doxycycline,100mg po BID X10d
+4,202943,2020,76,M,1,Left thigh,20,Yes,Doxycycline,100mg po BID X10d

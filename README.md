@@ -26,8 +26,8 @@ For questions or comments, contact the Kleinstein Lab at Yale University or open
 ### General
 
 - Metadata and clinical information are in `metadata/`.
-  - `airrflow_tcr.tsv` is the input file needed to run [nf-core/airrflow](https://nf-co.re/airrflow/)
-    - See primary_analysis/notebooks/06-analysis_airr.Rmd for more details.
+  	- `airrflow_tcr.tsv` is the input file needed to run [nf-core/airrflow](https://nf-co.re/airrflow/)
+    	- See primary_analysis/notebooks/06-analysis_airr.Rmd for more details.
 	- `meta_bockenstedt_lyme.csv` contains the standardized sample info with the following columns:
 		- SampleDir: The name of the original /raw directory.
 		- SampleDirCleaned: Same as SampleDir, except that the TCR samples have suffixes such as "VDJ\_VHT" and "\_VHT" removed.
@@ -38,11 +38,10 @@ For questions or comments, contact the Kleinstein Lab at Yale University or open
 		- Subject: The subject ID.
 		- SampleType: The tissue that the sample came from e.g. blood, EM or control.
 		- DataType: Gene expression (GEX) or immune profiling (TCR).
-		- Dataset: The custom defined dataset e.g. 2, 3 or 4.
+		- Dataset: The custom-defined dataset e.g. 2, 3 or 4.
 		- Year: The year the analysis was run.
 		- Disease: Lyme.
 	- `meta_clinical_bockenstedt_lyme.csv` contains relevant clinical information for all of the patients.
-
 - Datasets were processed with 10x Genomics' Cell Ranger 6.1.2 (GRCh38-2020-A, vdj_GRCh38_alts_ensembl-5.0.0).
 - Note that the datasets within most of the code and the tables are labelled 2 to 4. In the paper these were renamed to 1 to 3 as we do not include "dataset 1" in this analysis.
 - Change paths as needed to match your structure. They were defined at the top of each notebook, so you'll only have to change them in one location instead of searching through each file.
