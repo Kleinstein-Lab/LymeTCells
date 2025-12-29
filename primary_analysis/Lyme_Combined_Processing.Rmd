@@ -146,4 +146,4 @@ options(knitr.duplicate.label = "allow")
 
 # Other analyses
 
-* <a href="./notebooks/other/resolution_choices.html" target="_blank">Clustering resolution choices</a> (visualization of clusters to choose how many to annotated on)
+* <a href="./notebooks/other/resolution_choices.html" target="_blank">Clustering resolution choices</a> (visualization of clusters to choose how many to annotate on)
