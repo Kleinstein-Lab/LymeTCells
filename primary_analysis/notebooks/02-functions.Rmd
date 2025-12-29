@@ -118,8 +118,7 @@ add_info_bar <- function(plot, method = "contains", info_type, info,
   # add the information to the plot data if needed
   if (method == "add") {
     plot$data[info_type] <- info[[info_type]]
-  }
-  else if (method == "join") {
+  } else if (method == "join") {
     plot_data <- suppressMessages(left_join(plot$data, info, # by = {{info_type}},
                                             multiple = "all",
                                             relationship = "many-to-many"))
@@ -144,13 +143,11 @@ add_info_bar <- function(plot, method = "contains", info_type, info,
   # explain the label or not
   if (label) {
     labels <- purrr::partial(label_both, sep = " ")
-  }
-  else {
+  } else {
     if (angle == 90) {
       #  adjust the width as desired
       labels <- label_wrap_gen(width = 10, multi_line = TRUE)
-    }
-    else {
+    } else {
       labels <- labeller()
     }
   }
@@ -265,12 +262,10 @@ plot_pcts <- function(pcts, tissue_type = "", clrs_specific,
                                   levels = rev(levels(factor(pcts[[fill_type]]))))
       # clrs_specific <- rev(clrs_specific)
     }
-  }
-  else if (plot_type == "Binary") {
+  } else if (plot_type == "Binary") {
     # so that TRUE plots on top of FALSE
     pcts[[fill_type]] <- factor(pcts[[fill_type]], levels = c(TRUE, FALSE))
-  }
-  else {
+  } else {
     stop("Please enter a valid plot type.")
   }
 
@@ -302,8 +297,7 @@ plot_pcts <- function(pcts, tissue_type = "", clrs_specific,
                                                                     NA)),
                     group = !!rlang::sym(fill_type)),
                     size = label_size, position = position_stack(vjust = 0.5))
-  }
-  else {
+  } else {
     p <-
       p +
       geom_label(aes(label =
@@ -326,10 +320,7 @@ plot_pcts <- function(pcts, tissue_type = "", clrs_specific,
                                          label = Total, fill = NULL),
                            vjust = -0.5, color = "black", size = label_size)
       }
-
-    }
-    # just for TRUE v FALSE plots
-    else if (plot_type == "Binary") {
+    } else if (plot_type == "Binary") { # just for TRUE v FALSE plots
       p <-
         p +
         # counts on top
@@ -499,8 +490,7 @@ plot_dot_side <- function(plot, seurat_obj, row_identity = "seurat_clusters",
     plot <- plot + facet_grid(rows = vars(id),
                               scales = "free", space = "free",
                               labeller = labeller(id = side_labels))
-  }
-  else {
+  } else {
     plot <- plot + facet_grid(rows = vars(id), cols = vars(!!rlang::sym(facet_col)),
                               scales = "free", space = "free",
                               labeller = labeller(id = side_labels))
@@ -556,8 +546,7 @@ plot_umap <- function(seurat_obj, tissue_type = "", clrs_specific,
     # don't include "Manual" in the title since we can consider it implied
     if (!missing(annotations_type)) {
       plot_title <- paste0("Annotated (", annotations_type, ") ", tissue_type)
-    }
-    else {
+    } else {
       plot_title <- paste("Annotated", tissue_type)
     }
 
@@ -572,8 +561,7 @@ plot_umap <- function(seurat_obj, tissue_type = "", clrs_specific,
     # alphabetize just in case
     Idents(seurat_obj) <- factor(Idents(seurat_obj),
                                  levels = sort(levels(seurat_obj)))
-  }
-  else {
+  } else {
     plot_title <- tissue_type
     cluster_legend <- "Cluster"
 
@@ -601,8 +589,7 @@ plot_umap <- function(seurat_obj, tissue_type = "", clrs_specific,
     if (plot_by == "all") {
       if (use_hues) clrs_specific <- iwanthue(length(unique(seurat_obj$SampleName)))
       else clrs_specific <- hue_pal()(length(unique(seurat_obj$SampleName)))
-    }
-    else {
+    } else {
       if (use_hues) clrs_specific <- iwanthue(nlevels(seurat_obj))
       else clrs_specific <- hue_pal()(nlevels(seurat_obj))
 
@@ -780,8 +767,7 @@ create_seurat_objs <- function(objs_list, meta_file,
     if (is_missing(different_location)) {
       path_dataset <- file.path(path_data_root,
                                 paste0("dataset", meta_sample$Dataset))
-    }
-    else {
+    } else {
       # if for whatever strange reason the data is being stored in an alternative way
       path_dataset <- different_location
     }
@@ -796,8 +782,7 @@ create_seurat_objs <- function(objs_list, meta_file,
 
       # create the Seurat object (assay = "RNA")
       obj <- CreateSeuratObject(counts = data_GEX, project = sample)
-    }
-    else {
+    } else {
       # already created when aggregated object is loaded
       obj <- objs_list[[sample]]
       obj$SampleName <- c() # this will be set again down below
@@ -1003,8 +988,7 @@ plot_counts <- function(summary_df, data_types = "All",
   if ("All" %in% data_types) {
     data_types <- unique(summary_df$DataType)
     data_type_desc <- "All"
-  }
-  else {
+  } else {
     data_type_desc <- paste(data_types, collapse = "/")
   }
 
@@ -1017,8 +1001,7 @@ plot_counts <- function(summary_df, data_types = "All",
 
     summary_df <- dplyr::filter(summary_df, DataType %in% data_types)
     data_type_desc <- paste(data_type_desc, aggregation_state)
-  }
-  else {
+  } else {
     y_axis <- "Count"
     y_axis_label <- "Barcodes"
   }
@@ -1037,8 +1020,7 @@ plot_counts <- function(summary_df, data_types = "All",
       p <- p + geom_bar(stat = "identity", color = "black", linewidth = 0.2) +
                scale_fill_manual(name = fill_type_label,
                                  values = unname(clrs_datatype))
-  }
-  else {
+  } else {
       p <- p + geom_bar(stat = "identity", position = "dodge",
                         color = "black", linewidth = 0.2) + #
                scale_fill_manual(name = fill_type_label,
@@ -1080,8 +1062,7 @@ plot_qc_heatmap <- function(input_matrix, data_types,
     title <- paste(title, "(By Percent)")
     legend_title <- "Percentage"
     col_split <- NULL # matrix_annos$Dataset
-  }
-  else {
+  } else {
     title <- paste(title, "(By Counts)")
     legend_title <- "Barcodes"
     col_split <- matrix_annos$Dataset
@@ -1195,8 +1176,7 @@ seurat_pipeline <- function(seurat_obj, subcluster = FALSE,
     seurat_obj <- FindNeighbors(seurat_obj, reduction = "pca",
                                 dims = 1:num_dims)
     seurat_obj <- FindClusters(seurat_obj, resolution = cluster_res)
-  }
-  else {
+  } else {
     # don't overwrite the original clustering column
     seurat_obj$seurat_clusters_orig <- seurat_obj$seurat_clusters
 
@@ -1672,8 +1652,7 @@ layout_doublets <- function(seurat_obj, tissue_type, clrs_specific,
     }
 
     Idents(seurat_obj) <- annotations_col
-  }
-  else {
+  } else {
     plot_col <- clusters_col
     cluster_legend <- "Cluster"
 
@@ -1799,8 +1778,7 @@ plot_immune_overlay <- function(seurat_obj, tissue_type, airr_type,
                     sizes.highlight = sizes_highlight,
                     ncol = ncol_sample, raster = FALSE) +
              labs(title = paste(plot_title, "by Sample"), color = "Dataset")
-    }
-    else { # dataset
+    } else { # dataset
       p <- UMAPPlot(object = seurat_obj,
                     pt.size = pt_size,
                     label = plot_label, label.size = label_size,
@@ -1814,9 +1792,7 @@ plot_immune_overlay <- function(seurat_obj, tissue_type, airr_type,
     # the legend
     p <- p + scale_color_manual(labels = c(paste0("non-", airr_type), rev(datasets)),
                                 values = c("lightgray", unname(clrs_specific[rev(datasets)])))
-  }
-
-  else if (plot_by == "isotype") {
+  } else if (plot_by == "isotype") {
     # set up the cells to be highlighted
     cells_total <- c()
     isotypes <- sort(unique(combined_vdj_gex$Isotype))
@@ -1840,9 +1816,7 @@ plot_immune_overlay <- function(seurat_obj, tissue_type, airr_type,
     # the legend
     p <- p + scale_color_manual(labels = c(paste0("non-", airr_type), rev(isotypes)),
                                 values = c("lightgray", unname(clrs_specific[rev(isotypes)])))
-  }
-
-  else { # all
+  } else { # all
     # set up the cells to be highlighted
     cells_total <- combined_vdj_gex[[barcode_col]]
 
@@ -2177,10 +2151,7 @@ match_sub_orig <- function(seurat_obj, seurat_obj_sub, cell_types,
       cat(paste("There are", nrow(cluster_info),
                 "subclustered cell labels being integrated in using all label matches."))
     }
-  }
-
-  # pull just the clusters that were used for their GEX labels
-  else {
+  } else { # pull just the clusters that were used for their GEX labels
     cluster_info <- dplyr::filter(cluster_info,
                                   annotated_clusters %in% cell_types)
 
@@ -2245,8 +2216,7 @@ recombine_subclusters <- function(seurat_obj,
              case_when(!is.na(!!sym(annotations_col_t)) ~
                          as.character(!!sym(annotations_col_t)),
                        TRUE ~ as.character(!!sym(annotations_col_new))))
-    }
-    else {
+    } else {
       new_col <- new_col %>%
         mutate(!!annotations_col_new :=
              case_when(!is.na(!!sym(annotations_col_t)) ~
@@ -2430,8 +2400,7 @@ plot_subsets <- function(seurat_obj, tissue_type, clrs_specific,
         if (signif_caption) {
           p <- p + labs(caption = "***P < 0.001; **P < 0.01; *P < 0.05")
         }
-      }
-      else {
+      } else {
         p <- p + geom_signif(data = data_df,
                              comparisons = list(c("Control", "EM")),
                              test = signif_test,
@@ -2454,8 +2423,7 @@ plot_subsets <- function(seurat_obj, tissue_type, clrs_specific,
   if (!split_by_dataset) {
       p <- p + geom_point(mapping = aes(color = !!plot_by),
                           position = position_dodge(0.9), size = 3, pch = 18)
-  }
-  else {
+  } else {
     # split into two groups by dataset (only datasets 2 to 4)
       p <- p + geom_point(mapping = aes(shape = Dataset, color = !!plot_by),
                           position = position_dodge(0.9), size = 3) +
@@ -3190,8 +3158,7 @@ heatmap_DESeq2 <- function(DESeq2_out, gene_list, FDR_cutoff = 0.05,
   # the draw function is for stacking the legends vertically (to save space)
   if (draw) {
     hm %>% draw(merge_legend = TRUE)
-  }
-  else {
+  } else {
     hm
   }
 }
