@@ -580,8 +580,7 @@ for (i in seq_along(samples)) {
                                                    sample_j = samples[[j]],
                                                    remove_sample_names = TRUE)
 
-    # Calculate the overlap percentage
-    # check all of this!!
+    # calculate the overlap percentage
     if (i > j) {
       GEX_GEX_matrix_p[i, j] <-
         GEX_GEX_matrix[i, j] / length(barcodes_GEX[[samples[i]]]) * 100
@@ -931,7 +930,7 @@ VlnPlot(combined, features = "nCount_RNA",
   NoLegend() + labels_standard
 ```
 
-### Percent Mitochondrial  {.tabset}
+### Percent Mitochondrial {.tabset}
 
 #### With points
 
@@ -1201,7 +1200,7 @@ VlnPlot(combined, features = "nCount_RNA",
   NoLegend() + labels_standard
 ```
 
-### Percent Mitochondrial  {.tabset}
+### Percent Mitochondrial {.tabset}
 
 #### With points
 
