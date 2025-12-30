@@ -1305,7 +1305,7 @@ print_kable(annotations_skin_t %>%
 Choose the color scheme:
 
 ```{r skin-t-annotations-color-schemes}
-# only want the non B cells to be black
+# only want the non T cells to be black
 skin_t_cell_types_num <- n_distinct(combined_skin_t$annotated_subclusters)
 skin_t_cell_types <- sort(unique(combined_skin_t$annotated_subclusters))
 
