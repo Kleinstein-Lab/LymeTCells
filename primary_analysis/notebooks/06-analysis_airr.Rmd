@@ -75,16 +75,6 @@ airrflow_version
 
 # Read in the data
 
-Read in the GEX objects:
-
-```{r setup-combined-gex}
-combined_blood <- readRDS(file.path(path_objs, "combined_blood.rds"))
-combined_skin <- readRDS(file.path(path_objs, "combined_skin.rds"))
-
-combined_blood_t <- readRDS(file.path(path_objs, "combined_blood_t_ref.rds"))
-combined_skin_t <- readRDS(file.path(path_objs, "combined_skin_t_ref.rds"))
-```
-
 Read in the processed `airrflow` and AIRR objects:
 
 ```{r setup-combined-airrflow}
