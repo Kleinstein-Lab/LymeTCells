@@ -212,7 +212,7 @@ calc_pcts <- function(data, meta_group_by = c("SampleName", "Dataset"),
 #' This assumes that you want to show the counts for binary plots.
 #'
 #' @param pcts The output of `calc_pcts`.
-#' @param tissue_type The type of tissue being plotted e.g. Blood or Skin.
+#' @param tissue_type The tissue type of interest e.g. "Blood" or "Skin".
 #' @param clrs_specific A specific (must have names) color palette.
 #' @param plot_type One of `All`, `Binary`.
 #' @param plot_value What is being plotted.
@@ -242,7 +242,7 @@ plot_pcts <- function(pcts, tissue_type = "", clrs_specific,
   border_color <- ifelse(use_white, "white", "black")
 
   # if you want to use the default ggplot2 colors
-  if (is_missing(clrs_specific))
+  if (rlang::is_missing(clrs_specific))
     clrs_specific <- hue_pal()(n_distinct(pcts %>%
                                             ungroup() %>%
                                             select(all_of(fill_type))))
@@ -515,12 +515,12 @@ Includes whether or not the object has been annotated with specific cell types
 #' This function plots a Seurat UMAP(s) in several useful ways.
 #'
 #' @param seurat_obj The Seurat object.
-#' @param tissue_type Blood, Skin.
+#' @param tissue_type The tissue type of interest e.g. "Blood" or "Skin".
 #' @param clrs_specific The specific color palette (should be named).
 #' @param use_hues Use the iwanthue hues instead of the default ggplot colors. Doesn't let you set any other settings.
 #' @param plot_by What to plot by: by dataset, by sample type (control vs EM/blood), by cluster, by sample, with all samples, or with all subjects.
-#' @param specific_clusters Can overlay clusters of interest e.g. B cell or by #.
-#' @param specific_col
+#' @param specific_clusters Can overlay clusters of interest e.g. T cell or by #.
+#' @param specific_col A column from the Seurat object's metadata.
 #' @param plot_label Add labels to the plot (or not).
 #' @param label_box Whether or not to give the labels a background.
 #' @param label_size The size of the plot labels.
@@ -585,7 +585,7 @@ plot_umap <- function(seurat_obj, tissue_type = "", clrs_specific,
 
   # if you want to use default ggplot2 or generated iwanthue colors
   # this needs fixing
-  if (is_missing(clrs_specific)) {
+  if (rlang::is_missing(clrs_specific)) {
     if (plot_by == "all") {
       if (use_hues) clrs_specific <- iwanthue(length(unique(seurat_obj$SampleName)))
       else clrs_specific <- hue_pal()(length(unique(seurat_obj$SampleName)))
@@ -694,7 +694,7 @@ plot_umap <- function(seurat_obj, tissue_type = "", clrs_specific,
   if (nchar(toString(specific_clusters)) > 80) p <- p + labs(subtitle = NULL)
 
   # custom subtitle
-  if (!is_missing(details)) p <- p + labs(subtitle = details)
+  if (!rlang::is_missing(details)) p <- p + labs(subtitle = details)
 
   # remove the legend if desired
   if (!include_legend) p <- p + NoLegend()
@@ -764,7 +764,7 @@ create_seurat_objs <- function(objs_list, meta_file,
     # you should have only one row after this point, so unique()'s are omitted
     meta_sample <- dplyr::filter(meta_file, SampleName == sample)
 
-    if (is_missing(different_location)) {
+    if (rlang::is_missing(different_location)) {
       path_dataset <- file.path(path_data_root,
                                 paste0("dataset", meta_sample$Dataset))
     } else {
@@ -954,8 +954,8 @@ count_barcode_overlaps <- function(barcodes_list1, barcodes_list2,
   barcodes_j <- barcodes_list2[[sample_j]]
 
   if (remove_sample_names) {
-      barcodes_i <- str_sub(barcodes_i, nchar(sample_i) + 2, nchar(barcodes_i))
-      barcodes_j <- str_sub(barcodes_j, nchar(sample_j) + 2, nchar(barcodes_j))
+    barcodes_i <- str_sub(barcodes_i, nchar(sample_i) + 2, nchar(barcodes_i))
+    barcodes_j <- str_sub(barcodes_j, nchar(sample_j) + 2, nchar(barcodes_j))
   }
 
   length(intersect(barcodes_i, barcodes_j))
@@ -1207,7 +1207,7 @@ You can also plot other things e.g. sample names.
 #' Visualize how many cells are in each Seurat cluster or cell type.
 #'
 #' @param clusters A factor or character vector of cluster identities, e.g. seurat_clusters or annotated_subclusters.
-#' @param tissue_type The type of tissue being plotted: "Blood" or "Skin".
+#' @param tissue_type The tissue type of interest e.g. "Blood" or "Skin".
 #' @param clrs_specific The specific color palette (should be named).
 #' @param x_axis What to plot on the x axis: "Cluster" or "Cell Type".
 #' @param x_axis_label The label for the x axis.
@@ -1218,11 +1218,11 @@ You can also plot other things e.g. sample names.
 plot_counts_cluster <- function(clusters, tissue_type = "", clrs_specific,
                                 x_axis = "Cluster", add_zeroes, details) {
   # if you want to use the default ggplot2 colors
-  if (is_missing(clrs_specific)) clrs_specific <- hue_pal()(n_distinct(clusters))
+  if (rlang::is_missing(clrs_specific)) clrs_specific <- hue_pal()(n_distinct(clusters))
 
   data <- data.frame(table(clusters)) %>% rename(Count = Freq)
 
-  if (!is_missing(add_zeroes)) {
+  if (!rlang::is_missing(add_zeroes)) {
     data <- bind_rows(data, data.frame(clusters = add_zeroes,
                                        Count = rep(0, length(add_zeroes)))) %>%
               arrange(clusters)
@@ -1237,52 +1237,12 @@ plot_counts_cluster <- function(clusters, tissue_type = "", clrs_specific,
          scale_fill_manual(values = clrs_specific) +
          theme_bw + labels_standard + theme(legend.position = "none")
 
-  if (!is_missing(details)) p <- p + labs(subtitle = details)
-
-  # if (total_percentage) {
-  #   ggplot(combined_skin[[]] %>% select(Subject) %>% mutate(Type = "Subject"),
-  #      aes(x = Type, fill = Subject)) +
-  #   geom_bar(linewidth = 0.2, color = "black") +
-  #   scale_fill_manual(values = colors_subject) +
-  #   coord_flip() +
-  #   theme_bw + labels_standard
-  # }
-
+  if (!rlang::is_missing(details)) p <- p + labs(subtitle = details)
   if (x_axis == "Cell Type") p <- p + labels_rotate_x
 
   # return the plot
   return(p)
 }
-
-# plot_counts_cluster2 <- function(seurat_obj, groups, fill_group, tissue_type, details,
-#                                   x_axis = "Cluster", clrs_specific) {
-#   # if you want to use the default ggplot2 colors
-#   if (is_missing(clrs_specific)) clrs_specific <- hue_pal()(nlevels(clusters))
-#
-#   p <- ggplot(data.frame(table(clusters)) %>% rename(Count = Freq),
-#               aes(x = clusters, y = Count, fill = clusters)) +
-#          geom_col() +
-#          geom_text(aes(label = Count), vjust = -1, size = 3) +
-#          labs(title = paste(tissue_type, "Cell Counts per", x_axis),
-#               x = x_axis) +
-#          scale_fill_manual(values = clrs_specific) +
-#          theme_bw + labels_standard + theme(legend.position = "none")
-#
-#   ggplot(seurat_obj[[]] %>%
-#          select(all_of(groups)) %>%
-#          mutate_all(as.character),
-#        aes(x = seurat_subclusters, fill = fill_group)) +
-#   geom_bar(position = "stack", color = "black", linewidth = 0.2) +
-#   labs(title = "Blood B Cells by Cluster", x = "Cluster", y = "Count") +
-#   scale_y_continuous(breaks = breaks_pretty()) +
-#   scale_fill_manual(values = colors_binary) +
-#   theme_bw + labels_standard
-#
-#   if (!is_missing(details)) p <- p + labs(subtitle = details)
-#
-#   # return the plot
-#   return(p)
-# }
 ```
 
 ### Tile
@@ -1325,7 +1285,7 @@ plot_tile <- function(seurat_obj, tissue_type, clrs_specific,
          theme(panel.grid.major.y = element_blank(),
                legend.position = "none")
 
-  if (!is_missing(details)) p <- p + labs(subtitle = details)
+  if (!rlang::is_missing(details)) p <- p + labs(subtitle = details)
 
   return(p)
 }
@@ -1351,10 +1311,9 @@ plot_tile <- function(seurat_obj, tissue_type, clrs_specific,
 #' @param alphabetize_all Whether or not to return all of the selected markers alphabetized.
 #'
 #' @returns A list of markers.
-get_features_from_all <- function(markers_df,
-                                  sources, contains, tissue_types,
-                                  cell_types = unique(markers_df$Cell_Type),
-                                  alphabetize_types = TRUE, alphabetize_all = TRUE) {
+get_features_from_all <- function(markers_df, sources, contains, tissue_types,
+                                  cell_types, alphabetize_types = TRUE,
+                                  alphabetize_all = TRUE) {
   # make specific selections if needed
   if (!rlang::is_missing(sources)) {
     markers_df <- dplyr::filter(markers_df, Source %in% sources)
@@ -1365,6 +1324,9 @@ get_features_from_all <- function(markers_df,
   }
   if (!rlang::is_missing(tissue_types)) {
     markers_df <-  dplyr::filter(markers_df, Tissue_Type %in% tissue_types)
+  }
+  if (rlang::is_missing(cell_types)) {
+    cell_types <- unique(markers_df$Cell_Type)
   }
 
   features <- c()
@@ -1467,8 +1429,6 @@ add_annotations <- function(seurat_obj, annotations_df,
 
 ### Violin with cell info
 
-From Hailong:
-
 ```{r func-vln-cell-info}
 #' @description
 #' Modifies Seurat's VlnPlot with cell count and cell percentage with feature expression > 0
@@ -1507,7 +1467,7 @@ vln_cell_info <- function(seurat_obj, feature, clrs_specific,
   expression_perc <- c()
 
   # just in case
-  if (is_missing(clrs_specific)) clrs_specific <- hue_pal()(n_distinct(clusters))
+  if (rlang::is_missing(clrs_specific)) clrs_specific <- hue_pal()(n_distinct(clusters))
 
   # determine the sample groups if split_by is provided
   sample_groups <-
@@ -1567,8 +1527,8 @@ vln_cell_info <- function(seurat_obj, feature, clrs_specific,
   if (rlang::is_missing(y_exp_percent)) {
     y_exp_percent <- ceiling(max(FetchData(seurat_obj, vars = feature))) + 0.1
   }
-  y_cell_count <- y_exp_percent + 0.5 # 0.25
-  y_max <- y_exp_percent + 1 # 0.5
+  y_cell_count <- y_exp_percent + 0.5
+  y_max <- y_exp_percent + 1
 
   # draw VlnPlot with annotations of cell count and percentage of cell with expression of the feature
   p <- VlnPlot(object = seurat_obj, features = feature, split.by = split_by,
@@ -1590,9 +1550,9 @@ vln_cell_info <- function(seurat_obj, feature, clrs_specific,
     largest_perc <- ifelse(seq_along(expression_perc) %in% largest_perc,
                            "^", "")
 
-    y_cell_count <- y_exp_percent + 0.5 # 0.25
-    y_largest_perc <- y_exp_percent + 1 # 0.5
-    y_max <- y_exp_percent + 1.5 # 0.75
+    y_cell_count <- y_exp_percent + 0.5
+    y_largest_perc <- y_exp_percent + 1
+    y_max <- y_exp_percent + 1.5
 
     # make the label a little larger
     p <- p + annotate(geom = "text", label = largest_perc, x = x_axis,
@@ -1616,17 +1576,16 @@ vln_cell_info <- function(seurat_obj, feature, clrs_specific,
 ```{r func-layout-doublets}
 #' This function plots an overview of a doublet identification method
 #'
-#' It assumes that colors_doublet has been defined
-#' Depends on other plots
+#' @details
+#' This assumes that colors_doublet has been defined and depends on other plots.
 #'
 #' @param seurat_obj The Seurat object.
-#' @param tissue_type Blood, Skin.
+#' @param tissue_type The tissue type of interest e.g. "Blood" or "Skin".
 #' @param clrs_specific The specific color palette (should be named).
-#' @param plot_by
 #' @param clusters_col Which column in the object stores the clusters.
 #' @param annotated If the cell types have been identified.
 #' @param annotations_col Which column in the object stores the cell types.
-#' @param doublet_col The column containing the doublets information.
+#' @param doublet_col The column containing the doublets information
 #' @param doublet_package The name of the doublet detection package used.
 #' @param details The optional subtitle.
 #'
@@ -1637,7 +1596,7 @@ layout_doublets <- function(seurat_obj, tissue_type, clrs_specific,
                             annotations_col = "annotated_clusters",
                             doublet_col, doublet_package, details = NULL) {
   # if you want to use the default ggplot2 colors
-  if (is_missing(clrs_specific)) {
+  if (rlang::is_missing(clrs_specific)) {
     clrs_specific <- hue_pal()(n_distinct(seurat_obj[[clusters_col]]))
   }
 
@@ -1731,7 +1690,7 @@ layout_doublets <- function(seurat_obj, tissue_type, clrs_specific,
 #' lightgray is Seurat's default background color and cells_total has to be a list for the labels to work later.
 #'
 #' @param seurat_obj The Seurat object (must contain Has_TCR col)
-#' @param tissue_type The tissue type e.g. Blood, Skin
+#' @param tissue_type The tissue type of interest e.g. "Blood" or "Skin".
 #' @param airr_type TCR
 #' @param clrs_specific The specific color palette (should be named).
 #' @param barcode_col The barcode column name: barcode, cell_id, or Cell_ID_Unique.
@@ -1751,7 +1710,7 @@ plot_immune_overlay <- function(seurat_obj, tissue_type, airr_type,
   plot_title <- paste(tissue_type, airr_type, "Overlay")
 
   # if you want to use the default Seurat colors
-  # if (is_missing(clrs_specific)) clrs_specific <- hue_pal()(num_clusts)
+  # if (rlang::is_missing(clrs_specific)) clrs_specific <- hue_pal()(num_clusts)
 
   # AIRR info
   airr_col <- paste0("Has_", airr_type)
@@ -1763,9 +1722,9 @@ plot_immune_overlay <- function(seurat_obj, tissue_type, airr_type,
     datasets <- as.character(unique(combined_vdj_gex$Dataset))
 
     for (dataset in datasets) {
-        cells_dataset <- dplyr::filter(combined_vdj_gex,
-                                       Dataset == dataset)[[barcode_col]]
-        cells_total[dataset] <- list(cells_dataset)
+      cells_dataset <- dplyr::filter(combined_vdj_gex,
+                                     Dataset == dataset)[[barcode_col]]
+      cells_total[dataset] <- list(cells_dataset)
     }
 
     # main plot (coloring the samples by dataset is helpful)
@@ -1922,10 +1881,10 @@ factor_family_info <- function(airr_db) {
 #' Collapsed light chains are alphabetized.
 #'
 #' @param seurat_obj The Seurat object containing GEX data.
-#' @param airr_type Type of immune receptor data. Default is "TCR".
+#' @param airr_type Type of immune receptor data.
 #' @param combined_airr AIRR formatted data frame with beta and alpha chains.
 #' @param new_cols Vector of column names to select from the AIRR data.
-#' @param overview Whether to print integration summary information. Default is TRUE.
+#' @param overview Whether to print integration summary information.
 #'
 #' @returns The Seurat object with AIRR columns added to the metadata.
 gex_add_airr <- function(seurat_obj, airr_type = "TCR",
@@ -2029,6 +1988,7 @@ gex_add_airr <- function(seurat_obj, airr_type = "TCR",
     seurat_obj[[meta_col]] <- combined_airr_select_obj[[meta_col]]
   }
 
+  # return the updated Seurat object
   seurat_obj
 }
 ```
@@ -2102,7 +2062,7 @@ clusters_gex_airr <- function(seurat_obj, clusters_col, annotations_col,
 #'
 #' @param seurat_obj The main Seurat object.
 #' @param seurat_obj_sub The sub Seurat object.
-#' @param tissue_type The type of tissue.
+#' @param tissue_type The tissue type of interest e.g. "Blood" or "Skin".
 #' @param airr_type The type of AIRR data.
 #' @param cell_types A vector of cell types.
 #'
@@ -2168,66 +2128,33 @@ match_sub_orig <- function(seurat_obj, seurat_obj_sub, cell_types,
 ### Recombine subclusters
 
 ```{r func-recombine-subclusters}
-#' This function replaced B and/or T cell type labels with annotated subpopulations based on cell ID.
-#'
-#' @details
-#' Assumes that you are adding in both B and T cell information.
+#' This function replaces T cell type labels with annotated subpopulations based on cell ID.
 #'
 #' @param seurat_obj The Seurat object for the full tissue.
-#' @param seurat_obj_b The Seurat object for the subclustered B cells.
 #' @param seurat_obj_t The Seurat object for the subclustered T cells.
 #' @param annotations_col The column in the full tissue object with the cell type labels.
-#' @param annotations_col_b The column in the B cells object with the cell type labels.
 #' @param annotations_col_t The column in the T cells object with the cell type labels.
 #' @param annotations_col_new The name for a new column to be created in the full tissue object (so you don't overwrite the "primary" labels). You could alternatively provide `annotations_col`.
 #'
 #' @returns A Seurat object with a new or updated column for cell type annotations.
-recombine_subclusters <- function(seurat_obj,
-                                  seurat_obj_b = NULL, seurat_obj_t = NULL,
+recombine_subclusters <- function(seurat_obj, seurat_obj_t,
                                   annotations_col = "annotated_clusters",
-                                  annotations_col_b = "annotated_subclusters",
                                   annotations_col_t = "annotated_subclusters",
                                   annotations_col_new = "annotated_clusters_expanded") {
-  # create a new metadata column with the B cell info
-  if (!is.null(seurat_obj_b)) {
-    seurat_obj[[annotations_col_new]] <-
-      left_join(seurat_obj[[]],
-                seurat_obj_b[[]] %>%
-                  select(Cell_ID_Unique, all_of(annotations_col_b)),
-                by = "Cell_ID_Unique") %>%
-      mutate(!!annotations_col_new :=
-             case_when(!is.na(!!sym(annotations_col_b)) ~
-                         as.character(!!sym(annotations_col_b)),
-                       TRUE ~ as.character(!!sym(annotations_col)))) %>%
-      pull(!!sym(annotations_col_new))
-  }
+  # create a new metadata column with the T cell info
+  new_col <-
+    left_join(seurat_obj[[]],
+              seurat_obj_t[[]] %>% select(Cell_ID_Unique, all_of(annotations_col_t)),
+              by = "Cell_ID_Unique")
 
-  # add in the T cell info
-  if (!is.null(seurat_obj_t)) {
-    new_col <-
-      left_join(seurat_obj[[]],
-                seurat_obj_t[[]] %>%
-                  select(Cell_ID_Unique, all_of(annotations_col_t)),
-                by = "Cell_ID_Unique")
+   new_col <- new_col %>%
+                mutate(!!annotations_col_new :=
+                     case_when(!is.na(!!sym(annotations_col_t)) ~
+                                 as.character(!!sym(annotations_col_t)),
+                               TRUE ~ as.character(!!sym(annotations_col))))
 
-    if (!is.null(seurat_obj_b)) {
-      new_col <- new_col %>%
-        mutate(!!annotations_col_new :=
-             case_when(!is.na(!!sym(annotations_col_t)) ~
-                         as.character(!!sym(annotations_col_t)),
-                       TRUE ~ as.character(!!sym(annotations_col_new))))
-    } else {
-      new_col <- new_col %>%
-        mutate(!!annotations_col_new :=
-             case_when(!is.na(!!sym(annotations_col_t)) ~
-                         as.character(!!sym(annotations_col_t)),
-                       TRUE ~ as.character(!!sym(annotations_col))))
-    }
-
-    seurat_obj[[annotations_col_new]] <-
-      new_col %>% pull(!!sym(annotations_col_new))
-  }
-
+  seurat_obj[[annotations_col_new]] <-
+    new_col %>% pull(!!sym(annotations_col_new))
 
   # alphabetize and (re)factorize the expanded annotations
   seurat_obj[[annotations_col_new]] <-
@@ -2254,12 +2181,12 @@ recombine_subclusters <- function(seurat_obj,
 #' Uses a Wilcoxon Signed Rank Test for paired data.
 #'
 #' @param seurat_obj The Seurat object.
-#' @param tissue_type Type of tissue being analyzed.
+#' @param tissue_type The tissue type of interest e.g. "Blood" or "Skin".
 #' @param clrs_specific The specific color palette (should be named).
 #' @param plot_by The variable to plot by, e.g., CellType (blood) or SampleType (skin).
-#' @param facet_by
-#' @param points_by
-#' @param paired Control and disease.
+#' @param facet_by The variable to facet by.
+#' @param points_by The variable for the points on top of the boxplot.
+#' @param paired Whether or not the data has paired control and disease samples.
 #' @param meta_group_by A character vector specifying the metadata columns to include in the output table. Must include Subject and SampleType.
 #' @param ncol Number of columns in the plot.
 #' @param include_legend Boolean indicating whether to include a legend.
@@ -2267,7 +2194,7 @@ recombine_subclusters <- function(seurat_obj,
 #' @param split_by_dataset Boolean indicating whether to split by dataset.
 #' @param filter_to Filter criteria to apply.
 #' @param highlights Specific elements to highlight in the plot.
-#' @param outlines Specific elements to outline in the plot
+#' @param outlines Specific elements to outline in the plot.
 #' @param clrs_outline The outline color.
 #' @param include_signif Whether to include significance test results.
 #' @param signif_stars Whether to use star notation for significance levels.
@@ -2361,10 +2288,8 @@ plot_subsets <- function(seurat_obj, tissue_type, clrs_specific,
          labs(title = paste(tissue_type, "Subset Frequencies by Cell Type"),
               x = NULL, y = "Subset Frequency")
 
-  # plot the violins and error bars
+  # plot the boxplots and error bars
   p <- p + geom_boxplot(aes(fill = !!plot_by), alpha = 0.4) +
-           # geom_violin(aes(fill = !!plot_by), color = NA, alpha = 0.4,
-           #             scale = "width", trim = TRUE, adjust = 2, width = 0.5) +
            geom_errorbarh(data = identity_df_sum,
                           mapping = aes(y = Mean, color = !!plot_by,
                                         xmin = after_stat(x) - 0.4,
@@ -2477,9 +2402,6 @@ plot_subsets <- function(seurat_obj, tissue_type, clrs_specific,
 
 ### Differential expression
 
-Taken directly from Hailong's "run_de.R" file, which itself pulls from the
-[original manuscript's analysis](https://github.com/neurorestore/DE-analysis/tree/167f55a5bff09f23cfd5b535763e13db2bc278b3).
-
 #### Seurat DE
 
 ```{r func-seurat-de}
@@ -2503,10 +2425,10 @@ seurat_DE = function(sc, de_test, params = list()) {
     mutate(cell_type = as.character(cell_type))
   labels = unique(meta$label)
   if (is.factor(labels)) {
-    ## https://github.com/satijalab/seurat/issues/741
-    ## avg_logFC: log fold-chage of the average expression between the two
-    ## groups. Positive values indicate that the gene is more highly expressed
-    ## in the first group
+    # https://github.com/satijalab/seurat/issues/741
+    # avg_logFC: log fold-change of the average expression between the two
+    # groups. Positive values indicate that the gene is more highly expressed
+    # in the first group
     label1 = levels(labels)[2]
     label2 = levels(labels)[1]
   } else {
@@ -2536,22 +2458,22 @@ seurat_DE = function(sc, de_test, params = list()) {
   # check for extra parameters for the mixed models
   if (!is.null(params$test)) {
     if (params$test == "LRT") {
-      use.lrt = T
+      use.lrt = TRUE
     } else {
-      use.lrt = F
+      use.lrt = FALSE
     }
   } else {
-    use.lrt = F
+    use.lrt = FALSE
   }
 
   if (!is.null(params$offset)) {
     if (params$offset == "YES") {
-      use.offset = T
+      use.offset = TRUE
     } else {
-      use.offset = F
+      use.offset = FALSE
     }
   } else {
-    use.offset = F
+    use.offset = FALSE
   }
 
   # run Seurat DE
@@ -2723,7 +2645,7 @@ pseudobulk_DE = function(sc,
             counts = all(as.matrix(x) %% 1 == 0)
             if (counts) {
               x = voom(as.matrix(x), design)
-              used_voom = T
+              used_voom = TRUE
             }
           }
           # run lmFit
@@ -2755,7 +2677,7 @@ pseudobulk_DE = function(sc,
           # create DESeq dataset
           targets = data.frame(group_sample = colnames(x)) %>%
             mutate(group = gsub(".*\\:", "", group_sample))
-          ## optionally, carry over factor levels from entire dataset
+          ## optionally, carry over factor levels from the entire dataset
           if (is.factor(meta$label)) {
             targets$group %<>% factor(levels = levels(meta$label))
           }
@@ -2764,16 +2686,11 @@ pseudobulk_DE = function(sc,
                                        design = ~ group)
 
           # set defaults on params
-          if (!"test" %in% names(params))
-            params$test = "LRT"
-          if (!"fitType" %in% names(params))
-            params$fitType = "parametric"
-          if (!"sfType" %in% names(params))
-            params$sfType = "poscounts"
-          if (!"independentFiltering" %in% names(params))
-            params$independentFiltering = FALSE
-          if (!"betaPrior" %in% names(params))
-            params$betaPrior = FALSE
+          if (!"test" %in% names(params)) params$test = "LRT"
+          if (!"fitType" %in% names(params)) params$fitType = "parametric"
+          if (!"sfType" %in% names(params)) params$sfType = "poscounts"
+          if (!"independentFiltering" %in% names(params)) params$independentFiltering = FALSE
+          if (!"betaPrior" %in% names(params)) params$betaPrior = FALSE
 
           # run differential expression
           if (params$test == "Wald") {
@@ -2814,7 +2731,7 @@ pseudobulk_DE = function(sc,
         tryCatch({
           targets = data.frame(group_sample = colnames(x)) %>%
             mutate(group = gsub(".*\\:", "", group_sample))
-          ## optionally, carry over factor levels from entire dataset
+          ## optionally, carry over factor levels from the entire dataset
           if (is.factor(meta$label)) {
             targets$group %<>% factor(levels = levels(meta$label))
           }
@@ -2822,18 +2739,12 @@ pseudobulk_DE = function(sc,
           y = DGEList(counts = x, group = targets$group)
 
           # set defaults on params
-          if (!"test" %in% names(params))
-            params$test = "LRT"
-          if (!"method" %in% names(params))
-            params$method = "TMM"
-          if (!"trend.method" %in% names(params))
-            params$trend.method = "locfit"
-          if (!"robust" %in% names(params))
-            params$robust = FALSE
-          if (!"tagwise" %in% names(params))
-            params$tagwise = TRUE
-          if (!"prior" %in% names(params))
-            params$prior = NULL
+          if (!"test" %in% names(params)) params$test = "LRT"
+          if (!"method" %in% names(params)) params$method = "TMM"
+          if (!"trend.method" %in% names(params)) params$trend.method = "locfit"
+          if (!"robust" %in% names(params)) params$robust = FALSE
+          if (!"tagwise" %in% names(params)) params$tagwise = TRUE
+          if (!"prior" %in% names(params)) params$prior = NULL
 
           # catch some parameter type errors
           if (!is.null(params$prior)) {
@@ -2875,15 +2786,15 @@ pseudobulk_DE = function(sc,
   # standardize column names to match Seurat output
   DE %<>% purrr::map(~ {
     colnames(.) %<>%
-      fct_recode("p_val" = "p.value",  ## DESeq2
-                 "p_val" = "p.value",  ## t/wilcox
-                 "p_val" = "P.Value",  ## limma
-                 "p_val" = "PValue", ## edgeR
-                 "p_val_adj" = "padj", ## DESeq2/t/wilcox
-                 "p_val_adj" = "adj.P.Val", ## limma
-                 "p_val_adj" = "FDR", ## edgeER
-                 "avg_logFC" = "log2FoldChange", ## DESEeq2
-                 "avg_logFC" = "logFC" ## limma/edgeR
+      fct_recode("p_val" = "p.value", # DESeq2
+                 "p_val" = "p.value", # t/wilcox
+                 "p_val" = "P.Value", # limma
+                 "p_val" = "PValue", # edgeR
+                 "p_val_adj" = "padj", # DESeq2/t/wilcox
+                 "p_val_adj" = "adj.P.Val", # limma
+                 "p_val_adj" = "FDR", # edgeER
+                 "avg_logFC" = "log2FoldChange", # DESEeq2
+                 "avg_logFC" = "logFC" # limma/edgeR
       ) %>%
       as.character()
     return(.)
@@ -2927,7 +2838,7 @@ run_DE = function(sc, de_test, params = list(), ...) {
   }
 
   de_test = gsub(",.*$", "", de_test)
-  ## print them
+  # print them
   message("running ", de_test, " with params: ", names(params), params)
 
   # run DE tests
@@ -2957,9 +2868,7 @@ run_DE = function(sc, de_test, params = list(), ...) {
 
 ### DESeq2 heatmaps
 
-Modified from Hailong's code.
-
-```{r}
+```{r func-heatmap-deseq2}
 #' This function is used to draw a heatmap from the output of DESeq2 for a list of genes
 #'
 #' @details
@@ -2990,7 +2899,7 @@ Modified from Hailong's code.
 #'
 #' @returns A ComplexHeatmap heatmap object.
 heatmap_DESeq2 <- function(DESeq2_out, gene_list, FDR_cutoff = 0.05,
-                           anno_top, clrs_anno_top, clr_na = "grey70", # grey75
+                           anno_top, clrs_anno_top, clr_na = "gray70",
                            clrs_plot =
                              colorRampPalette(rev(pals::brewer.rdbu(n = 7))),
                            nclrs = 100, zero_white = TRUE, split_row,
@@ -3003,7 +2912,7 @@ heatmap_DESeq2 <- function(DESeq2_out, gene_list, FDR_cutoff = 0.05,
                      rename(cell_type = name)
   de_genes <- de_genes_full %>% dplyr::filter(gene %in% gene_list)
 
-  # contains foldchanges
+  # contains fold changes
   de_m <- de_genes %>%
             select(gene, cell_type, avg_logFC) %>%
             pivot_wider(names_from = cell_type, values_from = avg_logFC) %>%
@@ -3112,8 +3021,8 @@ heatmap_DESeq2 <- function(DESeq2_out, gene_list, FDR_cutoff = 0.05,
 
   # set zero to be at white
   if (nclrs %% 2 == 1) nclrs <- nclrs + 1
-  breaks <- c(seq(min_break, 0, length.out = (nclrs/2) + 1),
-              seq(0, max_break, length.out = nclrs/2)[-1])
+  breaks <- c(seq(min_break, 0, length.out = (nclrs / 2) + 1),
+              seq(0, max_break, length.out = nclrs / 2)[-1])
 
   hm <-
     ComplexHeatmap::Heatmap(matrix = as.matrix(de_m),
@@ -3152,8 +3061,7 @@ heatmap_DESeq2 <- function(DESeq2_out, gene_list, FDR_cutoff = 0.05,
                             heatmap_legend_param =
                               list(title = "log2FC",
                                    title_gp = gpar(fontsize = row_size - 1),
-                                   labels_gp = gpar(fontsize = row_size - 2)
-                                   ))
+                                   labels_gp = gpar(fontsize = row_size - 2)))
 
   # the draw function is for stacking the legends vertically (to save space)
   if (draw) {
