@@ -2,9 +2,9 @@
 
 This repository contains code and analysis pipelines for single-cell transcriptomic and immune profiling in Lyme disease. The code is primarily organized as R Markdown (RMD) notebooks, with supporting R, Python, and shell scripts. You can convert RMD notebooks to R scripts using `knitr::purl()`.
 
-Please cite [Single cell immunophenotyping identifies CD8\+ GZMK\+ IFNG\+ T cells as a key immune population in cutaneous Lyme disease](https://www.biorxiv.org/content/10.1101/2025.06.09.658661v1?ct=). The graphical abstract is [available here](https://app.biorender.com/citation/68fbc783f68c818efe196e5c). Data is [publicly available on GEO](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE297325).
+Please cite [Single cell immunophenotyping identifies CD8\+ GZMK\+ IFNG\+ T cells as a key immune population in cutaneous Lyme disease](https://doi.org/10.1172/jci.insight.196741). The graphical abstract is [available here](https://app.biorender.com/citation/68fbc783f68c818efe196e5c). Data is [publicly available on GEO](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE297325).
 
-For questions or comments, contact the Kleinstein Lab at Yale University or open an issue on GitHub. 
+For questions or comments, contact the Kleinstein Lab at Yale University or open an issue on GitHub.
 
 ## Getting Started
 
