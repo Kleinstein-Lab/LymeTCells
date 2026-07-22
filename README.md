@@ -19,7 +19,7 @@ For questions or comments, contact the Kleinstein Lab at Yale University or open
 	- *primary_analysis/Lyme_Combined_Processing.Rmd* will generate a handy HTML file when knit (you will need to knit the other notebooks so that the links within work though).
 	- *primary_analysis/style.css* is just included to make the HTML files prettier; it isn't necessary.
 3. Most analyses require R (≥3.6). Some may involve Python (≥3.7).
-	- Python is needed for the two included downstream analyses (splicing and TRUST4).
+	- Python is needed for two of the included downstream analyses (splicing and TRUST4).
 
 
 ## Details

@@ -132,7 +132,8 @@ options(knitr.duplicate.label = "allow")
 
 # Downstream
 
-- <a href="./notebooks/downstream/splicing.html" target="_blank">Signaling</a> (CellChat for ligand-receptor pairing)
+- <a href="./notebooks/downstream/pathway_analysis.html" target="_blank">Pathway analysis</a> (including pseudobulk differential expression)
+- <a href="./notebooks/downstream/signaling.html" target="_blank">Signaling</a> (CellChat for ligand-receptor pairing)
 - <a href="./notebooks/downstream/splicing.html" target="_blank">Splicing</a> (to look for TEMRA cells)
 - <a href="./notebooks/downstream/trust4.html" target="_blank">TRUST4</a> (to look for γδ T cells)
 

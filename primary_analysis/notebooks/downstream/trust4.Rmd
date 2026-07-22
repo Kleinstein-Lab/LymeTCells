@@ -51,7 +51,7 @@ code_setup <-
 code_functions <-
   knitr::purl(here::here("primary_analysis", "notebooks", "02-functions.Rmd"),
               output = tempfile(), documentation = 0)
-code_meta <- 
+code_meta <-
   knitr::purl(here::here("primary_analysis", "notebooks", "03-meta.Rmd"),
               output = tempfile(), documentation = 0)
 

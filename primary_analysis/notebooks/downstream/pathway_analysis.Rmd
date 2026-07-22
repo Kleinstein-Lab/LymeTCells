@@ -1,0 +1,2281 @@
+---
+title: "Pathway Analysis"
+output:
+  html_document:
+    code_download: yes
+    code_folding: hide
+    css: ../../"style.css"
+    dev: "png"
+    df_print: kable
+    fig_caption: yes
+    keep_md: no
+    self_contained: true
+    theme: yeti
+    toc: yes
+    toc_depth: 4
+    toc_float:
+        collapsed: false
+        smooth_scroll: false
+editor_options:
+  chunk_output_type: console
+---
+
+------------------------------------------------------------------------
+
+# Overview and setup
+
+```{r setup-options, include = FALSE}
+knitr::opts_chunk$set(comment = NA, dpi = 200, fig.align = "center",
+                      out.width = "100%", warning = FALSE, error = TRUE,
+                      message = FALSE,
+                      fig.path = here::here("figures",
+                                            "downstream", "pathway_analysis",
+                                            "pathways-"))
+
+# will mess with chunk labels, but needed for parameterized reports
+options(knitr.duplicate.label = "allow")
+```
+
+**Author(s):** Edel Aron<br>
+**Last Updated:** `r Sys.Date()`
+
+**R version:** `r R.Version()$version.string`<br>
+**Platform:** `r R.Version()$platform`<br>
+**Running under:** `r sessionInfo()$running`
+
+```{r, include = FALSE}
+# load packages, colors and themes, functions, and metadata (R code only)
+code_setup <-
+  knitr::purl(here::here("notebooks", "01-setup.Rmd"),
+              output = tempfile(), documentation = 0)
+code_functions <-
+  knitr::purl(here::here("notebooks", "02-functions.Rmd"),
+              output = tempfile(), documentation = 0)
+code_meta <-
+  knitr::purl(here::here("notebooks", "03-meta.Rmd"),
+              output = tempfile(), documentation = 0)
+
+# read in the code, then remove the temp files
+source(code_setup)
+source(code_functions)
+source(code_meta)
+unlink(c(code_setup, code_functions, code_meta))
+```
+
+Connect to `Enrichr`:
+
+```{r setup-enrichr}
+setEnrichrSite("Enrichr")
+```
+
+Additional libraries:
+
+```{r}
+packages <- c()
+for (n in seq_along(packages)) {
+  suppressPackageStartupMessages(library(packages[n], character.only = TRUE))
+  cat(paste0(packages[n], ": ", packageVersion(packages[n]), "\n"))
+}
+```
+
+Could also use tools such as clusterProfiler, msigdbr, or ggpubr (for volcano plots).
+
+------------------------------------------------------------------------
+
+# Read in the data
+
+## GEX
+
+```{r setup}
+# objects
+combined_skin <-
+  readRDS(file.path(path_objs, "final", "combined_skin_airr.rds"))
+combined_skin_recombined_t <-
+  readRDS(file.path(path_objs, "final", "combined_skin_recombined_t.rds"))
+
+# colors
+colors_annotated_skin <- combined_skin@misc$colors_annotated
+colors_annotated_skin_recombined_t <- combined_skin_recombined_t@misc$colors_annotated
+```
+
+Subclustered objects use the refined cells:
+
+```{r setup-subcluster-skin}
+# objects
+combined_skin_t <-
+  readRDS(file.path(path_objs, "final", "combined_skin_t_ref.rds"))
+
+# colors
+colors_annotated_skin_t <- combined_skin_t@misc$colors_annotated
+```
+
+## Differential expression
+
+Define the FDR cutoff:
+
+```{r setup-de-setup}
+#| class.source = "fold-show"
+
+# use the same one for everything
+fdr_cutoff <- 0.05
+```
+
+Read in the DESeq2 results:
+
+```{r setup-de-deseq2}
+# by cell type
+de_skin <-
+  readRDS(file.path(path_objs, "downstream", "differential_expression",
+                    "deseq2_combined_skin.rds"))
+de_skin_recombined_t <-
+  readRDS(file.path(path_objs, "downstream", "differential_expression",
+                    "deseq2_combined_skin_recombined_t.rds"))
+de_skin_t <-
+  readRDS(file.path(path_objs, "downstream", "differential_expression",
+                    "deseq2_combined_skin_t.rds"))
+```
+
+Create the filtered tables:
+
+```{r setup-de-tables}
+de_genes_skin <- enframe(de_skin) %>%
+                   unnest(value) %>%
+                   rename(cell_type = name) %>%
+                   dplyr::filter(p_val_adj < fdr_cutoff)
+de_genes_skin_recombined_t <- enframe(de_skin_recombined_t) %>%
+                              unnest(value) %>%
+                              rename(cell_type = name) %>%
+                              dplyr::filter(p_val_adj < fdr_cutoff)
+de_genes_skin_t <- enframe(de_skin_t) %>%
+                     unnest(value) %>%
+                     rename(cell_type = name) %>%
+                     dplyr::filter(p_val_adj < fdr_cutoff)
+```
+
+------------------------------------------------------------------------
+
+# Differential expression {.tabset}
+
+Set up the required columns needed to calculate pseudobulk and run DE:
+
+```{r setup-de-setup-cols}
+combined_skin$replicate <- combined_skin$Subject
+combined_skin$label <- combined_skin$SampleType
+combined_skin$cell_type <- combined_skin$annotated_clusters
+
+combined_skin_recombined_t$replicate <- combined_skin_recombined_t$Subject
+combined_skin_recombined_t$label <- combined_skin_recombined_t$SampleType
+combined_skin_recombined_t$cell_type <-
+  combined_skin_recombined_t$annotated_clusters_expanded
+
+combined_skin_t$replicate <- combined_skin_t$Subject
+combined_skin_t$label <- combined_skin_t$SampleType
+combined_skin_t$cell_type <- combined_skin_t$annotated_subclusters
+```
+
+Running differential expression on all of the cells together is a little nonsensical, so we run it on each cell type instead.
+
+[Recommendations for single-cell analysis](https://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html#recommendations-for-single-cell-analysis)
+
+## Skin
+
+```{r de-skin-calc}
+#| eval = FALSE
+
+de_skin <- pseudobulk_DE(combined_skin, de_test = "pseudobulk_DESeq2")
+
+saveRDS(de_skin,
+        file.path(path_objs, "downstream", "differential_expression",
+                  "deseq2_combined_skin.rds"))
+```
+
+## Skin (Recombined T Cells)
+
+```{r de-skin-recombined-t-calc}
+#| eval = FALSE
+
+de_skin_recombined_t <-
+  pseudobulk_DE(combined_skin_recombined_t, de_test = "pseudobulk_DESeq2")
+
+saveRDS(de_skin_recombined_t,
+        file.path(path_objs, "downstream", "differential_expression",
+                  "deseq2_combined_skin_recombined_t.rds"))
+```
+
+## Skin T Cells
+
+```{r de-skin-t-calc}
+#| eval = FALSE
+
+de_skin_t <- pseudobulk_DE(combined_skin_t, de_test = "pseudobulk_DESeq2")
+
+saveRDS(de_skin_t,
+        file.path(path_objs, "downstream", "differential_expression",
+                  "deseq2_combined_skin_t.rds"))
+```
+
+## Skin T Cells (EM only)
+
+CD8+ GZMK+ IFNG exploration:
+
+```{r de-skin-t-em-ifng-calc}
+#| eval = FALSE
+
+combined_skin_t_em_ifng <-
+  subset(combined_skin_t, subset = SampleType == "EM")
+combined_skin_t_em_ifng <-
+  subset(combined_skin_t_em_ifng,
+         subset = annotated_subclusters %in% c("CD8+ GZMK+ IFNGhi T Cells",
+                                               "CD8+ GZMK+ IFNGint T Cells"))
+combined_skin_t_em_ifng$annotated_subclusters <-
+  droplevels(combined_skin_t_em_ifng$annotated_subclusters)
+
+combined_skin_t_em_ifng$replicate <- combined_skin_t_em_ifng$Subject # SampleName
+combined_skin_t_em_ifng$label <- combined_skin_t_em_ifng$annotated_subclusters
+combined_skin_t_em_ifng$cell_type <- "CD8+ GZMK+ IFNG T Cells"
+
+# we want the IFNGint to be the "reference" cell type
+combined_skin_t_em_ifng$label <-
+  relevel(combined_skin_t_em_ifng$label, ref = "CD8+ GZMK+ IFNGint T Cells")
+
+de_skin_t_em_ifng <-
+  pseudobulk_DE(combined_skin_t_em_ifng, de_test = "pseudobulk_DESeq2")
+
+saveRDS(de_skin_t_em_ifng,
+        file.path(path_objs, "downstream", "differential_expression",
+                  "deseq2_combined_skin_t_em_ifng.rds"))
+```
+
+CD8+ GZMK+ IFNGhi vs. HSPhi T cells:
+
+```{r de-skin-t-em-ifnghi-hsphi-calc}
+#| eval = FALSE
+
+combined_skin_t_em_ifnghi_hsphi <-
+  subset(combined_skin_t, subset = SampleType == "EM")
+combined_skin_t_em_ifnghi_hsphi <-
+  subset(combined_skin_t_em_ifnghi_hsphi,
+         subset = annotated_subclusters %in% c("CD8+ GZMK+ IFNGhi T Cells",
+                                               "HSPhi T Cells"))
+combined_skin_t_em_ifnghi_hsphi$annotated_subclusters <-
+  droplevels(combined_skin_t_em_ifnghi_hsphi$annotated_subclusters)
+
+combined_skin_t_em_ifnghi_hsphi$replicate <-
+  combined_skin_t_em_ifnghi_hsphi$Subject
+combined_skin_t_em_ifnghi_hsphi$label <-
+  combined_skin_t_em_ifnghi_hsphi$annotated_subclusters
+combined_skin_t_em_ifnghi_hsphi$cell_type <- "T Cells"
+
+# we want the HSPhi to be the "reference" cell type
+combined_skin_t_em_ifnghi_hsphi$label <-
+  relevel(combined_skin_t_em_ifnghi_hsphi$label, ref = "HSPhi T Cells")
+
+de_skin_t_em_ifnghi_hsphi <-
+  pseudobulk_DE(combined_skin_t_em_ifnghi_hsphi, de_test = "pseudobulk_DESeq2")
+
+saveRDS(de_skin_t_em_ifnghi_hsphi,
+        file.path(path_objs, "downstream", "differential_expression",
+                  "deseq2_combined_skin_t_em_ifnghi_hsphi.rds"))
+```
+
+Expanded vs. singletons:
+
+Like in [Single-cell T cell receptor sequencing of paired human atherosclerotic plaques and blood reveals autoimmune-like features of expanded effector T cells](https://www.nature.com/articles/s44161-022-00208-4#Fig3):
+
+```{r}
+# let's do EM only
+combined_skin_t_em_ifnghi <-
+  subset(combined_skin_t, subset = SampleType == "EM")
+combined_skin_t_em_ifnghi <-
+  subset(combined_skin_t_em_ifnghi,
+         subset = annotated_subclusters == "CD8+ GZMK+ IFNGhi T Cells")
+combined_skin_t_em_ifnghi$annotated_subclusters <-
+  droplevels(combined_skin_t_em_ifnghi$annotated_subclusters)
+
+# singletons vs expanded clones
+clone_info <- countClones(combined_skin_t_em_ifnghi[[]],
+                          clone = "clone_id_unique", remove_na = TRUE) %>%
+                mutate(clone_type = ifelse(seq_count > 1, "Expanded", "Singleton"))
+combined_skin_t_em_ifnghi@meta.data <-
+  left_join(combined_skin_t_em_ifnghi[[]],
+            clone_info %>% select(clone_id_unique, clone_type),
+            by = join_by(clone_id_unique))
+rownames(combined_skin_t_em_ifnghi@meta.data) <-
+  combined_skin_t_em_ifnghi$Cell_ID_Unique
+combined_skin_t_em_ifnghi <-
+  subset(combined_skin_t_em_ifnghi, clone_type %in% c("Expanded", "Singleton"))
+combined_skin_t_em_ifnghi$clone_type <-
+  factor(combined_skin_t_em_ifnghi$clone_type)
+
+combined_skin_t_em_ifnghi$replicate <-
+  combined_skin_t_em_ifnghi$Subject
+combined_skin_t_em_ifnghi$label <-
+  combined_skin_t_em_ifnghi$clone_type
+combined_skin_t_em_ifnghi$cell_type <- "CD8+ GZMK+ IFNGhi T Cells"
+
+# we want the singletons to be the "reference" cell type
+combined_skin_t_em_ifnghi$label <-
+  relevel(combined_skin_t_em_ifnghi$label, ref = "Singleton")
+
+de_skin_t_em_ifnghi_clone_type <-
+  pseudobulk_DE(combined_skin_t_em_ifnghi, de_test = "pseudobulk_DESeq2")
+
+saveRDS(de_skin_t_em_ifnghi_clone_type,
+        file.path(path_objs, "downstream", "differential_expression",
+                  "deseq2_combined_skin_t_em_ifnghi_clone_type.rds"))
+```
+
+# Total counts {.tabset}
+
+Total counts by cell subset:
+
+## Skin
+
+```{r de-skin-counts-bar}
+#| fig.dim = c(14, 8)
+
+skin_no_de <-
+  setdiff(unique(combined_skin$annotated_clusters),
+          unique(de_genes_skin$cell_type))
+
+plot_counts_cluster(clusters = de_genes_skin$cell_type,
+                    tissue_type = "Skin",
+                    clrs_specific = colors_annotated_skin,
+                    x_axis = "Cell Type",
+                    add_zeroes = skin_no_de,
+                    details = "Differentially Expressed Genes")
+```
+
+## Skin (Recombined)
+
+```{r de-skin-recombined-t-counts-bar}
+#| fig.dim = c(14, 8)
+
+skin_recombined_t_no_de <-
+  setdiff(unique(combined_skin_recombined_t$annotated_clusters_expanded),
+          unique(de_genes_skin_recombined_t$cell_type))
+
+plot_counts_cluster(clusters = de_genes_skin_recombined_t$cell_type,
+                    tissue_type = "Skin (Recombined T)",
+                    clrs_specific = colors_annotated_skin_recombined_t,
+                    x_axis = "Cell Type",
+                    add_zeroes = skin_recombined_t_no_de,
+                    details = "Differentially Expressed Genes")
+```
+
+```{r, eval = FALSE}
+# shows everything
+UpSetR::upset(fromList(split(de_genes_skin_recombined_t$gene,
+                             de_genes_skin_recombined_t$cell_type)),
+              nsets = n_distinct(de_genes_skin_recombined_t$cell_type),
+              nintersects = NA, order.by = "freq",
+              mainbar.y.label = "DEG Intersections")
+
+# just the immune cell types
+UpSetR::upset(fromList(split(de_genes_skin_recombined_t$gene,
+                             de_genes_skin_recombined_t$cell_type)),
+              nintersects = NA,
+              sets = c("B Cells", "CD4- CD8- T Cells",
+                       "CD4+ Tissue-Resident Memory T Cells",
+                       "CD8+ GZMK+ IFNGhi T Cells",
+                       "Cycling Dendritic Cells", "Langerhans", "Macrophages",
+                       "Natural Killers"),
+              # keep.order = TRUE,
+              order.by = "freq",
+              mainbar.y.label = "DEG Intersections (Immune Only)",
+              text.scale = 1.1)
+```
+
+## Skin T Cells
+
+```{r de-skin-t-counts-bar}
+#| fig.dim = c(12, 8)
+
+skin_t_no_de <-
+  setdiff(unique(combined_skin_t$annotated_subclusters),
+          unique(de_genes_skin_t$cell_type))
+
+plot_counts_cluster(clusters = de_genes_skin_t$cell_type,
+                    tissue_type = "Skin T Cells",
+                    clrs_specific = colors_annotated_skin_t,
+                    x_axis = "Cell Type",
+                    add_zeroes = skin_t_no_de,
+                    details = "Differentially Expressed Genes")
+```
+
+------------------------------------------------------------------------
+
+# Heatmaps
+
+Chemokines:
+
+* [A guide to chemokines and their receptors (Hughes and Nibbs, 2018)](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6120486/)
+  * "Although chemokines were originally named according to specific functions, a systematic nomenclature was introduced in 2000 that includes a subfamily designation (i.e., CC, CXC, CX3C, or XC), followed by the letter L (denoting 'ligand'), and then a number according to when the gene was first isolated"
+  * "There are 10 CCRs, 6 CXCRs, and a single CX3CR and XCR."
+  * "Receptor specificity is complex: many chemokines bind to multiple cCKRs, and some cCKRs have many ligands"
+
+## Skin {.tabset}
+
+### All chemokine ligands {.tabset}
+
+#### Full list
+
+```{r de-skin-genes-chemokines-ligands-genes}
+specific_gene <- "Chemokine Ligands"
+genes_list <- c(str_c("CCL", 1:28), # from Hailong
+                grep("^CX3CL", rownames(combined_skin), value = TRUE),
+                str_c("CXCL", 1:17), # from Hailong
+                grep("^XCL", rownames(combined_skin), value = TRUE))
+```
+
+```{r de-skin-genes-chemokines-ligands-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+#### Significant only
+
+```{r de-skin-genes-chemokines-sig-ligands-genes}
+specific_gene <- "Chemokine Ligands"
+genes_list <- str(unique(de_genes_skin$gene),
+                         "^CCL|^CX3CL|^CXCL|^XCL")
+```
+
+```{r de-skin-genes-chemokines-sig-ligands-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### All chemokine receptors {.tabset}
+
+#### Full list
+
+```{r de-skin-genes-chemokines-receptors-genes}
+specific_gene <- "Chemokine Receptors"
+genes_list <- grep("^(CCR|CX3CR|CXCR|XCR)", rownames(combined_skin),
+                   value = TRUE)
+```
+
+```{r de-skin-genes-chemokines-receptors-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+#### Significant only
+
+```{r de-skin-genes-chemokines-sig-receptors-genes}
+specific_gene <- "Chemokine Receptors"
+genes_list <- str(unique(de_genes_skin$gene),
+                         "^CCR|^CX3CR|^CXCR|^XCR")
+```
+
+```{r de-skin-genes-chemokines-sig-receptors-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### CCL {.tabset}
+
+#### Full list
+
+```{r de-skin-genes-ccl-genes}
+specific_gene <- "CCL"
+genes_list <- str_c(specific_gene, 1:28) # from Hailong
+```
+
+```{r de-skin-genes-ccl-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+#### Significant only
+
+```{r de-skin-genes-ccl-sig-genes}
+specific_gene <- "CCL"
+genes_list <- str_subset(string = unique(de_genes_skin$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-genes-ccl-sig-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### CCR {.tabset}
+
+#### Full list
+
+```{r de-skin-genes-ccr-genes}
+specific_gene <- "CCR"
+genes_list <- grep(paste0("^", specific_gene), rownames(combined_skin),
+                   value = TRUE)
+```
+
+```{r de-skin-genes-ccr-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+#### Significant only
+
+```{r de-skin-genes-ccr-sig-genes}
+specific_gene <- "CCR"
+genes_list <- str_subset(string = unique(de_genes_skin$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-genes-ccr-sig-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### CX3CL {.tabset}
+
+#### Significant only
+
+```{r de-skin-genes-cx3cl-sig-genes}
+specific_gene <- "CX3CL"
+genes_list <- str_subset(string = unique(de_genes_skin$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-genes-cx3cl-sig-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### CX3CR {.tabset}
+
+#### Full list
+
+```{r de-skin-genes-cx3cr-genes}
+specific_gene <- "CX3CR"
+genes_list <- grep(paste0("^", specific_gene), rownames(combined_skin),
+                   value = TRUE)
+```
+
+```{r de-skin-genes-cx3cr-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+#### Significant only
+
+```{r de-skin-genes-cx3cr-sig-genes}
+specific_gene <- "CX3CR"
+genes_list <- str_subset(string = unique(de_genes_skin$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-genes-cx3cr-sig-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### CXCL {.tabset}
+
+#### Full list
+
+```{r de-skin-genes-cxcl-genes}
+specific_gene <- "CXCL"
+genes_list <- str_c(specific_gene, 1:17) # from Hailong
+```
+
+```{r de-skin-genes-cxcl-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+#### Significant only
+
+```{r de-skin-genes-cxcl-sig-genes}
+specific_gene <- "CXCL"
+genes_list <- str_subset(string = unique(de_genes_skin$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-genes-cxcl-sig-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### CXCR {.tabset}
+
+#### Full list
+
+```{r de-skin-genes-cxcr-genes}
+specific_gene <- "CXCR"
+genes_list <- grep(paste0("^", specific_gene), rownames(combined_skin),
+                   value = TRUE)
+```
+
+```{r de-skin-genes-cxcr-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+#### Significant only
+
+```{r de-skin-genes-cxcr-sig-genes}
+specific_gene <- "CXCR"
+genes_list <- str_subset(string = unique(de_genes_skin$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-genes-cxcr-sig-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### GBP {.tabset}
+
+> Guanylate-binding proteins (GBP) are a family of dynamin-related large GTPases which are expressed in response to interferons and other pro-inflammatory cytokines. GBPs mediate a broad spectrum of innate immune functions against intracellular pathogens ranging from viruses to bacteria and protozoa. - https://pubmed.ncbi.nlm.nih.gov/29174633/
+
+> Interferon-gamma (IFN-γ) is a pleiotropic cytokine that exerts important functions in inflammation, infectious diseases, and cancer. The large GTPase human guanylate-binding protein 1 (GBP-1) is among the most strongly IFN-γ-induced cellular proteins. - https://pmc.ncbi.nlm.nih.gov/articles/PMC6156764/
+
+#### Full list
+
+```{r de-skin-genes-gbp-genes}
+specific_gene <- "GBP"
+genes_list <- grep(paste0("^", specific_gene), rownames(combined_skin),
+                   value = TRUE)
+```
+
+```{r de-skin-genes-gbp-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+#### Significant only
+
+```{r de-skin-genes-gbp-sig-genes}
+specific_gene <- "GBP"
+genes_list <- str_subset(string = unique(de_genes_skin$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-genes-gbp-sig-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### IFN
+
+```{r de-skin-genes-ifn-genes}
+specific_gene <- "IFN"
+genes_list <- str_subset(string = unique(de_genes_skin$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-genes-ifn-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### IFNG
+
+```{r de-skin-genes-ifng-genes}
+specific_gene <- "IFNG"
+genes_list <- str_subset(string = unique(de_genes_skin$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-genes-ifng-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### IL {.tabset}
+
+#### Full list
+
+```{r de-skin-genes-il-genes}
+specific_gene <- "IL"
+
+# from Hailong
+# "Interleukin 30 (IL-30) forms one chain of the heterodimeric cytokine called interleukin 27 (IL-27)"
+genes_list <- c(paste0("IL", 1:39),
+                "IL1A", "IL1B", "IL12A", "IL12B", "IL17A", "IL17B", "IL23A",
+                "CXCL8", # CXCL8 is IL8
+                "TXLNA", # TXLNA is IL14
+                "IL28A", # IFNL2 is IL28A
+                "IFNL3", # IFNL3 is IL28B
+                "IFNL1", # IFNL1 is IL29
+                "IL36A")
+```
+
+```{r de-skin-genes-il-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+#### Significant only
+
+```{r de-skin-genes-il-sig-genes}
+specific_gene <- "IL"
+genes_list <- str_subset(string = unique(de_genes_skin$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-genes-il-sig-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### ISGs
+
+```{r de-skin-genes-isgs-genes}
+specific_gene <- "Interferon-Stimulated"
+genes_list <- c("CCL5", "CCL7", "IL10", "IL32", "IRF1", "IRF9", "ISG20",
+                "SOCS3", "STAT1", "STAT2", "TAPBP", "TNFRSF14")
+```
+
+```{r de-skin-genes-isgs-bar}
+#| fig.dim = c(12, max(3, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### Other {.tabset}
+
+```{r de-skin-genes-other-genes}
+specific_gene <- "Other"
+genes_list <- c("LCE2A", "LCE2B", "LCE3A", "LCE3B") # from Hailong
+```
+
+```{r de-skin-genes-other-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### MMP {.tabset}
+
+#### Full list
+
+```{r de-skin-genes-mmp-genes}
+specific_gene <- "MMP"
+genes_list <- grep(paste0("^", specific_gene), rownames(combined_skin),
+                   value = TRUE)
+```
+
+```{r de-skin-genes-mmp-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+#### Significant only
+
+```{r de-skin-genes-mmp-sig-genes}
+specific_gene <- "MMP"
+genes_list <- str_subset(string = unique(de_genes_skin$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-genes-mmp-sig-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### TLR {.tabset}
+
+#### Full list
+
+```{r de-skin-genes-tlr-genes}
+specific_gene <- "TLR"
+genes_list <- grep(paste0("^", specific_gene), rownames(combined_skin),
+                   value = TRUE)
+```
+
+```{r de-skin-genes-tlr-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+#### Significant only
+
+```{r de-skin-genes-tlr-sig-genes}
+specific_gene <- "TLR"
+genes_list <- str_subset(string = unique(de_genes_skin$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-genes-tlr-sig-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### TNF
+
+```{r de-skin-genes-tnf-genes}
+specific_gene <- "TNF"
+genes_list <- str_subset(string = unique(de_genes_skin$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-genes-tnf-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### XCL {.tabset}
+
+#### Full list
+
+```{r de-skin-genes-xcl-genes}
+specific_gene <- "XCL"
+genes_list <- grep(paste0("^", specific_gene), rownames(combined_skin),
+                   value = TRUE)
+```
+
+```{r de-skin-genes-xcl-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+#### Significant only
+
+```{r de-skin-genes-xcl-sig-genes}
+specific_gene <- "XCL"
+genes_list <- str_subset(string = unique(de_genes_skin$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-genes-xcl-sig-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### XCR {.tabset}
+
+#### Full list
+
+```{r de-skin-genes-xcr-genes}
+specific_gene <- "XCR"
+genes_list <- grep(paste0("^", specific_gene), rownames(combined_skin),
+                   value = TRUE)
+```
+
+```{r de-skin-genes-xcr-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+#### Significant only
+
+```{r de-skin-genes-xcr-sig-genes}
+specific_gene <- "XCR"
+genes_list <- str_subset(string = unique(de_genes_skin$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-genes-xcr-sig-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+## Skin (Recombined) {.tabset}
+
+### All chemokine ligands {.tabset}
+
+#### Full list
+
+```{r de-skin-recombined-genes-chemokines-ligands-genes}
+specific_gene <- "Chemokine Ligands"
+# doing it Hailong's way e.g. str_c("CCL", 1:28) misses genes like CCL3L1
+genes_list <- c(str_c("CCL", 1:28), # from Hailong
+                grep("^CX3CL", rownames(combined_skin_recombined_t), value = TRUE),
+                str_c("CXCL", 1:17), # from Hailong
+                grep("^XCL", rownames(combined_skin_recombined_t), value = TRUE))
+```
+
+```{r de-skin-recombined-genes-chemokines-ligands-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_recombined_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin (Recombined)"),
+                 x_angle = 90, col_size = 12)
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+#### Significant only
+
+```{r de-skin-recombined-genes-chemokines-sig-ligands-genes}
+specific_gene <- "Chemokine Ligands"
+genes_list <- str(unique(de_genes_skin_recombined_t$gene),
+                         "^CCL|^CX3CL|^CXCL|^XCL")
+```
+
+```{r de-skin-recombined-genes-chemokines-sig-ligands-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_recombined_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin (Recombined)"),
+                 x_angle = 90, col_size = 12)
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### All chemokine receptors {.tabset}
+
+#### Full list
+
+```{r de-skin-recombined-genes-chemokines-receptors-genes}
+specific_gene <- "Chemokine Receptors"
+genes_list <- grep("^(CCR|CX3CR|CXCR|XCR)", rownames(combined_skin_recombined_t),
+                   value = TRUE)
+```
+
+```{r de-skin-recombined-genes-chemokines-receptors-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_recombined_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin (Recombined)"),
+                 x_angle = 90, col_size = 12)
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+#### Significant only
+
+```{r de-skin-recombined-genes-chemokines-sig-receptors-genes}
+specific_gene <- "Chemokine Receptors"
+genes_list <- str(unique(de_genes_skin_recombined_t$gene),
+                         "^CCR|^CX3CR|^CXCR|^XCR")
+```
+
+```{r de-skin-recombined-genes-chemokines-sig-receptors-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_recombined_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin (Recombined)"),
+                 x_angle = 90, col_size = 12)
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+
+### CCL {.tabset}
+
+#### Full list
+
+```{r de-skin-recombined-genes-ccl-genes}
+specific_gene <- "CCL"
+genes_list <- str_c(specific_gene, 1:28) # from Hailong
+```
+
+```{r de-skin-recombined-genes-ccl-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_recombined_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin (Recombined)"),
+                 x_angle = 90, col_size = 12)
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+#### Significant only
+
+```{r de-skin-recombined-genes-ccl-sig-genes}
+specific_gene <- "CCL"
+genes_list <- str_subset(string = unique(de_genes_skin_recombined_t$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-recombined-genes-ccl-sig-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_recombined_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin (Recombined)"),
+                 x_angle = 90, col_size = 12)
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### CCR {.tabset}
+
+#### Full list
+
+```{r de-skin-recombined-genes-ccr-genes}
+specific_gene <- "CCR"
+genes_list <- grep(paste0("^", specific_gene), rownames(combined_skin_recombined_t),
+                   value = TRUE)
+```
+
+```{r de-skin-recombined-genes-ccr-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_recombined_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin (Recombined)"),
+                 x_angle = 90, col_size = 12)
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+#### Significant only
+
+```{r de-skin-recombined-genes-ccr-sig-genes}
+specific_gene <- "CCR"
+genes_list <- str_subset(string = unique(de_genes_skin_recombined_t$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-recombined-genes-ccr-sig-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_recombined_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin (Recombined)"),
+                 x_angle = 90, col_size = 12)
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### CX3CL {.tabset}
+
+#### Significant only
+
+```{r de-skin-recombined-genes-cx3cl-sig-genes}
+specific_gene <- "CX3CL"
+genes_list <- str_subset(string = unique(de_genes_skin_recombined_t$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-recombined-genes-cx3cl-sig-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_recombined_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin (Recombined)"),
+                 x_angle = 90, col_size = 12)
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### CX3CR {.tabset}
+
+#### Full list
+
+```{r de-skin-recombined-genes-cx3cr-genes}
+specific_gene <- "CX3CR"
+genes_list <- grep(paste0("^", specific_gene), rownames(combined_skin_recombined_t),
+                   value = TRUE)
+```
+
+```{r de-skin-recombined-genes-cx3cr-bar}
+#| fig.dim = c(10, max(6, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_recombined_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin (Recombined)"),
+                 x_angle = 90, col_size = 12)
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+#### Significant only
+
+```{r de-skin-recombined-genes-cx3cr-sig-genes}
+specific_gene <- "CX3CR"
+genes_list <- str_subset(string = unique(de_genes_skin_recombined_t$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-recombined-genes-cx3cr-sig-bar}
+#| fig.dim = c(10, max(6, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_recombined_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin (Recombined)"),
+                 x_angle = 90, col_size = 12)
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### CXCL {.tabset}
+
+#### Full list
+
+```{r de-skin-recombined-genes-cxcl-genes}
+specific_gene <- "CXCL"
+genes_list <- str_c(specific_gene, 1:17) # from Hailong
+```
+
+```{r de-skin-recombined-genes-cxcl-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_recombined_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin (Recombined)"),
+                 x_angle = 90, col_size = 12)
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+#### Significant only
+
+```{r de-skin-recombined-genes-cxcl-sig-genes}
+specific_gene <- "CXCL"
+genes_list <- str_subset(string = unique(de_genes_skin_recombined_t$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-recombined-genes-cxcl-sig-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_recombined_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin (Recombined)"),
+                 x_angle = 90, col_size = 12)
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### CXCR {.tabset}
+
+#### Full list
+
+```{r de-skin-recombined-genes-cxcr-genes}
+specific_gene <- "CXCR"
+genes_list <- grep(paste0("^", specific_gene), rownames(combined_skin_recombined_t),
+                   value = TRUE)
+```
+
+```{r de-skin-recombined-genes-cxcr-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_recombined_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin (Recombined)"),
+                 x_angle = 90, col_size = 12)
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+#### Significant only
+
+```{r de-skin-recombined-genes-cxcr-sig-genes}
+specific_gene <- "CXCR"
+genes_list <- str_subset(string = unique(de_genes_skin_recombined_t$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-recombined-genes-cxcr-sig-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_recombined_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin (Recombined)"),
+                 x_angle = 90, col_size = 12)
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### GBP {.tabset}
+
+> Guanylate-binding proteins (GBP) are a family of dynamin-related large GTPases which are expressed in response to interferons and other pro-inflammatory cytokines. GBPs mediate a broad spectrum of innate immune functions against intracellular pathogens ranging from viruses to bacteria and protozoa. - https://pubmed.ncbi.nlm.nih.gov/29174633/
+
+> Interferon-gamma (IFN-γ) is a pleiotropic cytokine that exerts important functions in inflammation, infectious diseases, and cancer. The large GTPase human guanylate-binding protein 1 (GBP-1) is among the most strongly IFN-γ-induced cellular proteins. - https://pmc.ncbi.nlm.nih.gov/articles/PMC6156764/
+
+#### Full list
+
+```{r de-skin-recombined-genes-gbp-genes}
+specific_gene <- "GBP"
+genes_list <- grep(paste0("^", specific_gene), rownames(combined_skin_recombined_t),
+                   value = TRUE)
+```
+
+```{r de-skin-recombined-genes-gbp-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_recombined_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin (Recombined)"),
+                 x_angle = 90, col_size = 12)
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+#### Significant only
+
+```{r de-skin-recombined-genes-gbp-sig-genes}
+specific_gene <- "GBP"
+genes_list <- str_subset(string = unique(de_genes_skin_recombined_t$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-recombined-genes-gbp-sig-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_recombined_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin (Recombined)"),
+                 x_angle = 90, col_size = 12)
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### HLA {.tabset}
+
+#### Full list
+
+```{r de-skin-recombined-genes-hla-genes}
+specific_gene <- "HLA"
+genes_list <- grep(paste0("^", specific_gene), rownames(combined_skin_recombined_t),
+                   value = TRUE)
+```
+
+```{r de-skin-recombined-genes-hla-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_recombined_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin (Recombined)"),
+                 x_angle = 90, col_size = 12)
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+#### Significant only
+
+```{r de-skin-recombined-genes-hla-sig-genes}
+specific_gene <- "HLA"
+genes_list <- str_subset(string = unique(de_genes_skin_recombined_t$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-recombined-genes-hla-sig-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_recombined_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin (Recombined)"),
+                 x_angle = 90, col_size = 12)
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### IFN {.tabset}
+
+#### Full list
+
+```{r de-skin-recombined-genes-ifn-genes}
+specific_gene <- "IFN"
+genes_list <- grep(paste0("^", specific_gene), rownames(combined_skin_recombined_t),
+                   value = TRUE)
+```
+
+```{r de-skin-recombined-genes-ifn-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_recombined_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin (Recombined)"),
+                 x_angle = 90, col_size = 12)
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+#### Significant only
+
+```{r de-skin-recombined-genes-ifn-sig-genes}
+specific_gene <- "IFN"
+genes_list <- str_subset(string = unique(de_genes_skin_recombined_t$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-recombined-genes-ifn-sig-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_recombined_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin (Recombined)"),
+                 x_angle = 90, col_size = 12)
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### IL {.tabset}
+
+#### Full list
+
+```{r de-skin-recombined-genes-il-genes}
+specific_gene <- "IL"
+
+# from Hailong
+# "Interleukin 30 (IL-30) forms one chain of the heterodimeric cytokine called interleukin 27 (IL-27)"
+genes_list <- c(paste0("IL", 1:39),
+                "IL1A", "IL1B", "IL12A", "IL12B", "IL17A", "IL17B", "IL23A",
+                "CXCL8", # CXCL8 is IL8
+                "TXLNA", # TXLNA is IL14
+                "IL28A", # IFNL2 is IL28A
+                "IFNL3", # IFNL3 is IL28B
+                "IFNL1", # IFNL1 is IL29
+                "IL36A")
+```
+
+```{r de-skin-recombined-genes-il-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_recombined_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin (Recombined)"),
+                 x_angle = 90, col_size = 12)
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+#### Significant only
+
+```{r de-skin-recombined-genes-il-sig-genes}
+specific_gene <- "IL"
+genes_list <- str_subset(string = unique(de_genes_skin_recombined_t$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-recombined-genes-il-sig-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_recombined_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin (Recombined)"),
+                 x_angle = 90, col_size = 12)
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### ISGs
+
+```{r de-skin-recombined-genes-isgs-genes}
+specific_gene <- "Interferon-Stimulated"
+genes_list <- c("CCL5", "CCL7", "IL10", "IL32", "IRF1", "IRF9", "ISG20",
+                "SOCS3", "STAT1", "STAT2", "TAPBP", "TNFRSF14")
+```
+
+```{r de-skin-recombined-genes-isgs-bar}
+#| fig.dim = c(12, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_recombined_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin (Recombined)"),
+                 x_angle = 90, col_size = 12)
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### Other {.tabset}
+
+```{r de-skin-recombined-genes-other-genes}
+specific_gene <- "Other"
+genes_list <- c("LCE2A", "LCE2B", "LCE3A", "LCE3B") # from Hailong
+```
+
+```{r de-skin-recombined-genes-other-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_recombined_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin (Recombined)"),
+                 x_angle = 90, col_size = 12)
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### MMP {.tabset}
+
+#### Full list
+
+```{r de-skin-recombined-genes-mmp-genes}
+specific_gene <- "MMP"
+genes_list <- grep(paste0("^", specific_gene), rownames(combined_skin_recombined_t),
+                   value = TRUE)
+```
+
+```{r de-skin-recombined-genes-mmp-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_recombined_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin (Recombined)"),
+                 x_angle = 90, col_size = 12)
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+#### Significant only
+
+```{r de-skin-recombined-genes-mmp-sig-genes}
+specific_gene <- "MMP"
+genes_list <- str_subset(string = unique(de_genes_skin_recombined_t$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-recombined-genes-mmp-sig-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_recombined_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin (Recombined)"),
+                 x_angle = 90, col_size = 12)
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### TLR {.tabset}
+
+#### Full list
+
+```{r de-skin-recombined-genes-tlr-genes}
+specific_gene <- "TLR"
+genes_list <- grep(paste0("^", specific_gene), rownames(combined_skin_recombined_t),
+                   value = TRUE)
+```
+
+```{r de-skin-recombined-genes-tlr-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_recombined_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin (Recombined)"),
+                 x_angle = 90, col_size = 12)
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+#### Significant only
+
+```{r de-skin-recombined-genes-tlr-sig-genes}
+specific_gene <- "TLR"
+genes_list <- str_subset(string = unique(de_genes_skin_recombined_t$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-recombined-genes-tlr-sig-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_recombined_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin (Recombined)"),
+                 x_angle = 90, col_size = 12)
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### TNF
+
+```{r de-skin-recombined-genes-tnf-genes}
+specific_gene <- "TNF"
+genes_list <- str_subset(string = unique(de_genes_skin_recombined_t$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-recombined-genes-tnf-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_recombined_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin (Recombined)"),
+                 x_angle = 90, col_size = 12)
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### XCL {.tabset}
+
+#### Full list
+
+```{r de-skin-recombined-genes-xcl-genes}
+specific_gene <- "XCL"
+genes_list <- grep(paste0("^", specific_gene), rownames(combined_skin_recombined_t),
+                   value = TRUE)
+```
+
+```{r de-skin-recombined-genes-xcl-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_recombined_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin (Recombined)"),
+                 x_angle = 90, col_size = 12)
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+#### Significant only
+
+```{r de-skin-recombined-genes-xcl-sig-genes}
+specific_gene <- "XCL"
+genes_list <- str_subset(string = unique(de_genes_skin_recombined_t$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-recombined-genes-xcl-sig-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_recombined_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin (Recombined)"),
+                 x_angle = 90, col_size = 12)
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### XCR {.tabset}
+
+#### Full list
+
+```{r de-skin-recombined-genes-xcr-genes}
+specific_gene <- "XCR"
+genes_list <- grep(paste0("^", specific_gene), rownames(combined_skin_recombined_t),
+                   value = TRUE)
+```
+
+```{r de-skin-recombined-genes-xcr-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_recombined_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin (Recombined)"),
+                 x_angle = 90, col_size = 12)
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+#### Significant only
+
+```{r de-skin-recombined-genes-xcr-sig-genes}
+specific_gene <- "XCR"
+genes_list <- str_subset(string = unique(de_genes_skin_recombined_t$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-recombined-genes-xcr-sig-bar}
+#| fig.dim = c(10, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_recombined_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin (Recombined)"),
+                 x_angle = 90, col_size = 12)
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+## Skin T Cells {.tabset}
+
+*All significant only except for the ISGs.*
+
+### CCL
+
+```{r de-skin-t-genes-ccl-sig-genes}
+specific_gene <- "CCL"
+genes_list <- str_subset(string = unique(de_genes_skin_t$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-t-genes-ccl-sig-bar}
+#| fig.dim = c(12, max(3, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin T Cells"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### CCR
+
+```{r de-skin-t-genes-ccr-sig-genes}
+specific_gene <- "CCR"
+genes_list <- str_subset(string = unique(de_genes_skin_t$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-t-genes-ccr-sig-bar}
+#| fig.dim = c(12, max(3, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin T Cells"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### CX3CL
+
+```{r de-skin-t-genes-cx3cl-sig-genes}
+specific_gene <- "CX3CL"
+genes_list <- str_subset(string = unique(de_genes_skin_t$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-t-genes-cx3cl-sig-bar}
+#| fig.dim = c(12, max(3, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin T Cells"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### CX3CR
+
+```{r de-skin-t-genes-cx3cr-sig-genes}
+specific_gene <- "CX3CR"
+genes_list <- str_subset(string = unique(de_genes_skin_t$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-t-genes-cx3cr-sig-bar}
+#| fig.dim = c(12, max(3, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin T Cells"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### CXCL
+
+```{r de-skin-t-genes-cxcl-sig-genes}
+specific_gene <- "CXCL"
+genes_list <- str_subset(string = unique(de_genes_skin_t$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-t-genes-cxcl-sig-bar}
+#| fig.dim = c(12, max(3, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin T Cells"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### CXCR
+
+```{r de-skin-t-genes-cxcr-sig-genes}
+specific_gene <- "CXCR"
+genes_list <- str_subset(string = unique(de_genes_skin_t$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-t-genes-cxcr-sig-bar}
+#| fig.dim = c(12, max(3, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin T Cells"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### IFITM
+
+```{r de-skin-t-genes-ifitm-sig-genes}
+specific_gene <- "IFITM"
+genes_list <- str_subset(string = unique(de_genes_skin_t$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-t-genes-ifitm-sig-bar}
+#| fig.dim = c(12, max(3, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin T Cells"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### IFN
+
+```{r de-skin-t-genes-ifn-sig-genes}
+specific_gene <- "IFN"
+genes_list <- str_subset(string = unique(de_genes_skin_t$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-t-genes-ifn-sig-bar}
+#| fig.dim = c(12, max(3, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin T Cells"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### IFNG
+
+```{r de-skin-t-genes-ifng-sig-genes}
+specific_gene <- "IFNG"
+genes_list <- str_subset(string = unique(de_genes_skin_t$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-t-genes-ifng-sig-bar}
+#| fig.dim = c(12, max(3, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin T Cells"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### IL
+
+```{r de-skin-t-genes-il-sig-genes}
+specific_gene <- "IL"
+genes_list <- str_subset(string = unique(de_genes_skin_t$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-t-genes-il-sig-bar}
+#| fig.dim = c(14, max(4, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin T Cells"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### ISGs
+
+```{r de-skin-t-genes-isgs-genes}
+specific_gene <- "Interferon-Stimulated"
+genes_list <- c("CCL5", "CCL7", "IL10", "IL32", "IRF1", "IRF9", "ISG20",
+                "SOCS3", "STAT1", "STAT2", "TAPBP", "TNFRSF14")
+```
+
+```{r de-skin-t-genes-isgs-bar}
+#| fig.dim = c(12, max(3, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin T Cells"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### XCL
+
+```{r de-skin-t-genes-xcl-sig-genes}
+specific_gene <- "XCL"
+genes_list <- str_subset(string = unique(de_genes_skin_t$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-t-genes-xcl-sig-bar}
+#| fig.dim = c(12, max(3, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin T Cells"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```
+
+### XCR
+
+```{r de-skin-t-genes-xcr-sig-genes}
+specific_gene <- "XCR"
+genes_list <- str_subset(string = unique(de_genes_skin_t$gene),
+                         pattern = paste0("^", specific_gene))
+```
+
+```{r de-skin-t-genes-xcr-sig-bar}
+#| fig.dim = c(12, max(3, length(genes_list)/2 + 2))
+
+if (length(genes_list) > 0) {
+  heatmap_DESeq2(DESeq2_out = de_skin_t,
+                 gene_list = genes_list,
+                 FDR_cutoff = fdr_cutoff,
+                 title = paste("Gene Expression of", specific_gene,
+                               "in the Skin T Cells"))
+} else {
+  cat(paste0("No genes found for ", specific_gene, "."))
+}
+```

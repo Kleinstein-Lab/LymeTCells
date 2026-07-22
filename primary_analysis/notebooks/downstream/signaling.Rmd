@@ -16,7 +16,7 @@ output:
     toc_float:
         collapsed: false
         smooth_scroll: false
-editor_options: 
+editor_options:
   chunk_output_type: console
 ---
 
@@ -51,7 +51,7 @@ code_setup <-
 code_functions <-
   knitr::purl(here::here("primary_analysis", "notebooks", "02-functions.Rmd"),
               output = tempfile(), documentation = 0)
-code_meta <- 
+code_meta <-
   knitr::purl(here::here("primary_analysis", "notebooks", "03-meta.Rmd"),
               output = tempfile(), documentation = 0)
 
@@ -200,7 +200,7 @@ pos_dataset = "EM"
 # define a char name used for storing differential expression analysis results
 features_name = paste0(pos_dataset, ".DGE")
 
-# perform differential expression analysis 
+# perform differential expression analysis
 # compared to CellChat version < v2, CellChat v2 now performs an ultra-fast Wilcoxon test using the presto package, which gives smaller values of logFC
 # thus we here set a smaller value of thresh.fc compared to the original one (thresh.fc = 0.1)
 # users can also provide a vector and dataframe of customized DEGs by modifying the cellchat_merged@var.features$LS.merged and cellchat_merged@var.features$LS.merged.info
@@ -208,8 +208,8 @@ cellchat_merged <-
   identifyOverExpressedGenes(cellchat_merged, group.dataset = "datasets",
                              pos_dataset = pos_dataset,
                              features_name = features_name, only.pos = FALSE,
-                             thresh.pc = 0.1, thresh.fc = 0.05, thresh.p = 0.05, 
-                             group.DE.combined = FALSE) 
+                             thresh.pc = 0.1, thresh.fc = 0.05, thresh.p = 0.05,
+                             group.DE.combined = FALSE)
 
 # map the results of differential expression analysis onto the inferred cell-cell communications to easily manage/subset the ligand-receptor pairs of interest
 net <- netMappingDEG(cellchat_merged, features_name = features_name,
@@ -246,28 +246,28 @@ cells_skin <- c("Endothelial Cells", "Fibroblasts", "Keratinocytes",
 ```{r}
 # plot differential circle plot
 par(mfrow = c(2, 2), xpd = TRUE)
-netVisual_diffInteraction(cellchat_merged, 
+netVisual_diffInteraction(cellchat_merged,
                           sources.use = cells_focus,
                           targets.use = cells_skin,
                           weight.scale = TRUE, measure = "count",
                           title.name = "Differential Number of Interactions \nSenders: CD8+ GZMK+ T cells - Receivers: Skin Cells",
                           remove.isolate = FALSE)
 
-netVisual_diffInteraction(cellchat_merged, 
+netVisual_diffInteraction(cellchat_merged,
                           sources.use = cells_focus,
                           targets.use = cells_skin,
                           weight.scale = TRUE, measure = "weight",
                           title.name = "Differential Strength of Interactions \nSenders: CD8+ GZMK+ T cells - Receivers: Skin Cells",
                           remove.isolate = FALSE)
 
-netVisual_diffInteraction(cellchat_merged, 
+netVisual_diffInteraction(cellchat_merged,
                           sources.use = cells_skin,
                           targets.use = cells_focus,
                           weight.scale = TRUE, measure = "count",
                           title.name = "Differential Number of Interactions \nSenders: Skin Cells - Receivers: CD8+ GZMK+ T cells",
                           remove.isolate = FALSE)
 
-netVisual_diffInteraction(cellchat_merged, 
+netVisual_diffInteraction(cellchat_merged,
                           sources.use = cells_skin,
                           targets.use = cells_focus,
                           weight.scale = TRUE, measure = "weight",
@@ -286,7 +286,7 @@ par(mfrow = c(2, 2), xpd = TRUE)
 # by count
 for (i in 1:length(cellchat_list)) {
   netVisual_circle(cellchat_list[[i]]@net$count, weight.scale = TRUE,
-                   label.edge = FALSE, 
+                   label.edge = FALSE,
                    sources.use = cells_focus, targets.use = cells_skin,
                    edge.weight.max = weight_max[2], edge.width.max = 12,
                    vertex.weight = as.numeric(table(cellchat_list[[i]]@idents)),
@@ -310,14 +310,14 @@ for (i in 1:length(cellchat_list)) {
 Skin cells as senders and GzmK T cells as receivers:
 
 ```{r}
-# plot interactions with 
+# plot interactions with
 weight_max <- getMaxWeight(cellchat_list, attribute = c("idents", "count"))
 par(mfrow = c(2, 2), xpd = TRUE)
 
 # by count
 for (i in 1:length(cellchat_list)) {
   netVisual_circle(cellchat_list[[i]]@net$count, weight.scale = TRUE,
-                   label.edge = FALSE, 
+                   label.edge = FALSE,
                    sources.use = cells_skin, targets.use = cells_focus,
                    edge.weight.max = weight_max[2], edge.width.max = 12,
                    vertex.weight = as.numeric(table(cellchat_list[[i]]@idents)),
@@ -347,18 +347,18 @@ GzmK T cells as receivers:
 ```{r}
 par(mfrow = c(1, 2), xpd = FALSE)
 
-netVisual_chord_gene(cellchat_list[[2]], 
+netVisual_chord_gene(cellchat_list[[2]],
                      sources.use = NULL, targets.use = cells_focus,
                      slot.name = "net", net = net.up, lab.cex = 1.2,
-                     small.gap = 1, 
-                     title.name = paste("Up-regulated signaling in", 
+                     small.gap = 1,
+                     title.name = paste("Up-regulated signaling in",
                                         names(cellchat_list)[2],
                                         "- Receivers: GZMK T cells"))
 
-netVisual_chord_gene(cellchat_list[[1]], 
+netVisual_chord_gene(cellchat_list[[1]],
                      sources.use = NULL, targets.use = cells_focus,
                      slot.name = "net", net = net.down, lab.cex = 1.2,
-                     small.gap = 1, 
+                     small.gap = 1,
                      title.name = paste("Down-regulated signaling in",
                                         names(cellchat_list)[2],
                                         "- Receivers: GZMK T cells"))
@@ -369,18 +369,18 @@ GzmK T cells as senders:
 ```{r}
 par(mfrow = c(1, 2), xpd = FALSE)
 
-netVisual_chord_gene(cellchat_list[[2]], 
+netVisual_chord_gene(cellchat_list[[2]],
                      sources.use = cells_focus, targets.use = NULL,
                      slot.name = "net", net = net.up, lab.cex = 1.2,
-                     small.gap = 1, 
+                     small.gap = 1,
                      title.name = paste("Up-regulated signaling in",
                                         names(cellchat_list)[2],
                                         "- Receivers: GZMK T cells"))
 
-netVisual_chord_gene(cellchat_list[[1]], 
+netVisual_chord_gene(cellchat_list[[1]],
                      sources.use = cells_focus, targets.use = NULL,
                      slot.name = "net", net = net.down, lab.cex = 1.2,
-                     small.gap = 1, 
+                     small.gap = 1,
                      title.name = paste("Down-regulated signaling in",
                                         names(cellchat_list)[2],
                                         "- Receivers: GZMK T cells"))
@@ -470,21 +470,21 @@ CXCL pathway:
 
 ```{r}
 # up-regulated L-R pairs in EM
-netVisual_chord_gene(cellchat_list[[2]], 
+netVisual_chord_gene(cellchat_list[[2]],
                      sources.use = cells_skin, targets.use = cells_focus,
                      signaling = "CXCL",
                      slot.name = "net", net = net.up, lab.cex = 0.9,
-                     small.gap = 3, 
+                     small.gap = 3,
                      color.use = colors_annotated_skin_recombined,
                      title.name = paste("Up-regulated signaling in",
                                         names(cellchat_list)[2]))
 
 # down-regulated L-R pairs in EM
-netVisual_chord_gene(cellchat_list[[1]], 
+netVisual_chord_gene(cellchat_list[[1]],
                      sources.use = NULL, targets.use = NULL,
                      signaling = "CXCL",
                      slot.name = "net", net = net.down, lab.cex = 0.9,
-                     small.gap = 3, 
+                     small.gap = 3,
                      color.use = colors_annotated_skin_recombined,
                      title.name = paste("Down-regulated signaling in",
                                         names(cellchat_list)[2]))
@@ -494,21 +494,21 @@ CCL pathway:
 
 ```{r}
 # up-regulated L-R pairs in EM
-netVisual_chord_gene(cellchat_list[[2]], 
+netVisual_chord_gene(cellchat_list[[2]],
                      sources.use = NULL, targets.use = NULL,
                      signaling = "CCL",
                      slot.name = "net", net = net.up, lab.cex = 0.9,
-                     small.gap = 3, 
+                     small.gap = 3,
                      color.use = colors_annotated_skin_recombined,
                      title.name = paste("Up-regulated signaling in",
                                         names(cellchat_list)[2]))
 
 # down-regulated L-R pairs in EM
-netVisual_chord_gene(cellchat_list[[1]], 
+netVisual_chord_gene(cellchat_list[[1]],
                      sources.use = NULL, targets.use = NULL,
                      signaling = "CCL",
                      slot.name = "net", net = net.down, lab.cex = 0.9,
-                     small.gap = 3, 
+                     small.gap = 3,
                      color.use = colors_annotated_skin_recombined,
                      title.name = paste("Down-regulated signaling in",
                                         names(cellchat_list)[2]))

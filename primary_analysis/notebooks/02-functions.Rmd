@@ -1,5 +1,7 @@
 Rather than having them scattered throughout the script and having to redefine them each time the analysis changes, they have all been placed here. This also helps with standardization if the analysis has distinct components (e.g. blood and skin data).
 
+*Note that you might have to update some functions depending on your version of Seurat e.g. `slot` will have to change to `layer`*
+
 ## Notebook
 
 ### Display pretty tables
